@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import UserEditor from './UserEditor'
 import AdminSettings from './AdminSettings'
+import Footer from '../../components/Footer'
 
 export default function AdminDashboard() {
   const { t } = useTranslation()
@@ -54,6 +55,7 @@ export default function AdminDashboard() {
         />
       )}
       <AdminSettings />
+      <Footer />
     </div>
   )
 }

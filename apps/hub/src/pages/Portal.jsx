@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
 import AppCard from '../components/AppCard'
+import Footer from '../components/Footer'
 
 export default function Portal() {
   const { t } = useTranslation()
@@ -39,6 +40,7 @@ export default function Portal() {
           </div>
         )}
       </main>
+      <Footer />
     </div>
   )
 }

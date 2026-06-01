@@ -1,8 +1,16 @@
+import { readFileSync } from 'fs'
+import { resolve } from 'path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const buildInfo = JSON.parse(readFileSync(resolve(__dirname, '../../build.json'), 'utf8'))
+
 export default defineConfig({
+  define: {
+    __BUILD_NUMBER__: JSON.stringify(buildInfo.build),
+    __BUILD_DATE__: JSON.stringify(buildInfo.date),
+  },
   plugins: [
     react(),
     VitePWA({

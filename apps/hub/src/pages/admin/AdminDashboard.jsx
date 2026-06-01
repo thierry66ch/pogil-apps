@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import UserEditor from './UserEditor'
+import AdminSettings from './AdminSettings'
 
 export default function AdminDashboard() {
   const { t } = useTranslation()
@@ -52,6 +53,7 @@ export default function AdminDashboard() {
           onClose={() => { setEditingUser(null); fetchUsers() }}
         />
       )}
+      <AdminSettings />
     </div>
   )
 }

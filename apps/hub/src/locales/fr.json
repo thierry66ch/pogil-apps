@@ -26,6 +26,22 @@
     "access": "Accès",
     "save": "Enregistrer",
     "delete": "Supprimer",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "settings": {
+      "title": "Mes identifiants",
+      "newEmail": "Nouvel e-mail",
+      "newEmailPlaceholder": "Laisser vide pour ne pas modifier",
+      "newPassword": "Nouveau mot de passe",
+      "newPasswordPlaceholder": "Laisser vide pour ne pas modifier",
+      "confirmPassword": "Confirmer le mot de passe",
+      "confirmPasswordPlaceholder": "Répéter le nouveau mot de passe",
+      "requestOtp": "Valider par OTP",
+      "otpSent": "Un code OTP a été envoyé à votre adresse e-mail actuelle. Saisissez-le pour confirmer les modifications.",
+      "success": "Vos identifiants ont été mis à jour.",
+      "errorEmpty": "Indiquez au moins un nouveau e-mail ou un nouveau mot de passe.",
+      "errorPasswordMismatch": "Les mots de passe ne correspondent pas.",
+      "errorRequest": "Une erreur est survenue. Veuillez réessayer.",
+      "errorOtp": "Code OTP invalide ou expiré."
+    }
   }
 }

@@ -77,6 +77,55 @@ admin.post('/verify-otp', async (c) => {
 
 // Routes protégées par le middleware admin
 admin.use('/users*', adminMiddleware)
+admin.use('/settings*', adminMiddleware)
+
+// POST /api/admin/settings/request-otp  — demande un OTP pour valider le changement
+admin.post('/settings/request-otp', async (c) => {
+  const adminId = c.get('adminId')
+  const adminUser = db.prepare('SELECT * FROM admin WHERE id = ?').get(adminId)
+  if (!adminUser) return c.json({ error: 'Not found' }, 404)
+
+  const otp = generateOtp()
+  const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString()
+
+  db.prepare('UPDATE admin SET otp_code = ?, otp_expires = ? WHERE id = ?')
+    .run(otp, expires, adminId)
+
+  try {
+    await sendOtpEmail(adminUser.email, otp)
+  } catch (err) {
+    console.warn('[DEV] Échec envoi email OTP:', err.message)
+    console.warn(`[DEV] OTP pour ${adminUser.email} : ${otp}`)
+  }
+
+  return c.json({ ok: true })
+})
+
+// POST /api/admin/settings/confirm  — valide l'OTP et applique les changements
+admin.post('/settings/confirm', async (c) => {
+  const adminId = c.get('adminId')
+  const { otp, newEmail, newPassword } = await c.req.json()
+
+  const adminUser = db.prepare('SELECT * FROM admin WHERE id = ?').get(adminId)
+  if (!adminUser) return c.json({ error: 'Not found' }, 404)
+
+  const now = new Date().toISOString()
+  if (adminUser.otp_code !== otp || adminUser.otp_expires < now) {
+    return c.json({ error: 'Invalid or expired OTP' }, 401)
+  }
+
+  db.prepare('UPDATE admin SET otp_code = NULL, otp_expires = NULL WHERE id = ?').run(adminId)
+
+  if (newEmail) {
+    db.prepare('UPDATE admin SET email = ? WHERE id = ?').run(newEmail, adminId)
+  }
+  if (newPassword) {
+    const password_hash = await bcrypt.hash(newPassword, 12)
+    db.prepare('UPDATE admin SET password_hash = ? WHERE id = ?').run(password_hash, adminId)
+  }
+
+  return c.json({ ok: true })
+})
 
 // GET /api/admin/users
 admin.get('/users', (c) => {

@@ -26,6 +26,22 @@
     "access": "Access",
     "save": "Save",
     "delete": "Delete",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "settings": {
+      "title": "My credentials",
+      "newEmail": "New email",
+      "newEmailPlaceholder": "Leave blank to keep current",
+      "newPassword": "New password",
+      "newPasswordPlaceholder": "Leave blank to keep current",
+      "confirmPassword": "Confirm password",
+      "confirmPasswordPlaceholder": "Repeat new password",
+      "requestOtp": "Confirm with OTP",
+      "otpSent": "An OTP code has been sent to your current email address. Enter it to confirm the changes.",
+      "success": "Your credentials have been updated.",
+      "errorEmpty": "Please provide at least a new email or a new password.",
+      "errorPasswordMismatch": "Passwords do not match.",
+      "errorRequest": "An error occurred. Please try again.",
+      "errorOtp": "Invalid or expired OTP code."
+    }
   }
 }

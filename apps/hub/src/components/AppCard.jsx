@@ -24,8 +24,8 @@ export default function AppCard({ app, token }) {
 
   return (
     <div className="app-card" onClick={handleClick}>
-      <span className="app-icon">{app.icon ?? '📦'}</span>
-      <span className="app-name">{app.name}</span>
+      <div className="app-card__icon">{app.icon ?? '📦'}</div>
+      <span className="app-card__name">{app.name}</span>
       {open && workspaces && workspaces.length > 1 && (
         <WorkspaceSelector workspaces={workspaces} appSlug={app.slug} />
       )}

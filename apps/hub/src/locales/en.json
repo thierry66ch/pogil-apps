@@ -1,6 +1,7 @@
 {
   "login": {
     "title": "Sign in",
+    "subtitle": "Welcome to pogil apps",
     "email": "Email or username",
     "password": "Password",
     "submit": "Sign in",
@@ -9,17 +10,22 @@
   },
   "portal": {
     "title": "My applications",
+    "greeting": "Hello, {{name}}!",
+    "subtitle": "Your pogil applications",
     "logout": "Sign out",
     "noApps": "No applications available"
   },
   "admin": {
     "title": "Administration",
     "login": "Admin login",
+    "loginSubtitle": "Restricted access",
     "otp": "OTP code",
     "otpSent": "An OTP code has been sent to your email address",
     "verify": "Verify",
+    "backToLogin": "Back",
     "users": "Users",
-    "addUser": "Add user",
+    "addUser": "Add",
+    "edit": "Edit",
     "username": "Username",
     "active": "Active",
     "inactive": "Inactive",
@@ -27,6 +33,8 @@
     "save": "Save",
     "delete": "Delete",
     "cancel": "Cancel",
+    "confirmDelete": "Delete user {{name}}?",
+    "passwordOptional": "leave blank to keep current",
     "settings": {
       "title": "My credentials",
       "newEmail": "New email",

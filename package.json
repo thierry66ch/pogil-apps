@@ -1,0 +1,22 @@
+{
+  "name": "pogil-apps",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "server"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=apps/hub",
+    "start": "node server/index.js",
+    "dev": "concurrently \"npm run dev --workspace=apps/hub\" \"npm run dev --workspace=server\"",
+    "setup": "node server/setup.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

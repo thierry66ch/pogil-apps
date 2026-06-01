@@ -1,0 +1,31 @@
+{
+  "login": {
+    "title": "Connexion",
+    "email": "Email ou nom d'utilisateur",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "forgotPassword": "Mot de passe oublié ?",
+    "error": "Identifiants incorrects"
+  },
+  "portal": {
+    "title": "Mes applications",
+    "logout": "Déconnexion",
+    "noApps": "Aucune application disponible"
+  },
+  "admin": {
+    "title": "Administration",
+    "login": "Connexion admin",
+    "otp": "Code OTP",
+    "otpSent": "Un code OTP a été envoyé à votre adresse e-mail",
+    "verify": "Vérifier",
+    "users": "Utilisateurs",
+    "addUser": "Ajouter un utilisateur",
+    "username": "Nom d'utilisateur",
+    "active": "Actif",
+    "inactive": "Inactif",
+    "access": "Accès",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "cancel": "Annuler"
+  }
+}

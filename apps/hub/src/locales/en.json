@@ -1,0 +1,31 @@
+{
+  "login": {
+    "title": "Sign in",
+    "email": "Email or username",
+    "password": "Password",
+    "submit": "Sign in",
+    "forgotPassword": "Forgot password?",
+    "error": "Invalid credentials"
+  },
+  "portal": {
+    "title": "My applications",
+    "logout": "Sign out",
+    "noApps": "No applications available"
+  },
+  "admin": {
+    "title": "Administration",
+    "login": "Admin login",
+    "otp": "OTP code",
+    "otpSent": "An OTP code has been sent to your email address",
+    "verify": "Verify",
+    "users": "Users",
+    "addUser": "Add user",
+    "username": "Username",
+    "active": "Active",
+    "inactive": "Inactive",
+    "access": "Access",
+    "save": "Save",
+    "delete": "Delete",
+    "cancel": "Cancel"
+  }
+}

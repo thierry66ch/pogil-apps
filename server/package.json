@@ -1,0 +1,17 @@
+{
+  "name": "@pogil/server",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@pogil/shared": "*",
+    "@hono/node-server": "^1.13.1",
+    "bcryptjs": "^3.0.2",
+    "hono": "^4.6.3",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^8.0.10"
+  }
+}

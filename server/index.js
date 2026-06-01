@@ -1,0 +1,59 @@
+import { readFileSync } from 'node:fs'
+import { Hono } from 'hono'
+import { serve } from '@hono/node-server'
+import { serveStatic } from '@hono/node-server/serve-static'
+import authRoutes from './routes/auth.js'
+import portalRoutes from './routes/portal.js'
+import adminRoutes from './routes/admin.js'
+
+// Load .env manually (no dotenv dependency required)
+try {
+  const env = readFileSync(new URL('../.env', import.meta.url), 'utf8')
+  for (const line of env.split('\n')) {
+    const [key, ...rest] = line.split('=')
+    if (key && !key.startsWith('#') && rest.length) {
+      process.env[key.trim()] ??= rest.join('=').trim()
+    }
+  }
+} catch { /* .env absent en production */ }
+
+// Simple in-memory rate limiter for auth routes
+const loginAttempts = new Map()
+function rateLimitMiddleware(c, next) {
+  const ip = c.req.header('x-forwarded-for') ?? 'unknown'
+  const now = Date.now()
+  const windowMs = 15 * 60 * 1000
+  const maxAttempts = 20
+  const entry = loginAttempts.get(ip) ?? { count: 0, resetAt: now + windowMs }
+  if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + windowMs }
+  entry.count++
+  loginAttempts.set(ip, entry)
+  if (entry.count > maxAttempts) return c.json({ error: 'Too many requests' }, 429)
+  return next()
+}
+
+const app = new Hono()
+
+app.use('/api/auth/*', rateLimitMiddleware)
+app.use('/api/admin/login', rateLimitMiddleware)
+app.use('/api/admin/verify-otp', rateLimitMiddleware)
+
+// API routes
+app.route('/api/auth', authRoutes)
+app.route('/api/me', portalRoutes)
+app.route('/api/admin', adminRoutes)
+
+// Static files (Vite build output)
+app.use('/*', serveStatic({ root: './apps/hub/dist' }))
+
+// SPA fallback
+app.get('*', serveStatic({ path: './apps/hub/dist/index.html' }))
+
+const PORT = Number(process.env.PORT ?? 3000)
+
+const server = serve({ fetch: app.fetch, port: PORT }, () => {
+  console.log(`Server running on http://localhost:${PORT}`)
+})
+
+process.on('SIGTERM', () => server.close())
+process.on('SIGINT', () => server.close())

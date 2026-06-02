@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 6 — 2026-06-02
+Script de seed idempotent (server/seed-demo.js, npm run seed) : utilisateur test, app jourdoc, workspace Jardin, 12 objets hiérarchiques, 17 thèmes, 6 notes de démo (observations, activités, documentation). Déploiement validé sur apps.pogil.ch (Node 24.15.0).
+
+---
+
 ## Build 5 — 2026-06-02
 Fix ThemeToggle tronqué : flex-shrink:0 sur topbar__controls et page-auth__controls ; boutons réduits de 26→22 px (toggle total 88→72 px). Ordre inversé dans Login/AdminLogin (ThemeToggle avant LanguageSwitcher). Les 3 icônes ☀️ 🖥 🌙 sont désormais toutes visibles.
 

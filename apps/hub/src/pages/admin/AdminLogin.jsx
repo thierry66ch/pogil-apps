@@ -66,8 +66,8 @@ export default function AdminLogin() {
           <span>pogil</span>
         </a>
         <div className="page-auth__controls">
-          <LanguageSwitcher />
           <ThemeToggle />
+          <LanguageSwitcher />
         </div>
       </header>
 

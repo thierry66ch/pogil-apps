@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 5 — 2026-06-02
+Fix ThemeToggle tronqué : flex-shrink:0 sur topbar__controls et page-auth__controls ; boutons réduits de 26→22 px (toggle total 88→72 px). Ordre inversé dans Login/AdminLogin (ThemeToggle avant LanguageSwitcher). Les 3 icônes ☀️ 🖥 🌙 sont désormais toutes visibles.
+
+---
+
 ## Build 4 — 2026-06-02
 MVP JourDoc frontend : JourDocApp (shell + sidebar nav responsive), JourDocJournal (vue jour avec navigation date), NoteForm (saisie rapide — type/nature/date/thème/objets/titre auto), NoteCard, ObjetDetail (fiche avec recherche récursive ±3 niveaux, contrôle de direction), ObjetManager et ThemeManager (arbres CRUD inline). Composant HierarchyPicker (sélecteur hiérarchique avec recherche textuelle, modes single/multi). Routes React Router imbriquées. Styles JourDoc dans global.css.
 

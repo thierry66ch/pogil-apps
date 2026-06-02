@@ -215,6 +215,7 @@ button, input, select, textarea { font: inherit; color: inherit }
   display: flex;
   align-items: center;
   gap: .25rem;
+  flex-shrink: 0;
 }
 
 /* 6 ── ICON BUTTON
@@ -271,15 +272,16 @@ button, input, select, textarea { font: inherit; color: inherit }
   background: var(--surface-alt);
   border: 1px solid var(--border);
   border-radius: var(--r-full);
-  padding: 3px;
-  gap: 2px;
+  padding: 2px;
+  gap: 1px;
+  flex-shrink: 0;
 }
 
 .theme-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px; height: 26px;
+  width: 22px; height: 22px;
   border: none;
   background: transparent;
   border-radius: var(--r-full);
@@ -288,7 +290,7 @@ button, input, select, textarea { font: inherit; color: inherit }
   transition: background .15s, color .15s, box-shadow .15s;
 }
 
-.theme-btn svg { width: 13px; height: 13px }
+.theme-btn svg { width: 12px; height: 12px }
 .theme-btn.active { background: var(--accent); color: #fff; box-shadow: var(--shadow-accent) }
 .theme-btn:not(.active):hover { background: var(--accent-bg); color: var(--accent) }
 
@@ -476,6 +478,7 @@ button, input, select, textarea { font: inherit; color: inherit }
   display: flex;
   align-items: center;
   gap: .375rem;
+  flex-shrink: 0;
 }
 
 .page-auth__main {

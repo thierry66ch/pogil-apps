@@ -5,6 +5,7 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import authRoutes from './routes/auth.js'
 import portalRoutes from './routes/portal.js'
 import adminRoutes from './routes/admin.js'
+import jourdocRoutes from './routes/jourdoc.js'
 
 // Load .env manually (no dotenv dependency required)
 try {
@@ -42,6 +43,7 @@ app.use('/api/admin/verify-otp', rateLimitMiddleware)
 app.route('/api/auth', authRoutes)
 app.route('/api/me', portalRoutes)
 app.route('/api/admin', adminRoutes)
+app.route('/api/jourdoc', jourdocRoutes)
 
 // Static files (Vite build output)
 app.use('/*', serveStatic({ root: './apps/hub/dist' }))

@@ -18,4 +18,12 @@ export const API_ROUTES = {
   ADMIN_SETTINGS_CONFIRM: '/api/admin/settings/confirm',
   ME_APPS: '/api/me/apps',
   ME_WORKSPACES: (slug) => `/api/me/apps/${slug}/workspaces`,
+  JD_WS:           (wsId) => `/api/jourdoc/${wsId}`,
+  JD_OBJETS:       (wsId) => `/api/jourdoc/${wsId}/objets`,
+  JD_OBJET:        (wsId, id) => `/api/jourdoc/${wsId}/objets/${id}`,
+  JD_OBJET_NOTES:  (wsId, id) => `/api/jourdoc/${wsId}/objets/${id}/notes`,
+  JD_THEMES:       (wsId) => `/api/jourdoc/${wsId}/themes`,
+  JD_THEME:        (wsId, id) => `/api/jourdoc/${wsId}/themes/${id}`,
+  JD_NOTES:        (wsId) => `/api/jourdoc/${wsId}/notes`,
+  JD_NOTE:         (wsId, id) => `/api/jourdoc/${wsId}/notes/${id}`,
 }

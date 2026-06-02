@@ -873,3 +873,437 @@ button, input, select, textarea { font: inherit; color: inherit }
   /* tighter targets OK for mouse/stylus */
   .app-grid { gap: 1.25rem }
 }
+
+/* ================================================
+   JOURDOC
+   ================================================ */
+
+/* Layout */
+.jd-app { }
+
+.jd-layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Sidebar desktop */
+.jd-nav {
+  display: flex;
+  flex-direction: row;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  z-index: 90;
+  background: var(--surface-glass);
+  border-top: 1px solid var(--border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: .25rem .5rem env(safe-area-inset-bottom);
+  justify-content: space-around;
+}
+
+.jd-main {
+  flex: 1;
+  padding: 1.25rem 1rem 5rem;
+  overflow-y: auto;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .jd-nav {
+    position: sticky;
+    top: var(--topbar-h);
+    height: calc(100dvh - var(--topbar-h));
+    flex-direction: column;
+    width: 200px;
+    flex-shrink: 0;
+    border-top: none;
+    border-right: 1px solid var(--border);
+    padding: 1rem .5rem;
+    justify-content: flex-start;
+    gap: .25rem;
+  }
+  .jd-main { padding: 1.5rem 2rem 2rem; }
+}
+
+.jd-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .125rem;
+  padding: .5rem .75rem;
+  border: none;
+  background: transparent;
+  border-radius: var(--r);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: .75rem;
+  font-weight: 600;
+  transition: all .15s var(--ease);
+  flex: 1;
+}
+
+@media (min-width: 768px) {
+  .jd-nav-item {
+    flex-direction: row;
+    gap: .625rem;
+    font-size: .875rem;
+    flex: none;
+    width: 100%;
+    padding: .625rem .875rem;
+    justify-content: flex-start;
+  }
+}
+
+.jd-nav-item:hover { background: var(--accent-bg); color: var(--accent) }
+.jd-nav-item.active { background: var(--accent-bg); color: var(--accent) }
+.jd-nav-icon { font-size: 1.25rem; line-height: 1 }
+@media (min-width: 768px) { .jd-nav-icon { font-size: 1.1rem } }
+
+.jd-nav-new {
+  color: var(--accent);
+  border: 1.5px dashed var(--border);
+  margin-top: auto;
+}
+@media (max-width: 767px) { .jd-nav-new { margin-top: 0 } }
+.jd-nav-new:hover { border-color: var(--accent); background: var(--accent-bg) }
+
+/* Journal */
+.jd-journal { position: relative; padding-bottom: 5rem }
+
+.jd-journal__nav {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: 1.5rem;
+}
+
+.jd-journal__date-wrap {
+  position: relative;
+  flex: 1;
+  text-align: center;
+}
+
+.jd-journal__date {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--text);
+  text-transform: capitalize;
+}
+
+.jd-date-hidden {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+}
+
+.jd-date-arrow {
+  width: 36px; height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 1.25rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.jd-date-arrow:hover { border-color: var(--accent); color: var(--accent) }
+.jd-date-arrow:disabled { opacity: .35; cursor: default }
+
+/* Note cards */
+.jd-notes-list { display: flex; flex-direction: column; gap: .75rem }
+
+.jd-note-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 1rem 1.125rem;
+  cursor: pointer;
+  transition: all .15s var(--ease);
+  border-left: 3px solid var(--accent);
+}
+.jd-note-card:hover { box-shadow: var(--shadow-md); transform: translateX(2px) }
+
+.jd-note-card__top {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .4rem;
+}
+
+.jd-note-card__titre {
+  font-size: .9375rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: .4rem;
+}
+
+.jd-note-card__theme {
+  font-size: .75rem;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.jd-note-card__objets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .375rem;
+}
+
+/* Badges */
+.jd-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  font-size: .6875rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  padding: .2em .6em;
+  border-radius: var(--r-full);
+  text-transform: uppercase;
+}
+.jd-badge-observation { background: rgba(16,185,129,.12); color: var(--success) }
+.jd-badge-activite    { background: rgba(99,102,241,.12); color: var(--accent) }
+.jd-badge-journal     { background: var(--accent-bg); color: var(--accent) }
+.jd-badge-documentation { background: rgba(245,158,11,.12); color: #d97706 }
+
+/* Chips (objets liés) */
+.jd-chip {
+  display: inline-block;
+  padding: .2em .55em;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  font-size: .75rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all .12s;
+}
+.jd-chip:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent) }
+
+/* FAB */
+.jd-fab {
+  position: fixed;
+  bottom: calc(60px + 1rem + env(safe-area-inset-bottom));
+  right: 1.25rem;
+  width: 52px; height: 52px;
+  border-radius: var(--r-full);
+  background: var(--grad);
+  color: #fff;
+  font-size: 1.5rem;
+  border: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-accent);
+  z-index: 80;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform .15s, box-shadow .15s;
+}
+.jd-fab:hover { transform: scale(1.08); box-shadow: var(--shadow-lg) }
+@media (min-width: 768px) { .jd-fab { bottom: 1.5rem; right: 1.5rem } }
+
+/* Loading */
+.jd-loading {
+  text-align: center;
+  padding: 3rem;
+  color: var(--text-muted);
+  font-size: .9375rem;
+}
+
+/* Note form */
+.jd-note-form { padding-bottom: 2rem }
+
+.jd-form-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.jd-form-header h2 { font-size: 1.25rem; font-weight: 700 }
+
+.jd-form { display: flex; flex-direction: column; gap: 1.125rem }
+
+.jd-form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.jd-form-row .form-field { flex: 1; min-width: 200px }
+
+/* Segmented control */
+.jd-segmented {
+  display: flex;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.jd-seg-btn {
+  flex: 1;
+  padding: .5rem .75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: .8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.jd-seg-btn.active { background: var(--accent); color: #fff }
+.jd-seg-btn:not(.active):hover { background: var(--accent-bg); color: var(--accent) }
+
+/* Date field */
+.jd-date-row {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+}
+
+/* Auto-generate button */
+.jd-auto-btn {
+  font-size: .75rem;
+  font-weight: 600;
+  padding: .2em .5em;
+  border: 1px solid var(--border);
+  border-radius: var(--r-full);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  transition: all .12s;
+}
+.jd-auto-btn:hover { background: var(--accent-bg) }
+
+/* Textarea */
+.jd-textarea { resize: vertical; min-height: 100px }
+
+/* Picker dropdown */
+.jd-picker { }
+.jd-picker__trigger {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  gap: .5rem;
+}
+.jd-picker__dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0; right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+  max-height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+.jd-picker__list {
+  list-style: none;
+  overflow-y: auto;
+  flex: 1;
+  padding: .25rem;
+}
+.jd-picker__item {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-size: .875rem;
+  transition: background .12s;
+}
+.jd-picker__item:hover { background: var(--accent-bg) }
+.jd-picker__item.selected { background: var(--accent-bg); color: var(--accent) }
+.jd-picker__nom { font-weight: 500; flex: 1 }
+.jd-picker__path { font-size: .75rem; color: var(--text-muted); font-family: var(--font-mono) }
+.jd-picker__check { margin-left: auto; color: var(--accent); font-weight: 700 }
+.jd-picker__empty { padding: .75rem; text-align: center; color: var(--text-muted); font-size: .875rem }
+.jd-picker__backdrop {
+  position: fixed; inset: 0; z-index: 49;
+}
+
+/* Objet detail */
+.jd-objet-detail { padding-bottom: 2rem }
+.jd-path-label {
+  font-size: .8125rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+.jd-objet-desc {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: .875rem 1rem;
+  font-size: .9375rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+.jd-direction-ctrl {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: 1.25rem;
+}
+
+/* Tree manager */
+.jd-manager { padding-bottom: 2rem }
+.jd-manager__title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem }
+.jd-tree { }
+.jd-tree-node { }
+.jd-tree-row {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+  padding: .3rem 0;
+  min-height: 36px;
+}
+.jd-tree-toggle {
+  width: 22px; height: 22px;
+  border: none; background: transparent;
+  color: var(--text-muted); cursor: pointer;
+  font-size: .85rem; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.jd-tree-leaf { width: 22px; text-align: center; color: var(--text-subtle); flex-shrink: 0 }
+.jd-tree-label {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex: 1;
+}
+.jd-tree-edit {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+.jd-tree-actions {
+  display: flex;
+  gap: .125rem;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.jd-tree-row:hover .jd-tree-actions { opacity: 1 }
+.jd-groupe { font-weight: 600; font-size: .9375rem }
+.jd-individu { font-size: .9375rem; color: var(--text-muted) }
+.jd-short { font-size: .75rem; color: var(--text-muted); font-family: var(--font-mono) }
+.jd-tree-add {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-top: .5rem;
+}

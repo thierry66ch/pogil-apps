@@ -374,21 +374,10 @@ export default function NoteForm() {
             </div>
           )}
 
-          {/* Notes entrantes (contexte — lecture seule) */}
-          {isEdit && liensEntrants.length > 0 && (
-            <div className="note-liens__group">
-              <span className="note-liens__group-label">Contexte (citée par)</span>
-              {liensEntrants.map(n => (
-                <NoteLienChip key={n.id} note={n}
-                  onClick={() => navigate(`/jourdoc/${wsId}/notes/${n.id}`)} />
-              ))}
-            </div>
-          )}
-
-          {/* Notes sortantes (suite — modifiables en edit) */}
+          {/* Notes sortantes = Contexte (notes plus anciennes citées, modifiables) */}
           {isEdit && liens.length > 0 && (
             <div className="note-liens__group">
-              <span className="note-liens__group-label">Suite / entraîne</span>
+              <span className="note-liens__group-label">Contexte (notes citées)</span>
               {liens.map(n => (
                 <NoteLienChip key={n.id} note={n}
                   onClick={() => navigate(`/jourdoc/${wsId}/notes/${n.id}`)}
@@ -399,6 +388,17 @@ export default function NoteForm() {
                     setLiens(prev => prev.filter(l => l.id !== n.id))
                   }}
                 />
+              ))}
+            </div>
+          )}
+
+          {/* Notes entrantes = Suite (notes plus récentes qui citent celle-ci, lecture seule) */}
+          {isEdit && liensEntrants.length > 0 && (
+            <div className="note-liens__group">
+              <span className="note-liens__group-label">Suite / entraîne</span>
+              {liensEntrants.map(n => (
+                <NoteLienChip key={n.id} note={n}
+                  onClick={() => navigate(`/jourdoc/${wsId}/notes/${n.id}`)} />
               ))}
             </div>
           )}

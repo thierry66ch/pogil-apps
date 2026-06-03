@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 17 — 2026-06-03
+Fix fil de notes : permutation Contexte/Suite — liens sortants (notes citées, plus anciennes) → Contexte ; liens entrants (notes qui citent celle-ci, plus récentes) → Suite / entraîne.
+
+---
+
 ## Build 16 — 2026-06-03
 Liaisons notes : section "Fil de notes" visible dès la création (liens en attente créés après POST). Titre complet affiché dans chips et picker (titre_alt en secondaire). Couleur par type (observation=vert, activité=indigo, documentation=ambre) sur chips et items picker. Tri chronologique des liens (sortByDate).
 

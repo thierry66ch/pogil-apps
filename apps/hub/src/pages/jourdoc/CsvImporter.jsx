@@ -104,7 +104,7 @@ export default function CsvImporter({ wsId, token, type = 'objets', onDone }) {
       <div className="csv-importer__help">
         <button type="button" className="jd-auto-btn"
           onClick={() => setShowExample(o => !o)}>
-          {showExample ? 'Masquer l'exemple' : '📋 Voir le format attendu'}
+          {showExample ? "Masquer l'exemple" : '📋 Voir le format attendu'}
         </button>
         <button type="button" className="jd-auto-btn"
           onClick={loadExample}>

@@ -67,7 +67,7 @@ function findOrCreateTheme(wsId, nom, parentId, nomCourt, created, skipped) {
   return r.lastInsertRowid
 }
 
-jourdoc.post('/:wsId/import/objets', async (c) => {
+jourdoc.post('/:wsId/import/objets', wsCheck, async (c) => {
   const wsId = c.get('wsId')
   const { csv } = await c.req.json()
   if (!csv?.trim()) return c.json({ error: 'CSV vide' }, 400)
@@ -115,7 +115,7 @@ jourdoc.post('/:wsId/import/objets', async (c) => {
   return c.json({ created: created.length, skipped: skipped.length, errors, details: { created, skipped } })
 })
 
-jourdoc.post('/:wsId/import/themes', async (c) => {
+jourdoc.post('/:wsId/import/themes', wsCheck, async (c) => {
   const wsId = c.get('wsId')
   const { csv } = await c.req.json()
   if (!csv?.trim()) return c.json({ error: 'CSV vide' }, 400)

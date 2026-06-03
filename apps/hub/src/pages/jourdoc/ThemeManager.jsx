@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useState, useMemo } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
-import { useJdData, authHeader } from './hooks'
+import { useJdData, authHeader, buildPathMap } from './hooks'
 
 function buildTree(items) {
   const map = new Map(items.map(i => [i.id, { ...i, children: [] }]))
@@ -14,17 +14,39 @@ function buildTree(items) {
   return roots
 }
 
-function ThemeNode({ node, wsId, token, onReload, depth = 0 }) {
+function getDescendantIds(id, items) {
+  const result = new Set([id])
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const item of items) {
+      if (item.parent_id !== null && result.has(item.parent_id) && !result.has(item.id)) {
+        result.add(item.id); changed = true
+      }
+    }
+  }
+  return result
+}
+
+function ThemeNode({ node, wsId, token, onReload, allThemes, depth = 0 }) {
+  const navigate = useNavigate()
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState({ nom: node.nom, nom_court: node.nom_court ?? '' })
+  const [form, setForm] = useState({ nom: node.nom, nom_court: node.nom_court ?? '', parent_id: node.parent_id ?? '' })
   const [addingChild, setAddingChild] = useState(false)
   const [childNom, setChildNom] = useState('')
   const [childCourt, setChildCourt] = useState('')
   const [open, setOpen] = useState(depth < 2)
 
+  const pathMap = useMemo(() => buildPathMap(allThemes), [allThemes])
+  const parentOptions = useMemo(() => {
+    const excluded = getDescendantIds(node.id, allThemes)
+    return allThemes.filter(t => !excluded.has(t.id))
+  }, [node.id, allThemes])
+
   async function save() {
     await fetch(API_ROUTES.JD_THEME(wsId, node.id), {
-      method: 'PUT', headers: authHeader(token), body: JSON.stringify({ ...form, parent_id: node.parent_id })
+      method: 'PUT', headers: authHeader(token),
+      body: JSON.stringify({ ...form, parent_id: form.parent_id === '' ? null : Number(form.parent_id) })
     })
     onReload(); setEditing(false)
   }
@@ -53,16 +75,38 @@ function ThemeNode({ node, wsId, token, onReload, depth = 0 }) {
 
         {editing ? (
           <div className="jd-tree-edit">
-            <input className="input" style={{ padding: '.25rem .5rem', fontSize: '.875rem' }}
+            <input className="input" style={{ padding: '.25rem .5rem', fontSize: '.875rem', minWidth: '120px' }}
               value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} autoFocus />
-            <input className="input" style={{ padding: '.25rem .5rem', fontSize: '.875rem', width: '80px' }}
-              placeholder="court" value={form.nom_court} onChange={e => setForm(f => ({ ...f, nom_court: e.target.value }))} />
+            <input className="input" style={{ padding: '.25rem .5rem', fontSize: '.875rem', width: '72px' }}
+              placeholder="court" value={form.nom_court}
+              onChange={e => setForm(f => ({ ...f, nom_court: e.target.value }))} />
+            <select
+              className="input jd-parent-select"
+              value={form.parent_id ?? ''}
+              onChange={e => setForm(f => ({ ...f, parent_id: e.target.value }))}
+            >
+              <option value="">— Racine —</option>
+              {parentOptions.map(t => {
+                const path = pathMap.get(t.id)
+                return (
+                  <option key={t.id} value={t.id}>
+                    {t.nom}{path ? ` (${path})` : ''}
+                  </option>
+                )
+              })}
+            </select>
             <button className="btn btn-primary" style={{ padding: '.25rem .6rem', fontSize: '.8rem' }} onClick={save}>✓</button>
             <button className="btn btn-ghost" style={{ padding: '.25rem .6rem', fontSize: '.8rem' }} onClick={() => setEditing(false)}>✕</button>
           </div>
         ) : (
           <div className="jd-tree-label">
-            <span className="jd-groupe">{node.nom}</span>
+            <span
+              className="jd-name-link jd-groupe"
+              onClick={() => navigate(`/jourdoc/${wsId}/theme/${node.id}`)}
+              title="Voir les notes"
+            >
+              {node.nom}
+            </span>
             {node.nom_court && <span className="jd-short">({node.nom_court})</span>}
             <div className="jd-tree-actions">
               <button className="icon-btn" title="Modifier" onClick={() => setEditing(true)} style={{ width: 28, height: 28 }}>✏️</button>
@@ -77,15 +121,17 @@ function ThemeNode({ node, wsId, token, onReload, depth = 0 }) {
         <div className="jd-tree-add" style={{ marginLeft: '1.5rem' }}>
           <input className="input" style={{ flex: 1, padding: '.25rem .5rem', fontSize: '.875rem' }}
             placeholder="Nom" value={childNom} onChange={e => setChildNom(e.target.value)} autoFocus />
-          <input className="input" style={{ width: '80px', padding: '.25rem .5rem', fontSize: '.875rem' }}
+          <input className="input" style={{ width: '72px', padding: '.25rem .5rem', fontSize: '.875rem' }}
             placeholder="court" value={childCourt} onChange={e => setChildCourt(e.target.value)} />
           <button className="btn btn-primary" style={{ padding: '.25rem .6rem', fontSize: '.8rem' }} onClick={addChild}>Ajouter</button>
-          <button className="btn btn-ghost" style={{ padding: '.25rem .6rem', fontSize: '.8rem' }} onClick={() => { setAddingChild(false); setChildNom(''); setChildCourt('') }}>Annuler</button>
+          <button className="btn btn-ghost" style={{ padding: '.25rem .6rem', fontSize: '.8rem' }}
+            onClick={() => { setAddingChild(false); setChildNom(''); setChildCourt('') }}>Annuler</button>
         </div>
       )}
 
       {open && node.children.map(child => (
-        <ThemeNode key={child.id} node={child} wsId={wsId} token={token} onReload={onReload} depth={depth + 1} />
+        <ThemeNode key={child.id} node={child} wsId={wsId} token={token}
+          onReload={onReload} allThemes={allThemes} depth={depth + 1} />
       ))}
     </div>
   )
@@ -102,7 +148,8 @@ export default function ThemeManager() {
   async function addRoot() {
     if (!newNom) return
     await fetch(API_ROUTES.JD_THEMES(wsId), {
-      method: 'POST', headers: authHeader(token), body: JSON.stringify({ nom: newNom, nom_court: newCourt, parent_id: null })
+      method: 'POST', headers: authHeader(token),
+      body: JSON.stringify({ nom: newNom, nom_court: newCourt, parent_id: null })
     })
     reload(); setNewNom(''); setNewCourt('')
   }
@@ -112,7 +159,8 @@ export default function ThemeManager() {
       <h2 className="jd-manager__title">🏷️ Thèmes</h2>
       <div className="jd-tree">
         {tree.map(node => (
-          <ThemeNode key={node.id} node={node} wsId={wsId} token={token} onReload={reload} />
+          <ThemeNode key={node.id} node={node} wsId={wsId} token={token}
+            onReload={reload} allThemes={themes} />
         ))}
       </div>
       <div className="jd-tree-add" style={{ marginTop: '1rem' }}>

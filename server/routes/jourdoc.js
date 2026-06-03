@@ -190,6 +190,7 @@ jourdoc.get('/:wsId/notes', (c) => {
   if (date_from) { sql += ' AND n.date >= ?';     params.push(date_from) }
   if (date_to)   { sql += ' AND n.date <= ?';     params.push(date_to) }
   if (objet_id)  { sql += ' AND no.objet_id = ?'; params.push(Number(objet_id)) }
+  if (c.req.query('theme_id')) { sql += ' AND n.theme_id = ?'; params.push(Number(c.req.query('theme_id'))) }
 
   sql += ' ORDER BY n.date DESC, n.created_at DESC'
 

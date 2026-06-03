@@ -1310,3 +1310,18 @@ button, input, select, textarea { font: inherit; color: inherit }
   flex-wrap: wrap;
   margin-top: .5rem;
 }
+
+/* Nom cliquable dans les arbres */
+.jd-name-link {
+  cursor: pointer;
+  transition: color .15s;
+}
+.jd-name-link:hover { color: var(--accent); text-decoration: underline }
+
+/* Sélecteur de parent dans le formulaire d'édition */
+.jd-parent-select {
+  padding: .25rem .5rem;
+  font-size: .8125rem;
+  min-width: 160px;
+  max-width: 260px;
+}

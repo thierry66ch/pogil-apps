@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 7 — 2026-06-03
+Améliorations arbres objets/thèmes : sélecteur de parent dans le formulaire d'édition (select avec chemin court, descendants exclus pour éviter les cycles). Noms cliquables dans les arbres → fiche objet (ObjetDetail) ou fiche thème (ThemeDetail, nouveau). Backend : filtre theme_id sur GET /notes.
+
+---
+
 ## Build 6 — 2026-06-02
 Script de seed idempotent (server/seed-demo.js, npm run seed) : utilisateur test, app jourdoc, workspace Jardin, 12 objets hiérarchiques, 17 thèmes, 6 notes de démo (observations, activités, documentation). Déploiement validé sur apps.pogil.ch (Node 24.15.0).
 

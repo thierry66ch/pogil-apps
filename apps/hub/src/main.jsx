@@ -11,6 +11,7 @@ import JourDocApp from './pages/jourdoc/JourDocApp'
 import JourDocJournal from './pages/jourdoc/JourDocJournal'
 import NoteForm from './pages/jourdoc/NoteForm'
 import ObjetDetail from './pages/jourdoc/ObjetDetail'
+import ThemeDetail from './pages/jourdoc/ThemeDetail'
 import ObjetManager from './pages/jourdoc/ObjetManager'
 import ThemeManager from './pages/jourdoc/ThemeManager'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -41,6 +42,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               <Route path="new" element={<NoteForm />} />
               <Route path="notes/:noteId" element={<NoteForm />} />
               <Route path="objet/:objetId" element={<ObjetDetail />} />
+              <Route path="theme/:themeId" element={<ThemeDetail />} />
               <Route path="objets" element={<ObjetManager />} />
               <Route path="themes" element={<ThemeManager />} />
             </Route>

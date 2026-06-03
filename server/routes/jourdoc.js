@@ -23,6 +23,45 @@ function wsCheck(c, next) {
   return next()
 }
 
+// ── WORKSPACES (non scoped) ──────────────────────────────────
+
+// Vérifie que l'utilisateur est owner du workspace
+function ownerCheck(c, next) {
+  const userId = c.get('userId')
+  const wsId = c.get('wsId') ?? Number(c.req.param('wsId'))
+  const access = db.prepare('SELECT role FROM user_workspace_access WHERE user_id=? AND workspace_id=?').get(userId, wsId)
+  if (access?.role !== 'owner') return c.json({ error: 'Owner requis' }, 403)
+  return next()
+}
+
+// Lister les workspaces JourDoc de l'utilisateur
+jourdoc.get('/workspaces', (c) => {
+  const userId = c.get('userId')
+  const ws = db.prepare(`
+    SELECT w.id, w.name, uwa.role, w.created_at
+    FROM workspaces w
+    JOIN user_workspace_access uwa ON uwa.workspace_id = w.id
+    JOIN apps a ON a.id = w.app_id
+    WHERE uwa.user_id = ? AND a.slug = 'jourdoc'
+    ORDER BY w.name
+  `).all(userId)
+  return c.json({ workspaces: ws })
+})
+
+// Créer un nouveau workspace JourDoc
+jourdoc.post('/workspaces', async (c) => {
+  const userId = c.get('userId')
+  const { name } = await c.req.json()
+  if (!name?.trim()) return c.json({ error: 'Nom requis' }, 400)
+  const app = db.prepare("SELECT id FROM apps WHERE slug = 'jourdoc'").get()
+  if (!app) return c.json({ error: 'App jourdoc introuvable' }, 404)
+  const r = db.prepare('INSERT INTO workspaces (app_id, name, created_by) VALUES (?,?,?)').run(app.id, name.trim(), userId)
+  db.prepare('INSERT INTO user_workspace_access (user_id, workspace_id, role) VALUES (?,?,?)').run(userId, r.lastInsertRowid, 'owner')
+  // Accès app si pas encore accordé
+  db.prepare('INSERT OR IGNORE INTO user_app_access (user_id, app_id) VALUES (?,?)').run(userId, app.id)
+  return c.json({ id: r.lastInsertRowid, name: name.trim() }, 201)
+})
+
 jourdoc.use('/:wsId/*', wsCheck)
 
 // Met à jour le flag `lie` d'un média selon ses liaisons actuelles
@@ -44,7 +83,70 @@ function withData(notes) {
   })
 }
 
-// ── Info workspace ────────────────────────────────────────────
+// ── Info + settings workspace ─────────────────────────────────
+
+// Renommer le workspace (owner)
+jourdoc.patch('/:wsId', wsCheck, ownerCheck, async (c) => {
+  const wsId = c.get('wsId')
+  const { name } = await c.req.json()
+  if (!name?.trim()) return c.json({ error: 'Nom requis' }, 400)
+  db.prepare('UPDATE workspaces SET name=? WHERE id=?').run(name.trim(), wsId)
+  return c.json({ ok: true, name: name.trim() })
+})
+
+// Supprimer le workspace (owner — cascade sur toutes les données JourDoc)
+jourdoc.delete('/:wsId', wsCheck, ownerCheck, (c) => {
+  const wsId = c.get('wsId')
+  db.prepare('DELETE FROM workspaces WHERE id=?').run(wsId)
+  return c.json({ ok: true })
+})
+
+// Membres du workspace
+jourdoc.get('/:wsId/members', (c) => {
+  const wsId = c.get('wsId')
+  const members = db.prepare(`
+    SELECT u.id, u.username, u.email, uwa.role
+    FROM user_workspace_access uwa JOIN users u ON u.id = uwa.user_id
+    WHERE uwa.workspace_id = ? ORDER BY uwa.role DESC, u.username
+  `).all(wsId)
+  return c.json({ members })
+})
+
+// Ajouter un membre (owner)
+jourdoc.post('/:wsId/members', ownerCheck, async (c) => {
+  const wsId = c.get('wsId')
+  const { identifier, role = 'member' } = await c.req.json()
+  if (!identifier) return c.json({ error: 'identifier requis' }, 400)
+  const user = db.prepare('SELECT id, username FROM users WHERE username=? OR email=?').get(identifier, identifier)
+  if (!user) return c.json({ error: 'Utilisateur introuvable' }, 404)
+  db.prepare('INSERT OR IGNORE INTO user_workspace_access (user_id, workspace_id, role) VALUES (?,?,?)').run(user.id, wsId, role)
+  const app = db.prepare("SELECT id FROM apps WHERE slug='jourdoc'").get()
+  if (app) db.prepare('INSERT OR IGNORE INTO user_app_access (user_id, app_id) VALUES (?,?)').run(user.id, app.id)
+  return c.json({ ok: true, user: { id: user.id, username: user.username } }, 201)
+})
+
+// Changer le rôle d'un membre (owner)
+jourdoc.put('/:wsId/members/:uid', ownerCheck, async (c) => {
+  const wsId = c.get('wsId')
+  const uid = Number(c.req.param('uid'))
+  const { role } = await c.req.json()
+  if (!['owner','member'].includes(role)) return c.json({ error: 'Rôle invalide' }, 400)
+  db.prepare('UPDATE user_workspace_access SET role=? WHERE user_id=? AND workspace_id=?').run(role, uid, wsId)
+  return c.json({ ok: true })
+})
+
+// Retirer un membre (owner peut retirer tout le monde; membre se retire lui-même)
+jourdoc.delete('/:wsId/members/:uid', async (c) => {
+  const wsId = c.get('wsId')
+  const userId = c.get('userId')
+  const uid = Number(c.req.param('uid'))
+  if (uid !== userId) {
+    const access = db.prepare('SELECT role FROM user_workspace_access WHERE user_id=? AND workspace_id=?').get(userId, wsId)
+    if (access?.role !== 'owner') return c.json({ error: 'Forbidden' }, 403)
+  }
+  db.prepare('DELETE FROM user_workspace_access WHERE user_id=? AND workspace_id=?').run(uid, wsId)
+  return c.json({ ok: true })
+})
 
 jourdoc.get('/:wsId', (c) => {
   const wsId = c.get('wsId')

@@ -12,6 +12,7 @@ const NAV = [
   { path: 'medias',    icon: '📷', label: 'Médias' },
   { path: 'objets',    icon: '🌿', label: 'Objets' },
   { path: 'themes',    icon: '🏷️', label: 'Thèmes' },
+  { path: 'settings',  icon: '⚙️', label: 'Workspace' },
 ]
 
 export default function JourDocApp() {
@@ -19,7 +20,10 @@ export default function JourDocApp() {
   const { token, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
   const [ws, setWs] = useState(null)
+  const [allWs, setAllWs] = useState([])
+  const [showSwitcher, setShowSwitcher] = useState(false)
 
   useEffect(() => {
     fetch(API_ROUTES.JD_WS(wsId), { headers: authHeader(token) })
@@ -27,32 +31,82 @@ export default function JourDocApp() {
       .then(data => setWs(data.workspace))
   }, [wsId, token])
 
+  useEffect(() => {
+    fetch(API_ROUTES.JD_WORKSPACES(), { headers: authHeader(token) })
+      .then(r => r.json())
+      .then(data => setAllWs(data.workspaces ?? []))
+  }, [token])
+
+  // Recharger ws si nom changé depuis WorkspaceManager
+  useEffect(() => {
+    const found = allWs.find(w => w.id === Number(wsId))
+    if (found && ws && found.name !== ws.name) setWs(w => ({ ...w, name: found.name }))
+  }, [allWs, wsId])
+
   function isActive(path) {
     const base = `/jourdoc/${wsId}`
     if (path === '') return location.pathname === base || location.pathname === base + '/'
     return location.pathname.includes(`${base}/${path}`)
   }
 
+  const others = allWs.filter(w => w.id !== Number(wsId))
+
   return (
     <div className="app-layout jd-app">
-      <TopBar
-        user={ws ? { username: ws.name } : null}
-        onLogout={logout}
-      />
+      <TopBar user={ws ? { username: ws.name } : null} onLogout={logout} />
 
       <div className="jd-layout">
-        {/* Sidebar desktop / nav bas mobile */}
         <nav className="jd-nav">
+
+          {/* ── Workspace switcher ── */}
+          <div className="ws-switch">
+            <button
+              className="ws-switch__btn"
+              onClick={() => setShowSwitcher(o => !o)}
+              title="Changer de workspace"
+            >
+              <span className="ws-switch__name">{ws?.name ?? '…'}</span>
+              <span className="ws-switch__chevron">{showSwitcher ? '▴' : '▾'}</span>
+            </button>
+
+            {showSwitcher && (
+              <>
+                <div className="ws-switch__menu">
+                  {others.length > 0 && (
+                    <>
+                      <div className="ws-switch__section-label">Basculer vers</div>
+                      {others.map(w => (
+                        <button key={w.id} className="ws-switch__item"
+                          onClick={() => { navigate(`/jourdoc/${w.id}`); setShowSwitcher(false) }}>
+                          {w.name}
+                          {w.role === 'owner' && <span className="ws-switch__role">owner</span>}
+                        </button>
+                      ))}
+                      <hr className="ws-switch__hr" />
+                    </>
+                  )}
+                  <button className="ws-switch__item ws-switch__create"
+                    onClick={() => { setShowSwitcher(false); navigate(`/jourdoc/${wsId}/settings?new=1`) }}>
+                    ✚ Nouveau workspace
+                  </button>
+                </div>
+                <div className="ws-switch__backdrop" onClick={() => setShowSwitcher(false)} />
+              </>
+            )}
+          </div>
+
+          {/* ── Items de navigation ── */}
           {NAV.map(({ path, icon, label }) => (
             <button
               key={path}
               className={`jd-nav-item${isActive(path) ? ' active' : ''}`}
-              onClick={() => navigate(`/jourdoc/${wsId}${path ? '/' + path : ''}`)}
+              onClick={() => { navigate(`/jourdoc/${wsId}${path ? '/' + path : ''}`); setShowSwitcher(false) }}
             >
               <span className="jd-nav-icon">{icon}</span>
               <span className="jd-nav-label">{label}</span>
             </button>
           ))}
+
           <button
             className="jd-nav-item jd-nav-new"
             onClick={() => navigate(`/jourdoc/${wsId}/new`)}
@@ -62,7 +116,6 @@ export default function JourDocApp() {
           </button>
         </nav>
 
-        {/* Contenu principal */}
         <main className="jd-main">
           <Outlet />
         </main>

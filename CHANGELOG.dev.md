@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 20 — 2026-06-03
+Gestion des workspaces : backend CRUD (créer, renommer PATCH, supprimer DELETE, membres GET/POST/PUT/DELETE, ownerCheck middleware). WorkspaceSwitcher dans la sidebar JourDoc (dropdown rapide, basculer d'un ws à l'autre). WorkspaceManager (⚙️ Workspace dans la nav) : renommer, supprimer ws courant, gérer les membres (inviter par username/email, changer rôle, retirer), créer un nouveau ws. Route /api/jourdoc/workspaces (non scoped).
+
+---
+
 ## Build 19 — 2026-06-03
 Navigation précédente/suivante dans NoteView : sortedIds() transmis via location.state depuis Journal, CalendarMonth (popup + panneau), CalendarWeek, ObjetDetail, ThemeDetail, ObjectMatrix. Tri date ASC + created_at ASC. NoteView lit noteIds, affiche position (n/total) et flèches ‹ / ›. Contexte préservé à chaque nav (replace:true). Backend : created_at ajouté à la requête objets/notes récursive.
 

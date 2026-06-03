@@ -158,7 +158,7 @@ export default function CsvImporter({ wsId, token, type = 'objets', onDone }) {
                       {preview.headers.map(h => (
                         <td key={h}>
                           {h === 'chemin' || h === 'path'
-                            ? <span style={{ paddingLeft: `${depth * 1rem}` }}>{row[h]}</span>
+                            ? <span style={{ paddingLeft: `${depth}rem` }}>{row[h]}</span>
                             : row[h]}
                         </td>
                       ))}

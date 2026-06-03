@@ -129,7 +129,7 @@ jourdoc.get('/:wsId/objets/:id/notes', (c) => {
   const placeholders = ids.map(() => '?').join(',')
   const notes = db.prepare(`
     SELECT DISTINCT n.id, n.type, n.nature, n.titre, n.titre_alt, n.date, n.contenu, n.theme_id,
-      t.nom AS theme_nom
+      n.created_at, t.nom AS theme_nom
     FROM jd_notes n
     JOIN jd_note_objet no ON no.note_id = n.id
     LEFT JOIN jd_themes t ON t.id = n.theme_id

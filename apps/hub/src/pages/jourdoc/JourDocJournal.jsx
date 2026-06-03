@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
 import { authHeader } from './hooks'
+import { sortedIds } from './calUtils'
 import NoteCard from './NoteCard'
 
 function isoToday() { return new Date().toISOString().slice(0, 10) }
@@ -63,7 +64,7 @@ export default function JourDocJournal() {
         </div>
       ) : (
         <div className="jd-notes-list">
-          {notes.map(note => <NoteCard key={note.id} note={note} />)}
+          {notes.map(note => <NoteCard key={note.id} note={note} contextNoteIds={sortedIds(notes)} />)}
         </div>
       )}
 

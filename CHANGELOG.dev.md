@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 19 — 2026-06-03
+Navigation précédente/suivante dans NoteView : sortedIds() transmis via location.state depuis Journal, CalendarMonth (popup + panneau), CalendarWeek, ObjetDetail, ThemeDetail, ObjectMatrix. Tri date ASC + created_at ASC. NoteView lit noteIds, affiche position (n/total) et flèches ‹ / ›. Contexte préservé à chaque nav (replace:true). Backend : created_at ajouté à la requête objets/notes récursive.
+
+---
+
 ## Build 18 — 2026-06-03
 Ergonomie : NoteView lecture (2 colonnes desktop, médias lightbox, fil de notes, bouton Modifier). RichTextEditor Tiptap (gras/italique/souligné, code/bloc, puces/numéros indentables, H1/H2, lien). RichTextView (HTML + fallback texte brut). Calendrier URL-based state (useSearchParams → navigate(-1) restaure le contexte). Bouton "+ Note" depuis ObjetDetail (pré-remplit objet). NoteForm → NoteView après sauvegarde. Tri liens created_at.
 

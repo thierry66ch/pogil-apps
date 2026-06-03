@@ -5,7 +5,7 @@ import Lightbox from './Lightbox'
 const NATURE_ICON = { observation: '👁', activite: '⚡' }
 const TYPE_ICON   = { journal: '📔', documentation: '📄' }
 
-export default function NoteCard({ note }) {
+export default function NoteCard({ note, contextNoteIds }) {
   const { wsId } = useParams()
   const navigate = useNavigate()
   const [lbIdx, setLbIdx] = useState(-1)
@@ -13,7 +13,8 @@ export default function NoteCard({ note }) {
   const photoMedias = (note.medias ?? []).filter(m => m.type_media !== 'pdf')
 
   return (
-    <div className="jd-note-card" onClick={() => navigate(`/jourdoc/${wsId}/notes/${note.id}`)}>
+    <div className="jd-note-card" onClick={() => navigate(`/jourdoc/${wsId}/notes/${note.id}`,
+    contextNoteIds?.length ? { state: { noteIds: contextNoteIds } } : undefined)}>
       <div className="jd-note-card__top">
         <span className={`jd-badge jd-badge-${note.nature ?? note.type}`}>
           {note.nature ? NATURE_ICON[note.nature] : TYPE_ICON[note.type]}

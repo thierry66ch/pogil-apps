@@ -1,10 +1,10 @@
 import { useNavigate, useParams } from 'react-router-dom'
-import { daysOfWeek, fmtDayShort, fmtWeekday, toISO } from './calUtils'
+import { daysOfWeek, fmtDayShort, fmtWeekday, toISO, sortedIds } from './calUtils'
 
 const NATURE_ICO = { observation: '👁', activite: '⚡', documentation: '📄', journal: '📔' }
 const NATURE_KEY = n => n.nature ?? n.type ?? 'journal'
 
-function WeekNoteItem({ note }) {
+function WeekNoteItem({ note, contextNoteIds }) {
   const { wsId } = useParams()
   const navigate = useNavigate()
   const key = NATURE_KEY(note)
@@ -13,8 +13,9 @@ function WeekNoteItem({ note }) {
   return (
     <div
       className={`week-note-item week-note-item--${key}`}
-      title={note.titre}           /* titre complet au hover */
-      onClick={() => navigate(`/jourdoc/${wsId}/notes/${note.id}`)}
+      title={note.titre}
+      onClick={() => navigate(`/jourdoc/${wsId}/notes/${note.id}`,
+        contextNoteIds?.length ? { state: { noteIds: contextNoteIds } } : undefined)}
     >
       <span className="week-note-item__icon">{NATURE_ICO[key] ?? '📔'}</span>
       <span className="week-note-item__title">{display}</span>
@@ -52,7 +53,7 @@ export default function CalendarWeek({ notes, anchor }) {
             </div>
 
             <div className="cal-week-col__notes">
-              {dayNotes.map(n => <WeekNoteItem key={n.id} note={n} />)}
+              {dayNotes.map(n => <WeekNoteItem key={n.id} note={n} contextNoteIds={sortedIds(notes)} />)}
               <button
                 className="cal-week-col__add"
                 onClick={() => navigate(`/jourdoc/${wsId}/new`, { state: { note_date: iso } })}

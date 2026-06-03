@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { daysOfMonth, fmtDay, toISO } from './calUtils'
+import { daysOfMonth, fmtDay, toISO, sortedIds } from './calUtils'
 
 const OBJ_COL_W = 180   // largeur fixe colonne objet (px)
 const DAY_COL_W = 34    // largeur fixe colonne jour (px)
@@ -187,7 +187,7 @@ export default function ObjectMatrix({ notes, objets, year, month }) {
             </div>
             {popup.notes.map(n => (
               <button key={n.id} className="matrix-popup__note"
-                onClick={() => { setPopup(null); navigate(`/jourdoc/${wsId}/notes/${n.id}`) }}>
+                onClick={() => { setPopup(null); navigate(`/jourdoc/${wsId}/notes/${n.id}`, { state: { noteIds: sortedIds(notes) } }) }}>
                 <span>{NATURE_ICO[n.nature ?? n.type] ?? '📔'}</span>
                 <span className="matrix-popup__titre">{n.titre}</span>
               </button>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
 import { authHeader } from './hooks'
@@ -36,6 +36,7 @@ export default function NoteView() {
   const { wsId, noteId } = useParams()
   const { token } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const [note, setNote] = useState(null)
   const [loading, setLoading] = useState(true)
   const [lbIdx, setLbIdx] = useState(-1)
@@ -60,12 +61,34 @@ export default function NoteView() {
   const photoMedias = (note.medias ?? []).filter(m => m.type_media !== 'pdf')
   const hasChain = (note.liens?.length ?? 0) > 0 || (note.liensEntrants?.length ?? 0) > 0
 
+  // Navigation précédent / suivant dans le contexte d'origine
+  const noteIds = location.state?.noteIds ?? []
+  const currentIdx = noteIds.indexOf(Number(noteId))
+  const prevId = currentIdx > 0 ? noteIds[currentIdx - 1] : null
+  const nextId = currentIdx < noteIds.length - 1 ? noteIds[currentIdx + 1] : null
+
+  function navTo(id) {
+    navigate(`/jourdoc/${wsId}/notes/${id}`, { state: location.state, replace: true })
+  }
+
   return (
     <div className="note-view">
       {/* Barre d'actions */}
       <div className="note-view__bar">
         <button className="btn btn-ghost" style={{ padding: '.35rem .6rem', fontSize: '.875rem' }}
           onClick={() => navigate(-1)}>← Retour</button>
+
+        {/* Navigation contextuelle */}
+        {noteIds.length > 1 && (
+          <div className="note-view__nav">
+            <button className="note-view__nav-btn" disabled={!prevId}
+              onClick={() => prevId && navTo(prevId)} title="Note précédente (chronologiquement)">‹</button>
+            <span className="note-view__nav-pos">{currentIdx + 1} / {noteIds.length}</span>
+            <button className="note-view__nav-btn" disabled={!nextId}
+              onClick={() => nextId && navTo(nextId)} title="Note suivante">›</button>
+          </div>
+        )}
+
         <button className="btn btn-primary" style={{ padding: '.45rem 1rem', fontSize: '.875rem' }}
           onClick={() => navigate(`/jourdoc/${wsId}/notes/${noteId}/edit`)}>✏️ Modifier</button>
       </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { daysOfMonth, fmtDay, fmtDayShort, toISO } from './calUtils'
+import { daysOfMonth, fmtDay, fmtDayShort, toISO, sortedIds } from './calUtils'
 import NoteCard from './NoteCard'
 
 const WEEKDAYS = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di']
@@ -75,7 +75,7 @@ export default function CalendarMonth({ notes, year, month }) {
                     <button
                       key={n.id}
                       className="cal-cell__popup-item"
-                      onClick={() => navigate(`/jourdoc/${wsId}/notes/${n.id}`)}
+                      onClick={() => navigate(`/jourdoc/${wsId}/notes/${n.id}`, { state: { noteIds: sortedIds(notes) } })}
                     >
                       <span>{NATURE_ICO[n.nature ?? n.type] ?? '📔'}</span>
                       <span className="cal-cell__popup-title">{n.titre_alt ?? n.titre}</span>
@@ -106,7 +106,7 @@ export default function CalendarMonth({ notes, year, month }) {
             <p style={{ color: 'var(--text-muted)', padding: '1rem 0' }}>Aucune note ce jour.</p>
           ) : (
             <div className="jd-notes-list">
-              {selectedNotes.map(n => <NoteCard key={n.id} note={n} />)}
+              {selectedNotes.map(n => <NoteCard key={n.id} note={n} contextNoteIds={sortedIds(notes)} />)}
             </div>
           )}
         </div>

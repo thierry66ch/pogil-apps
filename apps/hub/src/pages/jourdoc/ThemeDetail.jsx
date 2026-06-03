@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
 import { useJdData, authHeader, buildPathMap } from './hooks'
+import { sortedIds } from './calUtils'
 import NoteCard from './NoteCard'
 
 export default function ThemeDetail() {
@@ -46,7 +47,7 @@ export default function ThemeDetail() {
         </div>
       ) : (
         <div className="jd-notes-list">
-          {notes.map(note => <NoteCard key={note.id} note={note} />)}
+          {notes.map(note => <NoteCard key={note.id} note={note} contextNoteIds={sortedIds(notes)} />)}
         </div>
       )}
     </div>

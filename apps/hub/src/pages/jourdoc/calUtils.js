@@ -95,6 +95,16 @@ export function daysOfWeek(anchor) {
   })
 }
 
+// Trie des notes par date ASC, puis created_at ASC, et retourne leurs IDs
+export function sortedIds(notes) {
+  return [...notes]
+    .sort((a, b) => {
+      const d = (a.date ?? '').localeCompare(b.date ?? '')
+      return d !== 0 ? d : (a.created_at ?? '').localeCompare(b.created_at ?? '')
+    })
+    .map(n => n.id)
+}
+
 export function fmtDay(iso) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('fr-CH', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'

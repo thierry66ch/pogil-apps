@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 11 — 2026-06-03
+Fix médias : date EXIF extraite en priorité (exifreader, format YYYY:MM:DD → ISO). Réduction automatique à 1600 px max (sharp, withMetadata pour conserver l'EXIF). Proxy Vite /uploads → port 3000 (vignettes visibles en dev). MediaGallery : filtres par défaut "Non liés" + date du jour.
+
+---
+
 ## Build 10 — 2026-06-03
 Phase 2 Médias : tables jd_medias + jd_note_media, upload multipart (UUID filenames, serveStatic /uploads/*), liste avec filtres (date/type/lié), suppression fichier + DB. MediaGallery (galerie avec drag&drop upload, filtres, sélection multi → créer note). MediaCard (vignette image/PDF, sélection, badge lié, suppression). MediaPicker (inline dans NoteForm, médias du jour, filtres). Vignettes dans NoteCard. NoteForm enrichi (section pièces jointes, médias pré-sélectionnés depuis galerie via location.state). Nav JourDoc : item 📷 Médias.
 

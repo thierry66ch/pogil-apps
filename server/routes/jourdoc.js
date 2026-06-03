@@ -1,6 +1,8 @@
 import { Hono } from 'hono'
-import { mkdirSync, writeFileSync, unlinkSync, existsSync, readFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync, unlinkSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
+import sharp from 'sharp'
+import ExifReader from 'exifreader'
 import db from '../db/db.js'
 import { authMiddleware } from '../middleware/authMiddleware.js'
 
@@ -296,6 +298,38 @@ jourdoc.delete('/:wsId/notes/:id', (c) => {
 // ── MÉDIAS ───────────────────────────────────────────────────
 
 const ALLOWED_EXTS = new Set(['jpg','jpeg','png','gif','webp','heic','heif','avif','pdf'])
+const IMAGE_EXTS   = new Set(['jpg','jpeg','png','gif','webp','heic','heif','avif'])
+const MAX_DIM = 1600
+
+// Extrait la date de prise depuis les métadonnées EXIF (format ISO YYYY-MM-DD)
+function extractExifDate(buffer) {
+  try {
+    const tags = ExifReader.load(buffer, { expanded: false })
+    const raw = (tags['DateTimeOriginal'] ?? tags['DateTime'] ?? tags['DateTimeDigitized'])?.description
+    if (raw && /^\d{4}:\d{2}:\d{2}/.test(raw)) {
+      return raw.slice(0, 10).replace(/:/g, '-')
+    }
+  } catch { /* pas d'EXIF lisible */ }
+  return null
+}
+
+// Réduit l'image à MAX_DIM px sur le grand côté, préserve les métadonnées EXIF
+async function resizeImage(buffer, ext) {
+  if (!IMAGE_EXTS.has(ext)) return { buf: buffer, size: buffer.length }
+  try {
+    const img = sharp(buffer)
+    const meta = await img.metadata()
+    const w = meta.width ?? 0
+    const h = meta.height ?? 0
+    if (w <= MAX_DIM && h <= MAX_DIM) return { buf: buffer, size: buffer.length }
+    const out = await img
+      .resize({ width: MAX_DIM, height: MAX_DIM, fit: 'inside', withoutEnlargement: true })
+      .withMetadata()
+      .toBuffer()
+    return { buf: out, size: out.length }
+  } catch { /* Sharp ne supporte pas ce format (ex. HEIC sans libheif) */ }
+  return { buf: buffer, size: buffer.length }
+}
 
 jourdoc.post('/:wsId/medias', async (c) => {
   const wsId = c.get('wsId')
@@ -305,7 +339,7 @@ jourdoc.post('/:wsId/medias', async (c) => {
   const files = Array.isArray(raw) ? raw : raw ? [raw] : []
   if (files.length === 0) return c.json({ error: 'Aucun fichier' }, 400)
 
-  const datePrise = (typeof body.date_prise === 'string' && body.date_prise)
+  const fallbackDate = (typeof body.date_prise === 'string' && body.date_prise)
     || new Date().toISOString().slice(0, 10)
 
   const dir = `uploads/jourdoc/${wsId}`
@@ -318,15 +352,22 @@ jourdoc.post('/:wsId/medias', async (c) => {
     if (!ALLOWED_EXTS.has(ext)) continue
 
     const typeMedia = ext === 'pdf' ? 'pdf' : 'photo'
+    const rawBuf = Buffer.from(await file.arrayBuffer())
+
+    // 1. Date EXIF en priorité
+    const exifDate = extractExifDate(rawBuf)
+    const datePrise = exifDate ?? fallbackDate
+
+    // 2. Réduction si image > 1600 px
+    const { buf, size } = await resizeImage(rawBuf, ext)
+
     const filename = `${randomUUID()}.${ext}`
     const filepath = `${dir}/${filename}`
-
-    const buf = await file.arrayBuffer()
-    writeFileSync(filepath, Buffer.from(buf))
+    writeFileSync(filepath, buf)
 
     const r = db.prepare(
       'INSERT INTO jd_medias (workspace_id, fichier, nom_original, type_media, mime_type, taille, date_prise) VALUES (?,?,?,?,?,?,?)'
-    ).run(wsId, filepath, file.name, typeMedia, file.type || null, file.size || null, datePrise)
+    ).run(wsId, filepath, file.name, typeMedia, file.type || null, size, datePrise)
 
     results.push({ id: r.lastInsertRowid, fichier: filepath, nom_original: file.name, type_media: typeMedia, date_prise: datePrise })
   }

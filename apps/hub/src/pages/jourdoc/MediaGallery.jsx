@@ -36,10 +36,10 @@ export default function MediaGallery() {
   const [dragging, setDragging] = useState(false)
   const [selected, setSelected] = useState(new Set())
 
-  // Filtres
-  const [filterDate, setFilterDate] = useState('')
+  // Filtres — par défaut : non liés du jour
+  const [filterDate, setFilterDate] = useState(today())
   const [filterType, setFilterType] = useState('')
-  const [filterLie, setFilterLie] = useState('')
+  const [filterLie, setFilterLie] = useState('0')
 
   async function loadMedias() {
     setLoading(true)

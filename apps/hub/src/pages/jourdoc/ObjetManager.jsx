@@ -42,8 +42,10 @@ function ObjetNode({ node, wsId, token, onReload, allObjets, depth = 0 }) {
   const pathMap = useMemo(() => buildPathMap(allObjets), [allObjets])
   const parentOptions = useMemo(() => {
     const excluded = getDescendantIds(node.id, allObjets)
-    return allObjets.filter(o => !excluded.has(o.id))
-  }, [node.id, allObjets])
+    return allObjets
+      .filter(o => !excluded.has(o.id))
+      .sort((a, b) => (pathMap.get(a.id) ?? a.nom).localeCompare(pathMap.get(b.id) ?? b.nom))
+  }, [node.id, allObjets, pathMap])
 
   async function save() {
     await fetch(API_ROUTES.JD_OBJET(wsId, node.id), {

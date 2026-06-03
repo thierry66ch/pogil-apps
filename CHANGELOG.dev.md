@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 8 — 2026-06-03
+Flèche de dépliage doublée (22→44 px, font 1.5rem) avec hover accent. Sélecteur de parent trié par chemin court (localeCompare sur pathMap) pour refléter la hiérarchie.
+
+---
+
 ## Build 7 — 2026-06-03
 Améliorations arbres objets/thèmes : sélecteur de parent dans le formulaire d'édition (select avec chemin court, descendants exclus pour éviter les cycles). Noms cliquables dans les arbres → fiche objet (ObjetDetail) ou fiche thème (ThemeDetail, nouveau). Backend : filtre theme_id sur GET /notes.
 

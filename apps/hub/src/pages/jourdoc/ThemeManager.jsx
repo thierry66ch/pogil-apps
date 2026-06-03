@@ -40,8 +40,10 @@ function ThemeNode({ node, wsId, token, onReload, allThemes, depth = 0 }) {
   const pathMap = useMemo(() => buildPathMap(allThemes), [allThemes])
   const parentOptions = useMemo(() => {
     const excluded = getDescendantIds(node.id, allThemes)
-    return allThemes.filter(t => !excluded.has(t.id))
-  }, [node.id, allThemes])
+    return allThemes
+      .filter(t => !excluded.has(t.id))
+      .sort((a, b) => (pathMap.get(a.id) ?? a.nom).localeCompare(pathMap.get(b.id) ?? b.nom))
+  }, [node.id, allThemes, pathMap])
 
   async function save() {
     await fetch(API_ROUTES.JD_THEME(wsId, node.id), {

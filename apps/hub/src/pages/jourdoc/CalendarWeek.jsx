@@ -1,6 +1,26 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { daysOfWeek, fmtDayShort, fmtWeekday, toISO } from './calUtils'
-import NoteCard from './NoteCard'
+
+const NATURE_ICO = { observation: '👁', activite: '⚡', documentation: '📄', journal: '📔' }
+const NATURE_KEY = n => n.nature ?? n.type ?? 'journal'
+
+function WeekNoteItem({ note }) {
+  const { wsId } = useParams()
+  const navigate = useNavigate()
+  const key = NATURE_KEY(note)
+  const display = note.titre_alt ?? note.titre
+
+  return (
+    <div
+      className={`week-note-item week-note-item--${key}`}
+      title={note.titre}           /* titre complet au hover */
+      onClick={() => navigate(`/jourdoc/${wsId}/notes/${note.id}`)}
+    >
+      <span className="week-note-item__icon">{NATURE_ICO[key] ?? '📔'}</span>
+      <span className="week-note-item__title">{display}</span>
+    </div>
+  )
+}
 
 export default function CalendarWeek({ notes, anchor }) {
   const { wsId } = useParams()
@@ -21,7 +41,6 @@ export default function CalendarWeek({ notes, anchor }) {
         const isToday = iso === todayISO
         return (
           <div key={iso} className={`cal-week-col${isToday ? ' cal-week-col--today' : ''}`}>
-            {/* En-tête du jour */}
             <div className="cal-week-col__header">
               <span className="cal-week-col__wd">{fmtWeekday(iso)}</span>
               <span className={`cal-week-col__num${isToday ? ' today' : ''}`}>
@@ -32,14 +51,12 @@ export default function CalendarWeek({ notes, anchor }) {
               </span>
             </div>
 
-            {/* Notes du jour */}
             <div className="cal-week-col__notes">
-              {dayNotes.map(n => <NoteCard key={n.id} note={n} />)}
-              {/* Bouton + rapide */}
+              {dayNotes.map(n => <WeekNoteItem key={n.id} note={n} />)}
               <button
                 className="cal-week-col__add"
                 onClick={() => navigate(`/jourdoc/${wsId}/new`, { state: { note_date: iso } })}
-                title={`Nouvelle note le ${fmtDayShort(iso)}`}
+                title={`Nouvelle note · ${fmtDayShort(iso)}`}
               >+</button>
             </div>
           </div>

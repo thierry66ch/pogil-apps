@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 14 — 2026-06-03
+Fix vues calendrier : WeekNoteItem compact (icône + fond coloré + titre_alt, titre complet en tooltip). Popup hover CSS sur CalendarMonth (titre_alt, navigation directe vers la note, repositionnement colonnes droite). Matrice refaite en CSS Grid natif : colonne objet sticky left, header sticky top, coin sticky, scroll vertical + horizontal sans chevauchement, hauteurs de lignes uniformes (grid-auto-rows: 34px).
+
+---
+
 ## Build 13 — 2026-06-03
 Phase 2 Calendrier : CalendarView (conteneur avec 3 modes + nav période + compteur). CalendarMonth (grille 7×N, dots colorés par nature, clic jour → notes + bouton +). CalendarWeek (7 colonnes, NoteCard compact, + rapide par colonne). ObjectMatrix (matrice objets × jours, cellules colorées par activité dominante, popup clic → notes liées + nouvelle note pré-remplie objet+date, scroll horizontal, colonne gauche sticky). Navigation "Aujourd'hui" + flèches sur tous les modes.
 

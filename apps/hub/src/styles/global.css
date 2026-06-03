@@ -2157,3 +2157,169 @@ button, input, select, textarea { font: inherit; color: inherit }
   width: 100%;
 }
 .matrix-popup__new:hover { background: var(--accent-bg); border-color: var(--accent) }
+
+/* ── WeekNoteItem ───────────────────────── */
+.week-note-item {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .3rem .5rem;
+  border-radius: var(--r-sm);
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  font-size: .75rem;
+  font-weight: 500;
+  overflow: hidden;
+  transition: filter .12s, transform .12s;
+}
+.week-note-item:hover { filter: brightness(.92); transform: translateX(1px) }
+.week-note-item--observation { border-color: var(--success); background: rgba(16,185,129,.08); color: var(--text) }
+.week-note-item--activite    { border-color: var(--accent);  background: rgba(99,102,241,.08); color: var(--text) }
+.week-note-item--documentation { border-color: #f59e0b; background: rgba(245,158,11,.08); color: var(--text) }
+.week-note-item--journal     { border-color: var(--border); background: var(--surface-alt); color: var(--text) }
+.week-note-item__icon { flex-shrink: 0; font-size: .9rem; line-height: 1 }
+.week-note-item__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+/* ── Popup survol CalendarMonth ─────────── */
+.cal-cell { overflow: visible !important }  /* allow popup to escape cell */
+
+.cal-cell__popup {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  min-width: 190px;
+  max-width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: .5rem .625rem;
+  z-index: 200;
+  pointer-events: auto;
+}
+/* Éviter débordement à droite pour les 2 dernières colonnes */
+.cal-grid > .cal-cell:nth-child(7n),
+.cal-grid > .cal-cell:nth-child(7n-1) {
+  & .cal-cell__popup { left: auto; right: 0 }
+}
+.cal-cell:hover .cal-cell__popup,
+.cal-cell__popup:hover { display: block }
+
+.cal-cell__popup-date {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: .3rem;
+  text-transform: capitalize;
+}
+.cal-cell__popup-item {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  width: 100%;
+  padding: .25rem .3rem;
+  background: none;
+  border: none;
+  border-radius: var(--r-sm);
+  text-align: left;
+  cursor: pointer;
+  font-size: .8125rem;
+  transition: background .12s;
+  overflow: hidden;
+}
+.cal-cell__popup-item:hover { background: var(--accent-bg) }
+.cal-cell__popup-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.cal-cell__popup-more {
+  font-size: .75rem;
+  color: var(--text-muted);
+  padding: .125rem .3rem;
+  display: block;
+}
+
+/* ── Matrice CSS Grid (mxg) ─────────────── */
+.mxg-wrap { overflow: hidden }
+
+.mxg {
+  display: grid;
+  grid-auto-rows: 34px;
+  overflow: auto;
+  max-height: calc(100dvh - var(--topbar-h) - 260px);
+  min-height: 200px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+/* Coin haut-gauche */
+.mxg__corner {
+  position: sticky; top: 0; left: 0; z-index: 15;
+  background: var(--surface-alt);
+  border-right: 2px solid var(--border);
+  border-bottom: 2px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 .75rem;
+  font-size: .7rem; font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .05em;
+}
+
+/* En-têtes de jours */
+.mxg__day-head {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--surface-alt);
+  border-right: 1px solid var(--border);
+  border-bottom: 2px solid var(--border);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1px;
+  font-size: .65rem;
+}
+.mxg__day-head.today { background: var(--accent-bg) }
+.mxg__day-head:last-child { border-right: none }
+.mxg__wd { color: var(--text-muted); font-weight: 700; text-transform: uppercase; line-height: 1 }
+.mxg__dn { font-weight: 800; color: var(--text); line-height: 1 }
+.mxg__day-head.today .mxg__dn { color: var(--accent) }
+
+/* Noms d'objets */
+.mxg__name {
+  position: sticky; left: 0; z-index: 5;
+  background: var(--surface);
+  border-right: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  overflow: hidden;
+  cursor: pointer;
+  transition: background .12s;
+  white-space: nowrap;
+}
+.mxg__name:hover { background: var(--accent-bg) }
+.mxg__name.groupe  { font-weight: 700; font-size: .8rem; color: var(--text) }
+.mxg__name.individu { font-size: .8rem; color: var(--text-muted) }
+.mxg__name:hover .mxg__name,
+.mxg__name:hover { color: var(--accent) }
+.mxg__arrow { margin-right: .25rem; font-size: .65rem; color: var(--text-subtle); flex-shrink: 0 }
+.mxg__short { font-size: .7rem; color: var(--text-subtle); margin-left: .25rem }
+
+/* Cellules de données */
+.mxg__cell {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: box-shadow .12s;
+  position: relative;
+}
+.mxg__cell:last-child { border-right: none }
+.mxg__cell:hover { box-shadow: inset 0 0 0 2px var(--accent); z-index: 1 }
+.mxg__cell.today { box-shadow: inset 0 0 0 1.5px var(--accent) }
+.mxg__cell.has:hover { box-shadow: inset 0 0 0 2px var(--accent) }

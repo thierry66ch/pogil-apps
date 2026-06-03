@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
 import { useJdData, authHeader, buildPathMap } from './hooks'
+import HierarchyPicker from './HierarchyPicker'
 
 function buildTree(items) {
   const map = new Map(items.map(i => [i.id, { ...i, children: [] }]))
@@ -33,7 +34,7 @@ function ObjetNode({ node, wsId, token, onReload, allObjets, depth = 0 }) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({
     nom: node.nom, nom_court: node.nom_court ?? '',
-    est_individu: node.est_individu, parent_id: node.parent_id ?? ''
+    est_individu: node.est_individu, parent_id: node.parent_id ?? null
   })
   const [addingChild, setAddingChild] = useState(false)
   const [childForm, setChildForm] = useState({ nom: '', nom_court: '', est_individu: false })
@@ -50,7 +51,7 @@ function ObjetNode({ node, wsId, token, onReload, allObjets, depth = 0 }) {
   async function save() {
     await fetch(API_ROUTES.JD_OBJET(wsId, node.id), {
       method: 'PUT', headers: authHeader(token),
-      body: JSON.stringify({ ...form, parent_id: form.parent_id === '' ? null : Number(form.parent_id) })
+      body: JSON.stringify({ ...form })
     })
     onReload(); setEditing(false)
   }
@@ -89,21 +90,17 @@ function ObjetNode({ node, wsId, token, onReload, allObjets, depth = 0 }) {
                 onChange={e => setForm(f => ({ ...f, est_individu: e.target.checked }))} />
               Individu
             </label>
-            <select
-              className="input jd-parent-select"
-              value={form.parent_id ?? ''}
-              onChange={e => setForm(f => ({ ...f, parent_id: e.target.value }))}
-            >
-              <option value="">— Racine —</option>
-              {parentOptions.map(o => {
-                const path = pathMap.get(o.id)
-                return (
-                  <option key={o.id} value={o.id}>
-                    {o.nom}{path ? ` (${path})` : ''}
-                  </option>
-                )
-              })}
-            </select>
+            <div style={{ minWidth: '200px', flex: 1 }}>
+              <HierarchyPicker
+                items={parentOptions}
+                value={form.parent_id}
+                onChange={v => setForm(f => ({ ...f, parent_id: v }))}
+                mode="single"
+                nullable
+                nullLabel="— Racine —"
+                placeholder="Choisir un parent…"
+              />
+            </div>
             <button className="btn btn-primary" style={{ padding: '.25rem .6rem', fontSize: '.8rem' }} onClick={save}>✓</button>
             <button className="btn btn-ghost" style={{ padding: '.25rem .6rem', fontSize: '.8rem' }} onClick={() => setEditing(false)}>✕</button>
           </div>

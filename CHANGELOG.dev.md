@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 9 — 2026-06-03
+HierarchyPicker unifié avec navigation clavier complète (↑↓ naviguer, Entrée valider, Échap fermer, clic mobile maintenu). État focalisé visible (outline accent). Support nullable/nullLabel pour l'option racine. Sélecteur de parent dans ObjetManager/ThemeManager remplacé par HierarchyPicker (plus de <select>). Footer "X sélectionnés / Effacer" en mode multi.
+
+---
+
 ## Build 8 — 2026-06-03
 Flèche de dépliage doublée (22→44 px, font 1.5rem) avec hover accent. Sélecteur de parent trié par chemin court (localeCompare sur pathMap) pour refléter la hiérarchie.
 

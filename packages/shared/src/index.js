@@ -29,4 +29,5 @@ export const API_ROUTES = {
   JD_MEDIAS:       (wsId) => `/api/jourdoc/${wsId}/medias`,
   JD_MEDIA:        (wsId, id) => `/api/jourdoc/${wsId}/medias/${id}`,
   JD_NOTE_MEDIAS:  (wsId, noteId) => `/api/jourdoc/${wsId}/notes/${noteId}/medias`,
+  JD_MEDIA_NOTES:  (wsId, mediaId) => `/api/jourdoc/${wsId}/medias/${mediaId}/notes`,
 }

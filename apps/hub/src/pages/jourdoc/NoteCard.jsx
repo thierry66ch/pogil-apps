@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import Lightbox from './Lightbox'
 
 const NATURE_ICON = { observation: '👁', activite: '⚡' }
 const TYPE_ICON   = { journal: '📔', documentation: '📄' }
@@ -6,6 +8,9 @@ const TYPE_ICON   = { journal: '📔', documentation: '📄' }
 export default function NoteCard({ note }) {
   const { wsId } = useParams()
   const navigate = useNavigate()
+  const [lbIdx, setLbIdx] = useState(-1)
+
+  const photoMedias = (note.medias ?? []).filter(m => m.type_media !== 'pdf')
 
   return (
     <div className="jd-note-card" onClick={() => navigate(`/jourdoc/${wsId}/notes/${note.id}`)}>
@@ -30,19 +35,35 @@ export default function NoteCard({ note }) {
         </div>
       )}
 
-      {/* Vignettes médias */}
+      {/* Vignettes médias — clic → lightbox (sans naviguer vers la note) */}
       {note.medias?.length > 0 && (
         <div className="jd-note-card__medias">
-          {note.medias.slice(0, 5).map(m => (
+          {note.medias.slice(0, 5).map((m, idx) =>
             m.type_media === 'pdf'
-              ? <div key={m.id} className="jd-thumb jd-thumb--pdf" title={m.nom_original}>📄</div>
+              ? <div key={m.id} className="jd-thumb jd-thumb--pdf"
+                  onClick={e => e.stopPropagation()} title={m.nom_original}>📄</div>
               : <img key={m.id} className="jd-thumb" src={`/${m.fichier}`}
-                  alt="" loading="lazy" title={m.nom_original} />
-          ))}
+                  alt="" loading="lazy" title={m.nom_original}
+                  onClick={e => {
+                    e.stopPropagation()
+                    const pIdx = photoMedias.findIndex(pm => pm.id === m.id)
+                    if (pIdx >= 0) setLbIdx(pIdx)
+                  }} />
+          )}
           {note.medias.length > 5 && (
             <div className="jd-thumb jd-thumb--more">+{note.medias.length - 5}</div>
           )}
         </div>
+      )}
+
+      {/* Lightbox sur les photos de cette note */}
+      {lbIdx >= 0 && (
+        <Lightbox
+          media={photoMedias[lbIdx]}
+          onClose={() => setLbIdx(-1)}
+          onPrev={lbIdx > 0 ? () => setLbIdx(i => i - 1) : null}
+          onNext={lbIdx < photoMedias.length - 1 ? () => setLbIdx(i => i + 1) : null}
+        />
       )}
     </div>
   )

@@ -413,6 +413,22 @@ jourdoc.get('/:wsId/notes/:id/medias', (c) => {
   return c.json({ medias })
 })
 
+// Notes liées à un média
+jourdoc.get('/:wsId/medias/:id/notes', (c) => {
+  const wsId = c.get('wsId')
+  const mediaId = Number(c.req.param('id'))
+  const notes = db.prepare(`
+    SELECT DISTINCT n.id, n.type, n.nature, n.titre, n.titre_alt, n.date, n.contenu, n.theme_id,
+      t.nom AS theme_nom
+    FROM jd_notes n
+    JOIN jd_note_media nm ON nm.note_id = n.id
+    LEFT JOIN jd_themes t ON t.id = n.theme_id
+    WHERE nm.media_id = ? AND n.workspace_id = ?
+    ORDER BY n.date DESC, n.created_at DESC
+  `).all(mediaId, wsId)
+  return c.json({ notes: withData(notes) })
+})
+
 // Remplacer les médias liés à une note
 jourdoc.put('/:wsId/notes/:id/medias', async (c) => {
   const wsId = c.get('wsId')

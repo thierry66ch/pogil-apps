@@ -8,44 +8,63 @@ const PDF_ICON = (
 )
 
 /**
- * Vignette d'un média dans la galerie.
- * selected / onSelect / onDelete optionnels.
+ * Vignette d'un média.
+ * onExpand  → ouvre lightbox (click sur l'image)
+ * onSelect  → sélectionne/désélectionne (checkbox)
+ * onNotes   → navigue vers les notes liées
+ * onDelete  → supprime le média
  */
-export default function MediaCard({ media, selected, onSelect, onDelete, size = 'md' }) {
+export default function MediaCard({ media, selected, onExpand, onSelect, onNotes, onDelete, size = 'md' }) {
   const isPhoto = media.type_media !== 'pdf'
   const url = `/${media.fichier}`
   const sz = size === 'sm' ? 'media-card--sm' : size === 'lg' ? 'media-card--lg' : ''
 
+  // Si pas de lightbox disponible, le clic image → sélection
+  const handleImageClick = onExpand ?? onSelect
+
   return (
-    <div
-      className={`media-card ${sz}${selected ? ' media-card--selected' : ''}`}
-      onClick={onSelect}
-      role={onSelect ? 'button' : undefined}
-      tabIndex={onSelect ? 0 : undefined}
-      onKeyDown={onSelect ? (e => (e.key === 'Enter' || e.key === ' ') && onSelect()) : undefined}
-    >
-      {isPhoto ? (
-        <img src={url} alt={media.nom_original} className="media-card__img" loading="lazy" />
-      ) : (
-        <div className="media-card__pdf">
-          {PDF_ICON}
-          <span className="media-card__pdf-name">{(media.nom_original ?? '').replace(/\.pdf$/i, '')}</span>
-        </div>
+    <div className={`media-card ${sz}${selected ? ' media-card--selected' : ''}`}>
+
+      {/* Zone image — click → lightbox (ou sélection en fallback) */}
+      <div className="media-card__media" onClick={handleImageClick}
+        role={handleImageClick ? 'button' : undefined}
+        style={{ cursor: handleImageClick ? (onExpand ? 'zoom-in' : 'pointer') : 'default' }}>
+        {isPhoto
+          ? <img src={url} alt={media.nom_original} className="media-card__img" loading="lazy" />
+          : <div className="media-card__pdf">
+              {PDF_ICON}
+              <span className="media-card__pdf-name">{(media.nom_original ?? '').replace(/\.pdf$/i, '')}</span>
+            </div>
+        }
+      </div>
+
+      {/* Checkbox de sélection (coin haut-gauche) */}
+      {onSelect && (
+        <button
+          className={`media-card__sel${selected ? ' active' : ''}`}
+          onClick={e => { e.stopPropagation(); onSelect() }}
+          aria-pressed={selected}
+          title={selected ? 'Désélectionner' : 'Sélectionner'}
+        >
+          {selected ? '✓' : ''}
+        </button>
       )}
 
-      {/* Overlay sélection */}
-      {selected && <div className="media-card__check">✓</div>}
-
-      {/* Badge lié */}
-      {media.lie ? <span className="media-card__badge media-card__badge--lie">✓ lié</span> : null}
+      {/* Notes liées (coin haut-droit, visible si lié) */}
+      {onNotes && media.lie ? (
+        <button className="media-card__linked" onClick={e => { e.stopPropagation(); onNotes() }}
+          title="Voir les notes liées">🔗</button>
+      ) : null}
 
       {/* Supprimer */}
       {onDelete && (
-        <button
-          className="media-card__del"
-          onClick={e => { e.stopPropagation(); onDelete() }}
-          title="Supprimer"
-        >×</button>
+        <button className="media-card__del" onClick={e => { e.stopPropagation(); onDelete() }}
+          title="Supprimer">×</button>
+      )}
+
+      {/* Date (coin bas) */}
+      {media.date_prise && (
+        <span className="media-card__date-label">{media.date_prise}</span>
       )}
     </div>
   )

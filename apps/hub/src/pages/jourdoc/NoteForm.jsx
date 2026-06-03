@@ -29,7 +29,7 @@ export default function NoteForm() {
     titre: '',
     titre_alt: '',
     contenu: '',
-    date: today(),
+    date: location.state?.note_date ?? today(),  // date de la 1ère image si venue de la galerie
     source_url: '',
   })
   const [mediaDetails, setMediaDetails] = useState([])  // détail des médias liés (pour miniatures)

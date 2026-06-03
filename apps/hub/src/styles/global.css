@@ -1605,3 +1605,141 @@ button, input, select, textarea { font: inherit; color: inherit }
   color: var(--text-muted);
   background: var(--surface-alt);
 }
+
+/* ── Lightbox ───────────────────────────── */
+.lightbox {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.92);
+  display: flex; align-items: center; justify-content: center;
+  animation: overlay-in .15s var(--ease);
+}
+.lightbox__content {
+  display: flex; flex-direction: column; align-items: center;
+  max-width: 95vw; max-height: 95vh; gap: .75rem;
+}
+.lightbox__img {
+  max-width: 95vw; max-height: 88vh;
+  object-fit: contain; border-radius: var(--r);
+  box-shadow: var(--shadow-xl);
+}
+.lightbox__pdf {
+  display: flex; flex-direction: column; align-items: center; gap: 1rem;
+  color: #fff; padding: 3rem;
+}
+.lightbox__caption {
+  display: flex; gap: 1rem; font-size: .8125rem; color: rgba(255,255,255,.6);
+}
+.lightbox__nav {
+  position: fixed; top: 50%; transform: translateY(-50%);
+  width: 48px; height: 48px;
+  border: none; background: rgba(255,255,255,.15);
+  color: #fff; font-size: 1.75rem; cursor: pointer; border-radius: var(--r-full);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px); transition: background .15s;
+}
+.lightbox__nav:hover { background: rgba(255,255,255,.3) }
+.lightbox__nav--prev { left: 1rem }
+.lightbox__nav--next { right: 1rem }
+.lightbox__close {
+  position: fixed; top: 1rem; right: 1rem;
+  width: 40px; height: 40px;
+  border: none; background: rgba(255,255,255,.15);
+  color: #fff; font-size: 1.25rem; cursor: pointer; border-radius: var(--r-full);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px); transition: background .15s;
+}
+.lightbox__close:hover { background: rgba(255,255,255,.3) }
+
+/* ── Filtre période ─────────────────────── */
+.period-nav {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: .375rem; margin-bottom: .875rem;
+}
+.period-nav__arrow {
+  width: 36px; height: 36px; flex-shrink: 0;
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  background: var(--surface); color: var(--text-muted);
+  font-size: 1.125rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.period-nav__arrow:hover { border-color: var(--accent); color: var(--accent) }
+.period-nav__label {
+  flex: 1; min-width: 160px; text-align: center;
+  font-size: .9375rem; font-weight: 700; color: var(--text);
+  text-transform: capitalize; cursor: default;
+}
+.period-nav__pills { display: flex; gap: .25rem; flex-wrap: wrap }
+.period-pill {
+  padding: .25rem .6rem; font-size: .75rem; font-weight: 700;
+  border: 1px solid var(--border); border-radius: var(--r-full);
+  background: var(--surface-alt); color: var(--text-muted);
+  cursor: pointer; transition: all .15s;
+}
+.period-pill.active { background: var(--accent); color: #fff; border-color: var(--accent) }
+.period-pill:not(.active):hover { border-color: var(--accent); color: var(--accent) }
+
+/* ── MediaCard redesign ─────────────────── */
+.media-card__media {
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+.media-card__sel {
+  position: absolute; top: 4px; left: 4px;
+  width: 22px; height: 22px;
+  border-radius: var(--r-sm);
+  border: 2px solid rgba(255,255,255,.7);
+  background: rgba(0,0,0,.3);
+  color: #fff; font-size: .85rem; font-weight: 900;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .15s; opacity: 0;
+  backdrop-filter: blur(2px);
+}
+.media-card:hover .media-card__sel,
+.media-card--selected .media-card__sel { opacity: 1 }
+.media-card__sel.active { background: var(--accent); border-color: var(--accent) }
+
+.media-card__linked {
+  position: absolute; top: 4px; right: 28px;
+  width: 22px; height: 22px; border: none;
+  background: rgba(0,0,0,.45); color: #fff;
+  border-radius: var(--r-sm); font-size: .8rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .15s;
+  backdrop-filter: blur(2px);
+}
+.media-card:hover .media-card__linked { opacity: 1 }
+.media-card__linked:hover { background: var(--accent) }
+
+.media-card__date-label {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.6), transparent);
+  color: #fff; font-size: .65rem; padding: .25rem .375rem;
+  text-align: right; opacity: 0; transition: opacity .15s;
+  pointer-events: none;
+}
+.media-card:hover .media-card__date-label { opacity: 1 }
+
+/* ── MediaDetail ───────────────────────── */
+.jd-media-detail { padding-bottom: 2rem }
+.jd-media-detail__preview {
+  border-radius: var(--r-lg); overflow: hidden;
+  max-width: 600px; margin-bottom: 1rem;
+  cursor: zoom-in; position: relative;
+  background: var(--surface-alt);
+}
+.jd-media-detail__img {
+  width: 100%; display: block;
+  max-height: 60vh; object-fit: contain;
+}
+.jd-media-detail__pdf {
+  padding: 3rem; text-align: center;
+  color: var(--text-muted); font-size: .9375rem;
+}
+.jd-media-detail__zoom {
+  position: absolute; bottom: .5rem; right: .75rem;
+  font-size: .75rem; color: rgba(255,255,255,.8);
+  background: rgba(0,0,0,.4); padding: .2em .5em;
+  border-radius: var(--r-full);
+  pointer-events: none;
+}

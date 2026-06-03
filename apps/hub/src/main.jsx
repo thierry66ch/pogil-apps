@@ -15,6 +15,7 @@ import ThemeDetail from './pages/jourdoc/ThemeDetail'
 import ObjetManager from './pages/jourdoc/ObjetManager'
 import ThemeManager from './pages/jourdoc/ThemeManager'
 import MediaGallery from './pages/jourdoc/MediaGallery'
+import MediaDetail from './pages/jourdoc/MediaDetail'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 
@@ -45,6 +46,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               <Route path="objet/:objetId" element={<ObjetDetail />} />
               <Route path="theme/:themeId" element={<ThemeDetail />} />
               <Route path="medias" element={<MediaGallery />} />
+              <Route path="media/:mediaId" element={<MediaDetail />} />
               <Route path="objets" element={<ObjetManager />} />
               <Route path="themes" element={<ThemeManager />} />
             </Route>

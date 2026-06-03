@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 12 — 2026-06-03
+Galerie médias : filtre plage de date période (jour/sem./mois/trim./an) avec flèches prev/next et label dynamique. Lightbox plein écran (nav ←→, Échap, clic fond). MediaCard redesigné : zone image → lightbox, checkbox coin haut-gauche → sélection, bouton 🔗 → notes liées. NoteCard : lightbox sur miniatures sans quitter la vue. Créer note depuis galerie : date = date de la 1ère image sélectionnée. MediaDetail (page notes liées + aperçu grand format). Auto-ancrage après upload sur la date de la première image. Backend : GET /medias/:id/notes.
+
+---
+
 ## Build 11 — 2026-06-03
 Fix médias : date EXIF extraite en priorité (exifreader, format YYYY:MM:DD → ISO). Réduction automatique à 1600 px max (sharp, withMetadata pour conserver l'EXIF). Proxy Vite /uploads → port 3000 (vignettes visibles en dev). MediaGallery : filtres par défaut "Non liés" + date du jour.
 

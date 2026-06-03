@@ -2,8 +2,9 @@
 
 function formatDate(iso) {
   const d = new Date(iso)
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  const pad = n => String(n).padStart(2, '0')
+  // UTC pour éviter le décalage horaire (build.json stocké en UTC)
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`
 }
 
 export default function Footer() {

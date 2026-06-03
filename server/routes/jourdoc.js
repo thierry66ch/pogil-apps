@@ -23,6 +23,141 @@ function wsCheck(c, next) {
   return next()
 }
 
+// ── IMPORT CSV ───────────────────────────────────────────────
+
+function parseCSV(raw) {
+  let text = raw.charCodeAt(0) === 0xFEFF ? raw.slice(1) : raw   // strip BOM
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
+    .filter(l => l.trim() && !l.trim().startsWith('#'))
+  if (lines.length < 2) return { headers: [], rows: [] }
+  const sep = lines[0].includes(';') ? ';' : ','
+  const split = line => line.split(sep).map(c => c.trim().replace(/^["'](.*)["']$/, '$1'))
+  const headers = split(lines[0]).map(h => h.toLowerCase())
+  const rows = lines.slice(1)
+    .map(line => Object.fromEntries(headers.map((h, i) => [h, split(line)[i] ?? ''])))
+    .filter(r => Object.values(r).some(v => v.trim()))
+  return { headers, rows }
+}
+
+function boolVal(s) {
+  return ['1','true','oui','yes','x'].includes((s ?? '').toLowerCase().trim())
+}
+
+function findOrCreateObjet(wsId, nom, parentId, nomCourt, estIndividu, description, created, skipped) {
+  const existing = parentId === null
+    ? db.prepare('SELECT id FROM jd_objets WHERE workspace_id=? AND nom=? AND parent_id IS NULL').get(wsId, nom)
+    : db.prepare('SELECT id FROM jd_objets WHERE workspace_id=? AND nom=? AND parent_id=?').get(wsId, nom, parentId)
+  if (existing) { skipped.push(nom); return existing.id }
+  const r = db.prepare(
+    'INSERT INTO jd_objets (workspace_id, parent_id, nom, nom_court, est_individu, description) VALUES (?,?,?,?,?,?)'
+  ).run(wsId, parentId, nom, nomCourt || null, estIndividu ? 1 : 0, description || null)
+  created.push(nom)
+  return r.lastInsertRowid
+}
+
+function findOrCreateTheme(wsId, nom, parentId, nomCourt, created, skipped) {
+  const existing = parentId === null
+    ? db.prepare('SELECT id FROM jd_themes WHERE workspace_id=? AND nom=? AND parent_id IS NULL').get(wsId, nom)
+    : db.prepare('SELECT id FROM jd_themes WHERE workspace_id=? AND nom=? AND parent_id=?').get(wsId, nom, parentId)
+  if (existing) { skipped.push(nom); return existing.id }
+  const r = db.prepare(
+    'INSERT INTO jd_themes (workspace_id, parent_id, nom, nom_court) VALUES (?,?,?,?)'
+  ).run(wsId, parentId, nom, nomCourt || null)
+  created.push(nom)
+  return r.lastInsertRowid
+}
+
+jourdoc.post('/:wsId/import/objets', async (c) => {
+  const wsId = c.get('wsId')
+  const { csv } = await c.req.json()
+  if (!csv?.trim()) return c.json({ error: 'CSV vide' }, 400)
+
+  const { headers, rows } = parseCSV(csv)
+  const created = [], skipped = [], errors = []
+  const pathCache = new Map()   // chemin complet → id
+  const nameCache = new Map()   // nom → id (format nom+parent)
+  const hasPath = headers.includes('chemin') || headers.includes('path')
+
+  if (hasPath) {
+    for (const row of rows) {
+      const chemin = (row.chemin || row.path || '').trim()
+      if (!chemin) continue
+      const parts = chemin.split('/').map(p => p.trim()).filter(Boolean)
+      let parentId = null, cumPath = ''
+      for (let i = 0; i < parts.length; i++) {
+        const nom = parts[i]
+        cumPath = cumPath ? `${cumPath}/${nom}` : nom
+        if (pathCache.has(cumPath)) { parentId = pathCache.get(cumPath); continue }
+        const isLeaf = i === parts.length - 1
+        const id = findOrCreateObjet(wsId, nom, parentId,
+          isLeaf ? row.nom_court : null,
+          isLeaf && boolVal(row.est_individu),
+          isLeaf ? row.description : null,
+          created, skipped)
+        pathCache.set(cumPath, id)
+        parentId = id
+      }
+    }
+  } else {
+    // Format nom + parent (nom du parent direct)
+    const existing = db.prepare('SELECT id, nom FROM jd_objets WHERE workspace_id=?').all(wsId)
+    for (const o of existing) nameCache.set(o.nom, o.id)
+    for (const row of rows) {
+      const nom = (row.nom || row.name || '').trim()
+      if (!nom) continue
+      const parentNom = (row.parent || '').trim()
+      const parentId = parentNom ? (nameCache.get(parentNom) ?? null) : null
+      const id = findOrCreateObjet(wsId, nom, parentId, row.nom_court, boolVal(row.est_individu), row.description, created, skipped)
+      nameCache.set(nom, id)
+    }
+  }
+
+  return c.json({ created: created.length, skipped: skipped.length, errors, details: { created, skipped } })
+})
+
+jourdoc.post('/:wsId/import/themes', async (c) => {
+  const wsId = c.get('wsId')
+  const { csv } = await c.req.json()
+  if (!csv?.trim()) return c.json({ error: 'CSV vide' }, 400)
+
+  const { headers, rows } = parseCSV(csv)
+  const created = [], skipped = [], errors = []
+  const pathCache = new Map()
+  const nameCache = new Map()
+  const hasPath = headers.includes('chemin') || headers.includes('path')
+
+  if (hasPath) {
+    for (const row of rows) {
+      const chemin = (row.chemin || row.path || '').trim()
+      if (!chemin) continue
+      const parts = chemin.split('/').map(p => p.trim()).filter(Boolean)
+      let parentId = null, cumPath = ''
+      for (let i = 0; i < parts.length; i++) {
+        const nom = parts[i]
+        cumPath = cumPath ? `${cumPath}/${nom}` : nom
+        if (pathCache.has(cumPath)) { parentId = pathCache.get(cumPath); continue }
+        const isLeaf = i === parts.length - 1
+        const id = findOrCreateTheme(wsId, nom, parentId, isLeaf ? row.nom_court : null, created, skipped)
+        pathCache.set(cumPath, id)
+        parentId = id
+      }
+    }
+  } else {
+    const existing = db.prepare('SELECT id, nom FROM jd_themes WHERE workspace_id=?').all(wsId)
+    for (const t of existing) nameCache.set(t.nom, t.id)
+    for (const row of rows) {
+      const nom = (row.nom || row.name || '').trim()
+      if (!nom) continue
+      const parentNom = (row.parent || '').trim()
+      const parentId = parentNom ? (nameCache.get(parentNom) ?? null) : null
+      const id = findOrCreateTheme(wsId, nom, parentId, row.nom_court, created, skipped)
+      nameCache.set(nom, id)
+    }
+  }
+
+  return c.json({ created: created.length, skipped: skipped.length, errors, details: { created, skipped } })
+})
+
 // ── WORKSPACES (non scoped) ──────────────────────────────────
 
 // Vérifie que l'utilisateur est owner du workspace

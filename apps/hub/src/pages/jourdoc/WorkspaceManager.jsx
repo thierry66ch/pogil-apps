@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
 import { authHeader } from './hooks'
+import CsvImporter from './CsvImporter'
 
 const ROLE_LABEL = { owner: 'Propriétaire', member: 'Membre' }
 
@@ -25,6 +26,7 @@ export default function WorkspaceManager() {
   const [inviteError, setInviteError] = useState('')
   const [inviteLoading, setInviteLoading] = useState(false)
 
+  const [importTab, setImportTab] = useState('objets')
   const [newWsName, setNewWsName] = useState('')
   const [showCreate, setShowCreate] = useState(showCreateOnMount)
   const [createLoading, setCreateLoading] = useState(false)
@@ -235,6 +237,25 @@ export default function WorkspaceManager() {
             ✚ Créer un nouveau workspace
           </button>
         )}
+      </section>
+
+      {/* ── Import CSV ── */}
+      <section className="ws-manager__section">
+        <h3 className="ws-manager__title">📥 Importer des données CSV</h3>
+        <p style={{ fontSize: '.875rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+          Importez en masse des objets ou des thèmes depuis un fichier CSV. Les doublons sont ignorés.
+        </p>
+
+        <div className="ws-manager__import-tabs">
+          <button
+            className={`ws-manager__import-tab${importTab === 'objets' ? ' active' : ''}`}
+            onClick={() => setImportTab('objets')}>🌿 Objets</button>
+          <button
+            className={`ws-manager__import-tab${importTab === 'themes' ? ' active' : ''}`}
+            onClick={() => setImportTab('themes')}>🏷️ Thèmes</button>
+        </div>
+
+        <CsvImporter key={importTab} wsId={wsId} token={token} type={importTab} onDone={() => setMsg(`Import ${importTab} terminé.`)} />
       </section>
     </div>
   )

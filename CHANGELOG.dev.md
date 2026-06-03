@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 21 — 2026-06-03
+Import CSV objets + thèmes : backend parseur (BOM, séparateur ; ou , auto-détecté, commentaires #), format chemin hiérarchique (Arbres/Fruitiers/Pommiers) ou nom+parent, idempotent (doublons ignorés). Routes POST /import/objets et /import/themes. CsvImporter : upload drag&drop + coller, prévisualisation table, résultats (créés/existants). Section import dans WorkspaceManager avec onglets Objets/Thèmes et exemples chargeables.
+
+---
+
 ## Build 20 — 2026-06-03
 Gestion des workspaces : backend CRUD (créer, renommer PATCH, supprimer DELETE, membres GET/POST/PUT/DELETE, ownerCheck middleware). WorkspaceSwitcher dans la sidebar JourDoc (dropdown rapide, basculer d'un ws à l'autre). WorkspaceManager (⚙️ Workspace dans la nav) : renommer, supprimer ws courant, gérer les membres (inviter par username/email, changer rôle, retirer), créer un nouveau ws. Route /api/jourdoc/workspaces (non scoped).
 

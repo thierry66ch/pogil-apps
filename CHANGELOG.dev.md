@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 16 — 2026-06-03
+Liaisons notes : section "Fil de notes" visible dès la création (liens en attente créés après POST). Titre complet affiché dans chips et picker (titre_alt en secondaire). Couleur par type (observation=vert, activité=indigo, documentation=ambre) sur chips et items picker. Tri chronologique des liens (sortByDate).
+
+---
+
 ## Build 15 — 2026-06-03
 Liaison entre notes (CDC §2.3) : table jd_note_note. Backend : recherche plein-texte GET /notes/search, POST/DELETE /notes/:id/liens, liens entrants dans GET /notes/:id. NoteLinkPicker (recherche debounce, titre_alt affiché, date). Section "Fil de notes" dans NoteForm (edit seulement) : liens entrants en lecture, liens sortants modifiables, NoteLienChip cliquable + suppression immédiate.
 

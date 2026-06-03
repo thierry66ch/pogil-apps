@@ -56,12 +56,10 @@ export default function NoteLinkPicker({ wsId, token, currentNoteId, onSelect, o
         <ul className="note-link-picker__list">
           {results.map(n => (
             <li key={n.id}>
-              <button className="note-link-picker__item" onClick={() => onSelect(n)}>
-                <span className={`jd-badge jd-badge-${NATURE_KEY(n)}`} style={{ fontSize: '.7rem', flexShrink: 0 }}>
-                  {NATURE_ICO[NATURE_KEY(n)]}
-                </span>
-                <span className="note-link-picker__title">{n.titre_alt ?? n.titre}</span>
-                {n.titre_alt && <span className="note-link-picker__full" title={n.titre}>{n.titre}</span>}
+              <button className={`note-link-picker__item note-link-picker__item--${NATURE_KEY(n)}`} onClick={() => onSelect(n)}>
+                <span className="note-link-picker__icon">{NATURE_ICO[NATURE_KEY(n)] ?? '📔'}</span>
+                <span className="note-link-picker__title">{n.titre}</span>
+                {n.titre_alt && <span className="note-link-picker__alt">{n.titre_alt}</span>}
                 <span className="note-link-picker__date">{fmtDate(n.date)}</span>
               </button>
             </li>

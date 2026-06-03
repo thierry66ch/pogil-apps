@@ -2468,3 +2468,30 @@ button, input, select, textarea { font: inherit; color: inherit }
   color: var(--text-muted);
   font-size: .875rem;
 }
+
+/* Couleurs par type — NoteLienChip */
+.note-lien-chip--observation { border-left: 3px solid var(--success) }
+.note-lien-chip--activite    { border-left: 3px solid var(--accent) }
+.note-lien-chip--documentation { border-left: 3px solid #f59e0b }
+.note-lien-chip--journal     { border-left: 3px solid var(--border) }
+
+.note-lien-chip--observation .note-lien-chip__main:hover { background: rgba(16,185,129,.08) }
+.note-lien-chip--activite    .note-lien-chip__main:hover { background: rgba(99,102,241,.08) }
+.note-lien-chip--documentation .note-lien-chip__main:hover { background: rgba(245,158,11,.08) }
+
+/* Couleurs + titre complet — NoteLinkPicker items */
+.note-link-picker__icon { flex-shrink: 0; font-size: 1rem }
+.note-link-picker__alt {
+  font-size: .7rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 110px;
+  flex-shrink: 0;
+}
+.note-link-picker__item--observation { border-left: 3px solid var(--success) }
+.note-link-picker__item--activite    { border-left: 3px solid var(--accent) }
+.note-link-picker__item--documentation { border-left: 3px solid #f59e0b }
+.note-link-picker__item--journal     { border-left: 3px solid var(--border) }

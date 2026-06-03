@@ -246,13 +246,13 @@ jourdoc.get('/:wsId/notes/:id', (c) => {
   ).all(id)
 
   const liens = db.prepare(
-    `SELECT nn.note_cible_id AS id, nn.type_lien, n.titre, n.titre_alt, n.type, n.nature, n.date
+    `SELECT nn.note_cible_id AS id, nn.type_lien, n.titre, n.titre_alt, n.type, n.nature, n.date, n.created_at
      FROM jd_note_note nn JOIN jd_notes n ON n.id = nn.note_cible_id
      WHERE nn.note_source_id = ? ORDER BY n.date ASC, n.created_at ASC`
   ).all(id)
 
   const liensEntrants = db.prepare(
-    `SELECT nn.note_source_id AS id, nn.type_lien, n.titre, n.titre_alt, n.type, n.nature, n.date
+    `SELECT nn.note_source_id AS id, nn.type_lien, n.titre, n.titre_alt, n.type, n.nature, n.date, n.created_at
      FROM jd_note_note nn JOIN jd_notes n ON n.id = nn.note_source_id
      WHERE nn.note_cible_id = ? ORDER BY n.date ASC, n.created_at ASC`
   ).all(id)

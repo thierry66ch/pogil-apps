@@ -17,6 +17,10 @@ export default function ObjetDetail() {
 
   const objet = objets.find(o => o.id === Number(objetId))
 
+  function newNoteForObjet() {
+    navigate(`/jourdoc/${wsId}/new`, { state: { objet_ids: [Number(objetId)] } })
+  }
+
   useEffect(() => {
     setLoading(true)
     fetch(API_ROUTES.JD_OBJET_NOTES(wsId, objetId) + `?direction=${direction}`, {
@@ -36,10 +40,12 @@ export default function ObjetDetail() {
       <div className="jd-form-header">
         <button className="btn btn-ghost" style={{ padding: '.35rem .6rem', fontSize: '.875rem' }}
           onClick={() => navigate(-1)}>← Retour</button>
-        <div>
+        <div style={{ flex: 1 }}>
           <h2 style={{ marginBottom: '.125rem' }}>{objet?.nom ?? `Objet #${objetId}`}</h2>
           {path && <span className="jd-path-label">{path}</span>}
         </div>
+        <button className="btn btn-primary" style={{ padding: '.4rem .875rem', fontSize: '.8125rem', flexShrink: 0 }}
+          onClick={newNoteForObjet}>+ Note</button>
       </div>
 
       {objet?.description && (

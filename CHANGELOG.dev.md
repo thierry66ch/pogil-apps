@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 18 — 2026-06-03
+Ergonomie : NoteView lecture (2 colonnes desktop, médias lightbox, fil de notes, bouton Modifier). RichTextEditor Tiptap (gras/italique/souligné, code/bloc, puces/numéros indentables, H1/H2, lien). RichTextView (HTML + fallback texte brut). Calendrier URL-based state (useSearchParams → navigate(-1) restaure le contexte). Bouton "+ Note" depuis ObjetDetail (pré-remplit objet). NoteForm → NoteView après sauvegarde. Tri liens created_at.
+
+---
+
 ## Build 17 — 2026-06-03
 Fix fil de notes : permutation Contexte/Suite — liens sortants (notes citées, plus anciennes) → Contexte ; liens entrants (notes qui citent celle-ci, plus récentes) → Suite / entraîne.
 

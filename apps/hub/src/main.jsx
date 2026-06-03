@@ -17,6 +17,7 @@ import ThemeManager from './pages/jourdoc/ThemeManager'
 import MediaGallery from './pages/jourdoc/MediaGallery'
 import MediaDetail from './pages/jourdoc/MediaDetail'
 import CalendarView from './pages/jourdoc/CalendarView'
+import NoteView from './pages/jourdoc/NoteView'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 
@@ -43,7 +44,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="/jourdoc/:wsId" element={<PrivateRoute><JourDocApp /></PrivateRoute>}>
               <Route index element={<JourDocJournal />} />
               <Route path="new" element={<NoteForm />} />
-              <Route path="notes/:noteId" element={<NoteForm />} />
+              <Route path="notes/:noteId" element={<NoteView />} />
+              <Route path="notes/:noteId/edit" element={<NoteForm />} />
               <Route path="objet/:objetId" element={<ObjetDetail />} />
               <Route path="theme/:themeId" element={<ThemeDetail />} />
               <Route path="calendar" element={<CalendarView />} />

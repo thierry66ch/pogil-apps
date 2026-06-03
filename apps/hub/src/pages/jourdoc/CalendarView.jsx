@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
 import { authHeader, useJdData } from './hooks'
@@ -18,19 +18,30 @@ export default function CalendarView() {
   const { wsId } = useParams()
   const { token } = useAuth()
   const { objets } = useJdData(wsId, token)
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [mode, setMode] = useState('month')
-  const [anchor, setAnchor] = useState(todayISO())
-  const [notes, setNotes] = useState([])
+  // État dans l'URL → navigate(-1) depuis une note restaure automatiquement le contexte
+  const [mode,   setModeState]   = useState(searchParams.get('mode')   ?? 'month')
+  const [anchor, setAnchorState] = useState(searchParams.get('anchor') ?? todayISO())
+  const [notes,  setNotes]  = useState([])
   const [loading, setLoading] = useState(true)
 
-  const currentMode = MODES.find(m => m.key === mode)
-  const { from, to } = useMemo(() => getRange(anchor, currentMode.period), [anchor, currentMode])
+  function setMode(m) {
+    setModeState(m)
+    setSearchParams({ mode: m, anchor }, { replace: true })
+  }
+  function setAnchor(a) {
+    const val = typeof a === 'function' ? a(anchor) : a
+    setAnchorState(val)
+    setSearchParams({ mode, anchor: val }, { replace: true })
+  }
 
-  // Date de référence pour CalendarMonth / ObjectMatrix
+  const currentMode = MODES.find(m => m.key === mode) ?? MODES[0]
+  const { from, to } = useMemo(() => getRange(anchor, currentMode.period), [anchor, currentMode])
   const refDate = new Date(anchor + 'T00:00:00')
   const year  = refDate.getFullYear()
   const month = refDate.getMonth()
+  const period = currentMode.period
 
   useEffect(() => {
     setLoading(true)
@@ -40,11 +51,8 @@ export default function CalendarView() {
       .finally(() => setLoading(false))
   }, [wsId, token, from, to])
 
-  const period = currentMode.period
-
   return (
     <div className="cal-view">
-      {/* Navigation période + sélecteur de mode */}
       <div className="cal-view__toolbar">
         <div className="period-nav">
           <button className="period-nav__arrow" onClick={() => setAnchor(a => shiftAnchor(a, period, -1))}>‹</button>
@@ -53,7 +61,6 @@ export default function CalendarView() {
           <button className="btn btn-ghost" style={{ padding: '.3rem .6rem', fontSize: '.8rem' }}
             onClick={() => setAnchor(todayISO())}>Aujourd'hui</button>
         </div>
-
         <div className="cal-mode-tabs">
           {MODES.map(m => (
             <button key={m.key}
@@ -65,14 +72,13 @@ export default function CalendarView() {
         </div>
       </div>
 
-      {/* Compteur rapide */}
       {!loading && notes.length > 0 && (
         <div className="cal-view__summary">
           <span>{notes.length} note{notes.length > 1 ? 's' : ''} sur la période</span>
           <span>·</span>
-          <span>{notes.filter(n => n.nature === 'observation').length} observations</span>
+          <span>{notes.filter(n => n.nature === 'observation').length} obs.</span>
           <span>·</span>
-          <span>{notes.filter(n => n.nature === 'activite').length} activités</span>
+          <span>{notes.filter(n => n.nature === 'activite').length} act.</span>
           {notes.some(n => n.medias?.length) && (
             <><span>·</span><span>{notes.reduce((s, n) => s + (n.medias?.length ?? 0), 0)} médias</span></>
           )}

@@ -7,12 +7,16 @@ import HierarchyPicker from './HierarchyPicker'
 import MediaPicker from './MediaPicker'
 import MediaCard from './MediaCard'
 import NoteLinkPicker from './NoteLinkPicker'
+import RichTextEditor from './RichTextEditor'
 
 function today() { return new Date().toISOString().slice(0, 10) }
 
 const NATURE_ICO = { observation: '👁', activite: '⚡', documentation: '📄', journal: '📔' }
 
-const sortByDate = arr => [...arr].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''))
+const sortByDate = arr => [...arr].sort((a, b) => {
+  const d = (a.date ?? '').localeCompare(b.date ?? '')
+  return d !== 0 ? d : (a.created_at ?? '').localeCompare(b.created_at ?? '')
+})
 
 function NoteLienChip({ note, onClick, onRemove }) {
   const typeKey = note.nature ?? note.type ?? 'journal'
@@ -47,7 +51,7 @@ export default function NoteForm() {
     type: 'journal',
     nature: 'observation',
     theme_id: null,
-    objet_ids: [],
+    objet_ids: location.state?.objet_ids ?? [],
     media_ids: initMediaIds,
     titre: '',
     titre_alt: '',
@@ -55,6 +59,7 @@ export default function NoteForm() {
     date: location.state?.note_date ?? today(),  // date de la 1ère image si venue de la galerie
     source_url: '',
   })
+  const [noteLoaded, setNoteLoaded] = useState(!isEdit) // pour la clé de RichTextEditor
   const [mediaDetails, setMediaDetails] = useState([])  // détail des médias liés (pour miniatures)
   const [showPicker, setShowPicker] = useState(initMediaIds.length > 0)
   const [liens, setLiens] = useState([])           // notes sortantes (cette note → autres)
@@ -85,6 +90,7 @@ export default function NoteForm() {
         setMediaDetails(note.medias ?? [])
         setLiens(sortByDate(note.liens ?? []))
         setLiensEntrants(sortByDate(note.liensEntrants ?? []))
+        setNoteLoaded(true)
         if ((note.medias?.length ?? 0) > 0) setShowPicker(true)
       })
   }, [isEdit, noteId, wsId, token])
@@ -145,8 +151,9 @@ export default function NoteForm() {
         body: JSON.stringify(body),
       })
       if (!res.ok) throw new Error()
-      // En mode création : créer les liens en attente
-      if (!isEdit && pendingLinks.length > 0) {
+      if (isEdit) {
+        navigate(`/jourdoc/${wsId}/notes/${noteId}`)
+      } else {
         const { id: newId } = await res.json()
         await Promise.all(pendingLinks.map(lk =>
           fetch(API_ROUTES.JD_NOTE_LIENS(wsId, newId), {
@@ -154,8 +161,8 @@ export default function NoteForm() {
             body: JSON.stringify({ note_cible_id: lk.id }),
           })
         ))
+        navigate(`/jourdoc/${wsId}/notes/${newId}`)
       }
-      navigate(`/jourdoc/${wsId}`)
     } catch {
       setError('Erreur lors de la sauvegarde.')
     } finally {
@@ -260,12 +267,15 @@ export default function NoteForm() {
             placeholder="Ex : Pom/Gol → TrAntif" />
         </div>
 
-        {/* Contenu */}
+        {/* Contenu — éditeur riche */}
         <div className="form-field">
           <label className="form-label">Contenu</label>
-          <textarea className="input jd-textarea" value={form.contenu}
-            onChange={e => setForm(f => ({ ...f, contenu: e.target.value }))}
-            placeholder="Détails de la note…" rows={5} />
+          <RichTextEditor
+            key={isEdit ? (noteLoaded ? `e-${noteId}` : `loading-${noteId}`) : 'new'}
+            initialContent={form.contenu}
+            onChange={v => setForm(f => ({ ...f, contenu: v }))}
+            placeholder="Détails de la note… (G=gras, I=italique, H1/H2=titres, •=puces, Tab=indenter)"
+          />
         </div>
 
         {/* Source URL */}

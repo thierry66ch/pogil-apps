@@ -2938,7 +2938,7 @@ button, input, select, textarea { font: inherit; color: inherit }
   border-radius: var(--r);
   font-size: .875rem; font-weight: 600;
 }
-.csv-importer__result-ok   { color: var(--success) }
+.csv-importer__result-ok   { color: var(--success) }\n.csv-importer__result-upd  { color: var(--accent) }
 .csv-importer__result-skip { color: var(--text-muted) }
 .csv-importer__result-err  { color: var(--danger) }
 

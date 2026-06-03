@@ -43,28 +43,72 @@ function boolVal(s) {
   return ['1','true','oui','yes','x'].includes((s ?? '').toLowerCase().trim())
 }
 
-function findOrCreateObjet(wsId, nom, parentId, nomCourt, estIndividu, description, created, skipped) {
-  const existing = parentId === null
+// Tri topologique : s'assure que les parents sont traités avant leurs enfants
+// (format nom+parent uniquement — le format chemin est déjà ordonné par construction)
+function topoSort(rows, nameKey, parentKey) {
+  const processed = new Set([''])   // '' = pas de parent = racine
+  const result = []
+  let remaining = [...rows]
+  while (remaining.length > 0) {
+    const before = remaining.length
+    const next = []
+    for (const row of remaining) {
+      const parent = (row[parentKey] ?? '').trim()
+      if (processed.has(parent)) {
+        result.push(row)
+        processed.add((row[nameKey] ?? '').trim())
+      } else {
+        next.push(row)
+      }
+    }
+    remaining = next
+    if (remaining.length === before) {
+      // Aucun progrès : dépendance circulaire ou parent introuvable → ajouter tel quel
+      result.push(...remaining)
+      break
+    }
+  }
+  return result
+}
+
+// Recherche par nom+parent exact ; si trouvé avec un mauvais parent → UPDATE
+function upsertObjet(wsId, nom, parentId, nomCourt, estIndividu, description, created, updated, skipped) {
+  // 1. Correspondance exacte (nom + parent correct)
+  const exact = parentId === null
     ? db.prepare('SELECT id FROM jd_objets WHERE workspace_id=? AND nom=? AND parent_id IS NULL').get(wsId, nom)
     : db.prepare('SELECT id FROM jd_objets WHERE workspace_id=? AND nom=? AND parent_id=?').get(wsId, nom, parentId)
-  if (existing) { skipped.push(nom); return existing.id }
+  if (exact) { skipped.push(nom); return exact.id }
+
+  // 2. Même nom, parent différent → mise à jour du parent
+  const byName = db.prepare('SELECT id FROM jd_objets WHERE workspace_id=? AND nom=?').get(wsId, nom)
+  if (byName) {
+    db.prepare('UPDATE jd_objets SET parent_id=? WHERE id=?').run(parentId, byName.id)
+    updated.push(nom); return byName.id
+  }
+
+  // 3. Création
   const r = db.prepare(
     'INSERT INTO jd_objets (workspace_id, parent_id, nom, nom_court, est_individu, description) VALUES (?,?,?,?,?,?)'
   ).run(wsId, parentId, nom, nomCourt || null, estIndividu ? 1 : 0, description || null)
-  created.push(nom)
-  return r.lastInsertRowid
+  created.push(nom); return r.lastInsertRowid
 }
 
-function findOrCreateTheme(wsId, nom, parentId, nomCourt, created, skipped) {
-  const existing = parentId === null
+function upsertTheme(wsId, nom, parentId, nomCourt, created, updated, skipped) {
+  const exact = parentId === null
     ? db.prepare('SELECT id FROM jd_themes WHERE workspace_id=? AND nom=? AND parent_id IS NULL').get(wsId, nom)
     : db.prepare('SELECT id FROM jd_themes WHERE workspace_id=? AND nom=? AND parent_id=?').get(wsId, nom, parentId)
-  if (existing) { skipped.push(nom); return existing.id }
+  if (exact) { skipped.push(nom); return exact.id }
+
+  const byName = db.prepare('SELECT id FROM jd_themes WHERE workspace_id=? AND nom=?').get(wsId, nom)
+  if (byName) {
+    db.prepare('UPDATE jd_themes SET parent_id=? WHERE id=?').run(parentId, byName.id)
+    updated.push(nom); return byName.id
+  }
+
   const r = db.prepare(
     'INSERT INTO jd_themes (workspace_id, parent_id, nom, nom_court) VALUES (?,?,?,?)'
   ).run(wsId, parentId, nom, nomCourt || null)
-  created.push(nom)
-  return r.lastInsertRowid
+  created.push(nom); return r.lastInsertRowid
 }
 
 jourdoc.post('/:wsId/import/objets', wsCheck, async (c) => {
@@ -73,12 +117,13 @@ jourdoc.post('/:wsId/import/objets', wsCheck, async (c) => {
   if (!csv?.trim()) return c.json({ error: 'CSV vide' }, 400)
 
   const { headers, rows } = parseCSV(csv)
-  const created = [], skipped = [], errors = []
-  const pathCache = new Map()   // chemin complet → id
-  const nameCache = new Map()   // nom → id (format nom+parent)
+  const created = [], updated = [], skipped = [], errors = []
+  const pathCache = new Map()
+  const nameCache = new Map()
   const hasPath = headers.includes('chemin') || headers.includes('path')
 
   if (hasPath) {
+    // Format chemin : déjà ordonné (racine en premier) — pas besoin de tri topo
     for (const row of rows) {
       const chemin = (row.chemin || row.path || '').trim()
       if (!chemin) continue
@@ -89,30 +134,31 @@ jourdoc.post('/:wsId/import/objets', wsCheck, async (c) => {
         cumPath = cumPath ? `${cumPath}/${nom}` : nom
         if (pathCache.has(cumPath)) { parentId = pathCache.get(cumPath); continue }
         const isLeaf = i === parts.length - 1
-        const id = findOrCreateObjet(wsId, nom, parentId,
+        const id = upsertObjet(wsId, nom, parentId,
           isLeaf ? row.nom_court : null,
           isLeaf && boolVal(row.est_individu),
           isLeaf ? row.description : null,
-          created, skipped)
+          created, updated, skipped)
         pathCache.set(cumPath, id)
         parentId = id
       }
     }
   } else {
-    // Format nom + parent (nom du parent direct)
+    // Format nom + parent : tri topologique pour garantir que les parents existent
+    const sorted = topoSort(rows, 'nom', 'parent')
     const existing = db.prepare('SELECT id, nom FROM jd_objets WHERE workspace_id=?').all(wsId)
     for (const o of existing) nameCache.set(o.nom, o.id)
-    for (const row of rows) {
+    for (const row of sorted) {
       const nom = (row.nom || row.name || '').trim()
       if (!nom) continue
       const parentNom = (row.parent || '').trim()
       const parentId = parentNom ? (nameCache.get(parentNom) ?? null) : null
-      const id = findOrCreateObjet(wsId, nom, parentId, row.nom_court, boolVal(row.est_individu), row.description, created, skipped)
+      const id = upsertObjet(wsId, nom, parentId, row.nom_court, boolVal(row.est_individu), row.description, created, updated, skipped)
       nameCache.set(nom, id)
     }
   }
 
-  return c.json({ created: created.length, skipped: skipped.length, errors, details: { created, skipped } })
+  return c.json({ created: created.length, updated: updated.length, skipped: skipped.length, errors })
 })
 
 jourdoc.post('/:wsId/import/themes', wsCheck, async (c) => {
@@ -121,7 +167,7 @@ jourdoc.post('/:wsId/import/themes', wsCheck, async (c) => {
   if (!csv?.trim()) return c.json({ error: 'CSV vide' }, 400)
 
   const { headers, rows } = parseCSV(csv)
-  const created = [], skipped = [], errors = []
+  const created = [], updated = [], skipped = [], errors = []
   const pathCache = new Map()
   const nameCache = new Map()
   const hasPath = headers.includes('chemin') || headers.includes('path')
@@ -137,25 +183,26 @@ jourdoc.post('/:wsId/import/themes', wsCheck, async (c) => {
         cumPath = cumPath ? `${cumPath}/${nom}` : nom
         if (pathCache.has(cumPath)) { parentId = pathCache.get(cumPath); continue }
         const isLeaf = i === parts.length - 1
-        const id = findOrCreateTheme(wsId, nom, parentId, isLeaf ? row.nom_court : null, created, skipped)
+        const id = upsertTheme(wsId, nom, parentId, isLeaf ? row.nom_court : null, created, updated, skipped)
         pathCache.set(cumPath, id)
         parentId = id
       }
     }
   } else {
+    const sorted = topoSort(rows, 'nom', 'parent')
     const existing = db.prepare('SELECT id, nom FROM jd_themes WHERE workspace_id=?').all(wsId)
     for (const t of existing) nameCache.set(t.nom, t.id)
-    for (const row of rows) {
+    for (const row of sorted) {
       const nom = (row.nom || row.name || '').trim()
       if (!nom) continue
       const parentNom = (row.parent || '').trim()
       const parentId = parentNom ? (nameCache.get(parentNom) ?? null) : null
-      const id = findOrCreateTheme(wsId, nom, parentId, row.nom_court, created, skipped)
+      const id = upsertTheme(wsId, nom, parentId, row.nom_court, created, updated, skipped)
       nameCache.set(nom, id)
     }
   }
 
-  return c.json({ created: created.length, skipped: skipped.length, errors, details: { created, skipped } })
+  return c.json({ created: created.length, updated: updated.length, skipped: skipped.length, errors })
 })
 
 // ── WORKSPACES (non scoped) ──────────────────────────────────

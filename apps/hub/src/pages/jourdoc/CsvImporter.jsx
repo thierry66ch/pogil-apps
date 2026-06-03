@@ -187,7 +187,10 @@ export default function CsvImporter({ wsId, token, type = 'objets', onDone }) {
       {result && (
         <div className="csv-importer__result">
           <span className="csv-importer__result-ok">✅ {result.created} créé{result.created !== 1 ? 's' : ''}</span>
-          <span className="csv-importer__result-skip">⏭ {result.skipped} déjà existant{result.skipped !== 1 ? 's' : ''}</span>
+          {result.updated > 0 && (
+            <span className="csv-importer__result-upd">🔄 {result.updated} parent{result.updated !== 1 ? 's' : ''} mis à jour</span>
+          )}
+          <span className="csv-importer__result-skip">⏭ {result.skipped} inchangé{result.skipped !== 1 ? 's' : ''}</span>
           {result.errors?.length > 0 && (
             <span className="csv-importer__result-err">⚠️ {result.errors.length} erreur{result.errors.length > 1 ? 's' : ''}</span>
           )}

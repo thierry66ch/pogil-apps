@@ -1743,3 +1743,417 @@ button, input, select, textarea { font: inherit; color: inherit }
   border-radius: var(--r-full);
   pointer-events: none;
 }
+
+/* ================================================
+   CALENDRIER
+   ================================================ */
+
+.cal-view { padding-bottom: 2rem }
+
+.cal-view__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+
+.cal-mode-tabs {
+  display: flex;
+  gap: .25rem;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 3px;
+}
+.cal-mode-tab {
+  padding: .35rem .75rem;
+  font-size: .8125rem;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: calc(var(--r) - 2px);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.cal-mode-tab.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow-sm) }
+.cal-mode-tab:not(.active):hover { color: var(--accent) }
+
+.cal-view__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  font-size: .8125rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+}
+
+/* ── Calendrier Mois ──────────────────────── */
+.cal-month { }
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 2px;
+}
+.cal-wd {
+  text-align: center;
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: .25rem;
+  letter-spacing: .04em;
+}
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.cal-cell {
+  min-height: 64px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  padding: .375rem .375rem .25rem;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s;
+  display: flex;
+  flex-direction: column;
+  gap: .125rem;
+  position: relative;
+}
+.cal-cell:hover { border-color: var(--accent) }
+.cal-cell--empty { background: transparent; border-color: transparent; cursor: default }
+.cal-cell--today { border-color: var(--accent); background: var(--accent-bg) }
+.cal-cell--selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) }
+.cal-cell--has-notes { background: var(--surface) }
+
+.cal-cell__num {
+  font-size: .875rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.cal-cell--today .cal-cell__num {
+  color: var(--accent);
+}
+.cal-cell__media {
+  position: absolute;
+  top: .25rem;
+  right: .25rem;
+  font-size: .65rem;
+  opacity: .6;
+}
+.cal-cell__dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: auto;
+}
+.cal-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.cal-dot--obs { background: var(--success) }
+.cal-dot--act { background: var(--accent) }
+.cal-dot--doc { background: #f59e0b }
+.cal-dot--jrn { background: var(--text-muted) }
+.cal-dot-more { font-size: .6rem; color: var(--text-muted); line-height: 8px }
+
+@media (min-width: 640px) {
+  .cal-cell { min-height: 80px }
+}
+
+/* Panneau jour sélectionné */
+.cal-day-panel {
+  border: 1.5px solid var(--accent);
+  border-radius: var(--r-lg);
+  padding: 1.25rem 1rem;
+  margin-top: 1rem;
+  background: var(--surface);
+}
+.cal-day-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.cal-day-panel__header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+/* Légende */
+.cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .875rem;
+  font-size: .8125rem;
+  color: var(--text-muted);
+  margin-top: 1rem;
+}
+.cal-legend__item {
+  display: flex;
+  align-items: center;
+  gap: .375rem;
+}
+
+/* ── Calendrier Semaine ────────────────────── */
+.cal-week {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: .375rem;
+  overflow-x: auto;
+}
+
+.cal-week-col {
+  min-width: 120px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.cal-week-col--today { border-color: var(--accent) }
+
+.cal-week-col__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: .5rem .25rem;
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--border);
+  gap: .125rem;
+}
+.cal-week-col__wd {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.cal-week-col__num {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+}
+.cal-week-col__num.today { color: var(--accent) }
+.cal-week-col__mo {
+  font-size: .7rem;
+  color: var(--text-muted);
+}
+
+.cal-week-col__notes {
+  padding: .5rem .375rem;
+  display: flex;
+  flex-direction: column;
+  gap: .375rem;
+  min-height: 80px;
+}
+
+/* NoteCard compact dans la vue semaine */
+.cal-week-col__notes .jd-note-card {
+  padding: .5rem .625rem;
+  border-radius: var(--r);
+  border-left-width: 2px;
+}
+.cal-week-col__notes .jd-note-card__titre {
+  font-size: .8125rem;
+}
+.cal-week-col__notes .jd-note-card__objets,
+.cal-week-col__notes .jd-note-card__medias { display: none }
+
+.cal-week-col__add {
+  width: 28px; height: 28px;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-subtle);
+  font-size: 1rem;
+  cursor: pointer;
+  align-self: center;
+  transition: all .15s;
+}
+.cal-week-col__add:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg) }
+
+/* ── Matrice Objets ────────────────────────── */
+.obj-matrix-wrap { overflow: hidden }
+
+.obj-matrix {
+  overflow-x: auto;
+  overflow-y: visible;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+
+.obj-matrix__head {
+  display: flex;
+  position: sticky;
+  top: var(--topbar-h);
+  z-index: 10;
+  background: var(--surface-alt);
+  border-bottom: 2px solid var(--border);
+}
+
+.obj-matrix__obj-col {
+  min-width: 160px;
+  max-width: 200px;
+  flex-shrink: 0;
+  padding: .5rem .75rem;
+  position: sticky;
+  left: 0;
+  background: var(--surface-alt);
+  z-index: 5;
+  border-right: 2px solid var(--border);
+  font-size: .8125rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.obj-matrix__obj-col--head { border-right: 2px solid var(--border) }
+
+.obj-matrix__day-head {
+  width: 36px;
+  min-width: 36px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: .25rem .125rem;
+  gap: .125rem;
+  border-right: 1px solid var(--border);
+  font-size: .7rem;
+}
+.obj-matrix__day-head.today { background: var(--accent-bg) }
+.obj-matrix__wd { color: var(--text-muted); font-weight: 600; text-transform: uppercase }
+.obj-matrix__dn { font-weight: 700; color: var(--text) }
+.obj-matrix__day-head.today .obj-matrix__dn { color: var(--accent) }
+
+.obj-matrix__row {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  transition: background .12s;
+}
+.obj-matrix__row:last-child { border-bottom: none }
+.obj-matrix__row:hover { background: rgba(99,102,241,.03) }
+.obj-matrix__row.has-activity { }
+
+.obj-matrix__obj-col {
+  min-width: 160px;
+  max-width: 200px;
+  flex-shrink: 0;
+  padding: .375rem .75rem;
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  border-right: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+.obj-matrix__row:hover .obj-matrix__obj-col { background: var(--surface-alt) }
+
+.obj-matrix__obj-name {
+  font-size: .8125rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: color .12s;
+}
+.obj-matrix__obj-name.individu { color: var(--text-muted) }
+.obj-matrix__obj-name.groupe   { font-weight: 600; color: var(--text) }
+.obj-matrix__obj-name:hover    { color: var(--accent); text-decoration: underline }
+.obj-matrix__arrow { margin-right: .25rem; font-size: .7rem; color: var(--text-subtle) }
+
+.obj-matrix__cell {
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all .15s;
+  position: relative;
+}
+.obj-matrix__cell:hover { box-shadow: inset 0 0 0 2px var(--accent); z-index: 1 }
+.obj-matrix__cell.today { box-shadow: inset 0 0 0 1.5px var(--accent) }
+.obj-matrix__cell.has-notes { cursor: pointer }
+.obj-matrix__cell:last-child { border-right: none }
+
+/* Popup matrice */
+.matrix-popup-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.35);
+  display: flex; align-items: center; justify-content: center;
+  animation: overlay-in .15s var(--ease);
+}
+.matrix-popup {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-xl);
+  padding: 1rem;
+  min-width: 280px;
+  max-width: 400px;
+  width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  animation: pop-in .15s var(--ease);
+}
+.matrix-popup__header {
+  display: flex;
+  align-items: flex-start;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-bottom: .25rem;
+}
+.matrix-popup__close {
+  margin-left: auto;
+  border: none; background: transparent;
+  font-size: 1.25rem; cursor: pointer; color: var(--text-muted);
+  padding: 0; line-height: 1;
+}
+.matrix-popup__note {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  padding: .5rem .625rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface-alt);
+  text-align: left;
+  cursor: pointer;
+  transition: all .12s;
+  font-size: .875rem;
+  width: 100%;
+}
+.matrix-popup__note:hover { background: var(--accent-bg); border-color: var(--accent) }
+.matrix-popup__titre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.matrix-popup__new {
+  margin-top: .25rem;
+  padding: .5rem;
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r);
+  background: transparent;
+  color: var(--accent);
+  font-size: .8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all .15s;
+  width: 100%;
+}
+.matrix-popup__new:hover { background: var(--accent-bg); border-color: var(--accent) }

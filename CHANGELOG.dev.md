@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 13 — 2026-06-03
+Phase 2 Calendrier : CalendarView (conteneur avec 3 modes + nav période + compteur). CalendarMonth (grille 7×N, dots colorés par nature, clic jour → notes + bouton +). CalendarWeek (7 colonnes, NoteCard compact, + rapide par colonne). ObjectMatrix (matrice objets × jours, cellules colorées par activité dominante, popup clic → notes liées + nouvelle note pré-remplie objet+date, scroll horizontal, colonne gauche sticky). Navigation "Aujourd'hui" + flèches sur tous les modes.
+
+---
+
 ## Build 12 — 2026-06-03
 Galerie médias : filtre plage de date période (jour/sem./mois/trim./an) avec flèches prev/next et label dynamique. Lightbox plein écran (nav ←→, Échap, clic fond). MediaCard redesigné : zone image → lightbox, checkbox coin haut-gauche → sélection, bouton 🔗 → notes liées. NoteCard : lightbox sur miniatures sans quitter la vue. Créer note depuis galerie : date = date de la 1ère image sélectionnée. MediaDetail (page notes liées + aperçu grand format). Auto-ancrage après upload sur la date de la première image. Backend : GET /medias/:id/notes.
 

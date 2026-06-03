@@ -7,10 +7,11 @@ import TopBar from '../../components/TopBar'
 import Footer from '../../components/Footer'
 
 const NAV = [
-  { path: '',        icon: '📔', label: 'Journal' },
-  { path: 'medias',  icon: '📷', label: 'Médias' },
-  { path: 'objets',  icon: '🌿', label: 'Objets' },
-  { path: 'themes',  icon: '🏷️', label: 'Thèmes' },
+  { path: '',          icon: '📔', label: 'Journal' },
+  { path: 'calendar',  icon: '📅', label: 'Calendrier' },
+  { path: 'medias',    icon: '📷', label: 'Médias' },
+  { path: 'objets',    icon: '🌿', label: 'Objets' },
+  { path: 'themes',    icon: '🏷️', label: 'Thèmes' },
 ]
 
 export default function JourDocApp() {

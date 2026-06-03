@@ -16,6 +16,7 @@ import ObjetManager from './pages/jourdoc/ObjetManager'
 import ThemeManager from './pages/jourdoc/ThemeManager'
 import MediaGallery from './pages/jourdoc/MediaGallery'
 import MediaDetail from './pages/jourdoc/MediaDetail'
+import CalendarView from './pages/jourdoc/CalendarView'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 
@@ -45,6 +46,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               <Route path="notes/:noteId" element={<NoteForm />} />
               <Route path="objet/:objetId" element={<ObjetDetail />} />
               <Route path="theme/:themeId" element={<ThemeDetail />} />
+              <Route path="calendar" element={<CalendarView />} />
               <Route path="medias" element={<MediaGallery />} />
               <Route path="media/:mediaId" element={<MediaDetail />} />
               <Route path="objets" element={<ObjetManager />} />

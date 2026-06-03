@@ -6,8 +6,29 @@ import { useJdData, authHeader } from './hooks'
 import HierarchyPicker from './HierarchyPicker'
 import MediaPicker from './MediaPicker'
 import MediaCard from './MediaCard'
+import NoteLinkPicker from './NoteLinkPicker'
 
 function today() { return new Date().toISOString().slice(0, 10) }
+
+const NATURE_ICO = { observation: '👁', activite: '⚡', documentation: '📄', journal: '📔' }
+
+function NoteLienChip({ note, onClick, onRemove }) {
+  const icon = NATURE_ICO[note.nature ?? note.type] ?? '📔'
+  const display = note.titre_alt ?? note.titre
+  const d = note.date ? new Date(note.date + 'T00:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' }) : ''
+  return (
+    <div className="note-lien-chip" title={note.titre}>
+      <button type="button" className="note-lien-chip__main" onClick={onClick}>
+        <span className="note-lien-chip__icon">{icon}</span>
+        <span className="note-lien-chip__title">{display}</span>
+        {d && <span className="note-lien-chip__date">{d}</span>}
+      </button>
+      {onRemove && (
+        <button type="button" className="note-lien-chip__remove" onClick={onRemove} title="Supprimer ce lien">×</button>
+      )}
+    </div>
+  )
+}
 
 export default function NoteForm() {
   const { wsId, noteId } = useParams()
@@ -34,6 +55,9 @@ export default function NoteForm() {
   })
   const [mediaDetails, setMediaDetails] = useState([])  // détail des médias liés (pour miniatures)
   const [showPicker, setShowPicker] = useState(initMediaIds.length > 0)
+  const [liens, setLiens] = useState([])          // notes sortantes (cette note → autres)
+  const [liensEntrants, setLiensEntrants] = useState([])  // notes entrantes (autres → cette note)
+  const [showLinkPicker, setShowLinkPicker] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -56,6 +80,8 @@ export default function NoteForm() {
           source_url: note.source_url ?? '',
         })
         setMediaDetails(note.medias ?? [])
+        setLiens(note.liens ?? [])
+        setLiensEntrants(note.liensEntrants ?? [])
         if ((note.medias?.length ?? 0) > 0) setShowPicker(true)
       })
   }, [isEdit, noteId, wsId, token])
@@ -291,6 +317,70 @@ export default function NoteForm() {
             />
           )}
         </div>
+
+        {/* ── Fil de notes (liens) — edit seulement ── */}
+        {isEdit && (
+          <div className="note-liens-section">
+            <div className="note-liens-section__header">
+              <span className="form-label">🔗 Fil de notes</span>
+              <button type="button" className="jd-auto-btn"
+                onClick={() => setShowLinkPicker(o => !o)}>
+                {showLinkPicker ? 'Fermer' : '+ Lier une note'}
+              </button>
+            </div>
+
+            {/* Picker de recherche */}
+            {showLinkPicker && (
+              <NoteLinkPicker
+                wsId={wsId} token={token} currentNoteId={Number(noteId)}
+                onSelect={async (n) => {
+                  await fetch(API_ROUTES.JD_NOTE_LIENS(wsId, noteId), {
+                    method: 'POST', headers: authHeader(token),
+                    body: JSON.stringify({ note_cible_id: n.id }),
+                  })
+                  setLiens(prev => prev.find(l => l.id === n.id) ? prev : [...prev, n])
+                  setShowLinkPicker(false)
+                }}
+                onClose={() => setShowLinkPicker(false)}
+              />
+            )}
+
+            {/* Notes entrantes (contexte — lecture seule) */}
+            {liensEntrants.length > 0 && (
+              <div className="note-liens__group">
+                <span className="note-liens__group-label">Contexte (citée par)</span>
+                {liensEntrants.map(n => (
+                  <NoteLienChip key={n.id} note={n}
+                    onClick={() => navigate(`/jourdoc/${wsId}/notes/${n.id}`)} />
+                ))}
+              </div>
+            )}
+
+            {/* Notes sortantes (suite — modifiables) */}
+            {liens.length > 0 && (
+              <div className="note-liens__group">
+                <span className="note-liens__group-label">Suite / entraîne</span>
+                {liens.map(n => (
+                  <NoteLienChip key={n.id} note={n}
+                    onClick={() => navigate(`/jourdoc/${wsId}/notes/${n.id}`)}
+                    onRemove={async () => {
+                      await fetch(API_ROUTES.JD_NOTE_LIEN(wsId, noteId, n.id), {
+                        method: 'DELETE', headers: authHeader(token),
+                      })
+                      setLiens(prev => prev.filter(l => l.id !== n.id))
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {liensEntrants.length === 0 && liens.length === 0 && !showLinkPicker && (
+              <p style={{ color: 'var(--text-subtle)', fontSize: '.8125rem', padding: '.25rem 0' }}>
+                Aucune liaison — cliquez "Lier une note" pour créer un fil documenté.
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="form-actions" style={{ marginTop: '.5rem' }}>
           {isEdit && <button type="button" className="btn btn-danger" onClick={handleDelete}>Supprimer</button>}

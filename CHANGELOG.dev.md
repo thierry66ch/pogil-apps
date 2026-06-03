@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 15 — 2026-06-03
+Liaison entre notes (CDC §2.3) : table jd_note_note. Backend : recherche plein-texte GET /notes/search, POST/DELETE /notes/:id/liens, liens entrants dans GET /notes/:id. NoteLinkPicker (recherche debounce, titre_alt affiché, date). Section "Fil de notes" dans NoteForm (edit seulement) : liens entrants en lecture, liens sortants modifiables, NoteLienChip cliquable + suppression immédiate.
+
+---
+
 ## Build 14 — 2026-06-03
 Fix vues calendrier : WeekNoteItem compact (icône + fond coloré + titre_alt, titre complet en tooltip). Popup hover CSS sur CalendarMonth (titre_alt, navigation directe vers la note, repositionnement colonnes droite). Matrice refaite en CSS Grid natif : colonne objet sticky left, header sticky top, coin sticky, scroll vertical + horizontal sans chevauchement, hauteurs de lignes uniformes (grid-auto-rows: 34px).
 

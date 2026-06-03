@@ -30,4 +30,7 @@ export const API_ROUTES = {
   JD_MEDIA:        (wsId, id) => `/api/jourdoc/${wsId}/medias/${id}`,
   JD_NOTE_MEDIAS:  (wsId, noteId) => `/api/jourdoc/${wsId}/notes/${noteId}/medias`,
   JD_MEDIA_NOTES:  (wsId, mediaId) => `/api/jourdoc/${wsId}/medias/${mediaId}/notes`,
+  JD_NOTES_SEARCH: (wsId) => `/api/jourdoc/${wsId}/notes/search`,
+  JD_NOTE_LIENS:   (wsId, noteId) => `/api/jourdoc/${wsId}/notes/${noteId}/liens`,
+  JD_NOTE_LIEN:    (wsId, noteId, cibleId) => `/api/jourdoc/${wsId}/notes/${noteId}/liens/${cibleId}`,
 }

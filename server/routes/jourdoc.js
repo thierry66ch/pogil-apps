@@ -179,6 +179,24 @@ jourdoc.delete('/:wsId/themes/:id', (c) => {
 
 // ── NOTES ────────────────────────────────────────────────────
 
+// Recherche plein-texte sur les notes (pour le picker de liaison)
+jourdoc.get('/:wsId/notes/search', (c) => {
+  const wsId = c.get('wsId')
+  const q = c.req.query('q') ?? ''
+  const exclude = Number(c.req.query('exclude') ?? 0)
+  const like = `%${q}%`
+  const notes = db.prepare(`
+    SELECT id, titre, titre_alt, type, nature, date, theme_id,
+      (SELECT nom FROM jd_themes WHERE id = theme_id) AS theme_nom
+    FROM jd_notes
+    WHERE workspace_id = ? AND id != ?
+      AND (titre LIKE ? OR titre_alt LIKE ?)
+    ORDER BY date DESC, created_at DESC
+    LIMIT 25
+  `).all(wsId, exclude || -1, like, like)
+  return c.json({ notes })
+})
+
 jourdoc.get('/:wsId/notes', (c) => {
   const wsId = c.get('wsId')
   const { type, nature, date_from, date_to, objet_id } = c.req.query()
@@ -228,12 +246,18 @@ jourdoc.get('/:wsId/notes/:id', (c) => {
   ).all(id)
 
   const liens = db.prepare(
-    `SELECT nn.note_cible_id AS id, nn.type_lien, n.titre, n.type, n.nature, n.date
+    `SELECT nn.note_cible_id AS id, nn.type_lien, n.titre, n.titre_alt, n.type, n.nature, n.date
      FROM jd_note_note nn JOIN jd_notes n ON n.id = nn.note_cible_id
-     WHERE nn.note_source_id = ?`
+     WHERE nn.note_source_id = ? ORDER BY n.date ASC, n.created_at ASC`
   ).all(id)
 
-  return c.json({ note: { ...note, objets, medias, liens } })
+  const liensEntrants = db.prepare(
+    `SELECT nn.note_source_id AS id, nn.type_lien, n.titre, n.titre_alt, n.type, n.nature, n.date
+     FROM jd_note_note nn JOIN jd_notes n ON n.id = nn.note_source_id
+     WHERE nn.note_cible_id = ? ORDER BY n.date ASC, n.created_at ASC`
+  ).all(id)
+
+  return c.json({ note: { ...note, objets, medias, liens, liensEntrants } })
 })
 
 jourdoc.post('/:wsId/notes', async (c) => {
@@ -285,6 +309,28 @@ jourdoc.put('/:wsId/notes/:id', async (c) => {
     for (const mediaId of [...new Set([...old, ...media_ids])]) refreshLie(mediaId)
   }
 
+  return c.json({ ok: true })
+})
+
+// POST /:wsId/notes/:id/liens — créer un lien
+jourdoc.post('/:wsId/notes/:id/liens', async (c) => {
+  const wsId = c.get('wsId')
+  const id = Number(c.req.param('id'))
+  const { note_cible_id, type_lien } = await c.req.json()
+  if (!note_cible_id || note_cible_id === id) return c.json({ error: 'Invalid target' }, 400)
+  const target = db.prepare('SELECT id FROM jd_notes WHERE id = ? AND workspace_id = ?').get(note_cible_id, wsId)
+  if (!target) return c.json({ error: 'Not found' }, 404)
+  db.prepare('INSERT OR IGNORE INTO jd_note_note (note_source_id, note_cible_id, type_lien) VALUES (?,?,?)')
+    .run(id, note_cible_id, type_lien ?? null)
+  return c.json({ ok: true }, 201)
+})
+
+// DELETE /:wsId/notes/:id/liens/:cibleId — supprimer un lien
+jourdoc.delete('/:wsId/notes/:id/liens/:cibleId', (c) => {
+  const wsId = c.get('wsId')
+  const id = Number(c.req.param('id'))
+  const cibleId = Number(c.req.param('cibleId'))
+  db.prepare('DELETE FROM jd_note_note WHERE note_source_id = ? AND note_cible_id = ?').run(id, cibleId)
   return c.json({ ok: true })
 })
 

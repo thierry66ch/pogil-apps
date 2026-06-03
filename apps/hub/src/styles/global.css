@@ -2323,3 +2323,148 @@ button, input, select, textarea { font: inherit; color: inherit }
 .mxg__cell:hover { box-shadow: inset 0 0 0 2px var(--accent); z-index: 1 }
 .mxg__cell.today { box-shadow: inset 0 0 0 1.5px var(--accent) }
 .mxg__cell.has:hover { box-shadow: inset 0 0 0 2px var(--accent) }
+
+/* ── Fil de notes (liaisons) ─────────────── */
+
+.note-liens-section {
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: .875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .625rem;
+  background: var(--surface-alt);
+}
+.note-liens-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.note-liens__group { display: flex; flex-direction: column; gap: .375rem }
+.note-liens__group-label {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding-left: .125rem;
+}
+
+.note-lien-chip {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  transition: border-color .15s;
+}
+.note-lien-chip:hover { border-color: var(--accent) }
+
+.note-lien-chip__main {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .4rem .75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  flex: 1;
+  overflow: hidden;
+  font-size: .875rem;
+  transition: background .12s;
+}
+.note-lien-chip__main:hover { background: var(--accent-bg) }
+.note-lien-chip__icon { flex-shrink: 0; font-size: 1rem }
+.note-lien-chip__title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.note-lien-chip__date {
+  font-size: .75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.note-lien-chip__remove {
+  padding: 0 .625rem;
+  height: 100%;
+  border: none;
+  border-left: 1px solid var(--border);
+  background: transparent;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background .12s;
+  align-self: stretch;
+  display: flex; align-items: center;
+}
+.note-lien-chip__remove:hover { background: var(--danger-bg) }
+
+/* NoteLinkPicker */
+.note-link-picker {
+  border: 1.5px solid var(--accent);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--surface);
+  margin-top: .5rem;
+}
+.note-link-picker__header {
+  display: flex;
+  gap: .5rem;
+  padding: .5rem .625rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-alt);
+}
+.note-link-picker__list {
+  list-style: none;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.note-link-picker__item {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  width: 100%;
+  padding: .5rem .875rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  cursor: pointer;
+  font-size: .875rem;
+  transition: background .12s;
+  overflow: hidden;
+}
+.note-link-picker__item:last-child { border-bottom: none }
+.note-link-picker__item:hover { background: var(--accent-bg) }
+.note-link-picker__title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.note-link-picker__full {
+  font-size: .75rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140px;
+}
+.note-link-picker__date {
+  font-size: .75rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.note-link-picker__empty,
+.note-link-picker__hint {
+  padding: .875rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: .875rem;
+}

@@ -106,9 +106,18 @@ export default function WorkspaceManager() {
       const res = await fetch(API_ROUTES.JD_WORKSPACES(), {
         method: 'POST', headers: authHeader(token), body: JSON.stringify({ name: newWsName.trim() })
       })
-      const data = await res.json()
-      if (res.ok) { navigate(`/jourdoc/${data.id}`); return }
-    } finally { setCreateLoading(false) }
+      let data
+      try { data = await res.json() } catch { data = {} }
+      if (res.ok && data.id) {
+        navigate(`/jourdoc/${data.id}`)
+      } else {
+        setMsg(`Erreur ${res.status} : ${data.error ?? 'impossible de créer le workspace'}`)
+      }
+    } catch (err) {
+      setMsg(`Erreur réseau : ${err.message}`)
+    } finally {
+      setCreateLoading(false)
+    }
   }
 
   return (

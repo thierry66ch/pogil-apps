@@ -117,3 +117,28 @@ CREATE INDEX IF NOT EXISTS idx_jd_notes_ws      ON jd_notes(workspace_id);
 CREATE INDEX IF NOT EXISTS idx_jd_notes_date    ON jd_notes(date);
 CREATE INDEX IF NOT EXISTS idx_jd_no_note       ON jd_note_objet(note_id);
 CREATE INDEX IF NOT EXISTS idx_jd_no_objet      ON jd_note_objet(objet_id);
+
+CREATE TABLE IF NOT EXISTS jd_medias (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  fichier      TEXT NOT NULL,
+  nom_original TEXT,
+  type_media   TEXT NOT NULL DEFAULT 'photo' CHECK(type_media IN ('photo','capture','pdf')),
+  mime_type    TEXT,
+  taille       INTEGER,
+  date_prise   TEXT,
+  lie          BOOLEAN NOT NULL DEFAULT 0,
+  created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS jd_note_media (
+  note_id  INTEGER NOT NULL REFERENCES jd_notes(id) ON DELETE CASCADE,
+  media_id INTEGER NOT NULL REFERENCES jd_medias(id) ON DELETE CASCADE,
+  PRIMARY KEY (note_id, media_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_jd_medias_ws    ON jd_medias(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_jd_medias_date  ON jd_medias(date_prise);
+CREATE INDEX IF NOT EXISTS idx_jd_medias_lie   ON jd_medias(lie);
+CREATE INDEX IF NOT EXISTS idx_jd_nm_note      ON jd_note_media(note_id);
+CREATE INDEX IF NOT EXISTS idx_jd_nm_media     ON jd_note_media(media_id);

@@ -48,3 +48,6 @@ Thumbs.db
 
 # Test coverage
 coverage/
+
+# User uploads (stored on server, not in repo)
+uploads/

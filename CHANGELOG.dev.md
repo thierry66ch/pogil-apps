@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 10 — 2026-06-03
+Phase 2 Médias : tables jd_medias + jd_note_media, upload multipart (UUID filenames, serveStatic /uploads/*), liste avec filtres (date/type/lié), suppression fichier + DB. MediaGallery (galerie avec drag&drop upload, filtres, sélection multi → créer note). MediaCard (vignette image/PDF, sélection, badge lié, suppression). MediaPicker (inline dans NoteForm, médias du jour, filtres). Vignettes dans NoteCard. NoteForm enrichi (section pièces jointes, médias pré-sélectionnés depuis galerie via location.state). Nav JourDoc : item 📷 Médias.
+
+---
+
 ## Build 9 — 2026-06-03
 HierarchyPicker unifié avec navigation clavier complète (↑↓ naviguer, Entrée valider, Échap fermer, clic mobile maintenu). État focalisé visible (outline accent). Support nullable/nullLabel pour l'option racine. Sélecteur de parent dans ObjetManager/ThemeManager remplacé par HierarchyPicker (plus de <select>). Footer "X sélectionnés / Effacer" en mode multi.
 

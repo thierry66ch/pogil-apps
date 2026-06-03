@@ -1,4 +1,6 @@
 import { Hono } from 'hono'
+import { mkdirSync, writeFileSync, unlinkSync, existsSync, readFileSync } from 'node:fs'
+import { randomUUID } from 'node:crypto'
 import db from '../db/db.js'
 import { authMiddleware } from '../middleware/authMiddleware.js'
 
@@ -20,6 +22,25 @@ function wsCheck(c, next) {
 }
 
 jourdoc.use('/:wsId/*', wsCheck)
+
+// Met à jour le flag `lie` d'un média selon ses liaisons actuelles
+function refreshLie(mediaId) {
+  const n = db.prepare('SELECT COUNT(*) AS n FROM jd_note_media WHERE media_id = ?').get(mediaId).n
+  db.prepare('UPDATE jd_medias SET lie = ? WHERE id = ?').run(n > 0 ? 1 : 0, mediaId)
+}
+
+// Enrichit une liste de notes avec objets + médias liés
+function withData(notes) {
+  return notes.map(note => {
+    const objets = db.prepare(
+      'SELECT o.id, o.nom, o.nom_court FROM jd_note_objet no JOIN jd_objets o ON o.id = no.objet_id WHERE no.note_id = ?'
+    ).all(note.id)
+    const medias = db.prepare(
+      'SELECT m.id, m.type_media, m.nom_original, m.fichier FROM jd_note_media nm JOIN jd_medias m ON m.id = nm.media_id WHERE nm.note_id = ? ORDER BY m.created_at LIMIT 6'
+    ).all(note.id)
+    return { ...note, objets, medias }
+  })
+}
 
 // ── Info workspace ────────────────────────────────────────────
 
@@ -72,11 +93,10 @@ jourdoc.get('/:wsId/objets/:id/notes', (c) => {
   const id = Number(c.req.param('id'))
   const direction = c.req.query('direction') ?? 'both'
   const maxDepth = 3
-
   let ids = []
 
   if (direction === 'down' || direction === 'both') {
-    const descendants = db.prepare(`
+    const rows = db.prepare(`
       WITH RECURSIVE desc(id, depth) AS (
         SELECT id, 0 FROM jd_objets WHERE id = ? AND workspace_id = ?
         UNION ALL
@@ -85,11 +105,11 @@ jourdoc.get('/:wsId/objets/:id/notes', (c) => {
       )
       SELECT id FROM desc
     `).all(id, wsId, maxDepth)
-    ids.push(...descendants.map(r => r.id))
+    ids.push(...rows.map(r => r.id))
   }
 
   if (direction === 'up' || direction === 'both') {
-    const ancestors = db.prepare(`
+    const rows = db.prepare(`
       WITH RECURSIVE anc(id, parent_id, depth) AS (
         SELECT id, parent_id, 0 FROM jd_objets WHERE id = ? AND workspace_id = ?
         UNION ALL
@@ -98,7 +118,7 @@ jourdoc.get('/:wsId/objets/:id/notes', (c) => {
       )
       SELECT id FROM anc
     `).all(id, wsId, maxDepth)
-    ids.push(...ancestors.map(r => r.id))
+    ids.push(...rows.map(r => r.id))
   }
 
   ids = [...new Set(ids)]
@@ -115,15 +135,7 @@ jourdoc.get('/:wsId/objets/:id/notes', (c) => {
     ORDER BY n.date DESC, n.created_at DESC
   `).all(...ids, wsId)
 
-  // Ajouter les objets liés à chaque note
-  const withObjets = notes.map(note => {
-    const objets = db.prepare(
-      'SELECT o.id, o.nom, o.nom_court FROM jd_note_objet no JOIN jd_objets o ON o.id = no.objet_id WHERE no.note_id = ?'
-    ).all(note.id)
-    return { ...note, objets }
-  })
-
-  return c.json({ notes: withObjets })
+  return c.json({ notes: withData(notes) })
 })
 
 // ── THEMES ───────────────────────────────────────────────────
@@ -177,10 +189,7 @@ jourdoc.get('/:wsId/notes', (c) => {
     LEFT JOIN jd_themes t ON t.id = n.theme_id
   `
   const params = []
-
-  if (objet_id) {
-    sql += ' JOIN jd_note_objet no ON no.note_id = n.id'
-  }
+  if (objet_id) sql += ' JOIN jd_note_objet no ON no.note_id = n.id'
 
   sql += ' WHERE n.workspace_id = ?'
   params.push(wsId)
@@ -195,15 +204,7 @@ jourdoc.get('/:wsId/notes', (c) => {
   sql += ' ORDER BY n.date DESC, n.created_at DESC'
 
   const notes = db.prepare(sql).all(...params)
-
-  const withObjets = notes.map(note => {
-    const objets = db.prepare(
-      'SELECT o.id, o.nom, o.nom_court FROM jd_note_objet no JOIN jd_objets o ON o.id = no.objet_id WHERE no.note_id = ?'
-    ).all(note.id)
-    return { ...note, objets }
-  })
-
-  return c.json({ notes: withObjets })
+  return c.json({ notes: withData(notes) })
 })
 
 jourdoc.get('/:wsId/notes/:id', (c) => {
@@ -220,18 +221,22 @@ jourdoc.get('/:wsId/notes/:id', (c) => {
     'SELECT o.id, o.nom, o.nom_court FROM jd_note_objet no JOIN jd_objets o ON o.id = no.objet_id WHERE no.note_id = ?'
   ).all(id)
 
+  const medias = db.prepare(
+    'SELECT m.id, m.type_media, m.nom_original, m.fichier FROM jd_note_media nm JOIN jd_medias m ON m.id = nm.media_id WHERE nm.note_id = ? ORDER BY m.created_at'
+  ).all(id)
+
   const liens = db.prepare(
     `SELECT nn.note_cible_id AS id, nn.type_lien, n.titre, n.type, n.nature, n.date
      FROM jd_note_note nn JOIN jd_notes n ON n.id = nn.note_cible_id
      WHERE nn.note_source_id = ?`
   ).all(id)
 
-  return c.json({ note: { ...note, objets, liens } })
+  return c.json({ note: { ...note, objets, medias, liens } })
 })
 
 jourdoc.post('/:wsId/notes', async (c) => {
   const wsId = c.get('wsId')
-  const { type = 'journal', nature, theme_id, titre, titre_alt, contenu, date, source_url, objet_ids = [] } = await c.req.json()
+  const { type = 'journal', nature, theme_id, titre, titre_alt, contenu, date, source_url, objet_ids = [], media_ids = [] } = await c.req.json()
   if (!titre) return c.json({ error: 'titre requis' }, 400)
 
   const result = db.prepare(
@@ -244,6 +249,10 @@ jourdoc.post('/:wsId/notes', async (c) => {
   for (const objetId of objet_ids) {
     db.prepare('INSERT OR IGNORE INTO jd_note_objet (note_id, objet_id) VALUES (?,?)').run(noteId, objetId)
   }
+  for (const mediaId of media_ids) {
+    db.prepare('INSERT OR IGNORE INTO jd_note_media (note_id, media_id) VALUES (?,?)').run(noteId, mediaId)
+    refreshLie(mediaId)
+  }
 
   return c.json({ id: noteId }, 201)
 })
@@ -251,7 +260,7 @@ jourdoc.post('/:wsId/notes', async (c) => {
 jourdoc.put('/:wsId/notes/:id', async (c) => {
   const wsId = c.get('wsId')
   const id = Number(c.req.param('id'))
-  const { type, nature, theme_id, titre, titre_alt, contenu, date, source_url, objet_ids } = await c.req.json()
+  const { type, nature, theme_id, titre, titre_alt, contenu, date, source_url, objet_ids, media_ids } = await c.req.json()
 
   db.prepare(
     `UPDATE jd_notes SET type=?, nature=?, theme_id=?, titre=?, titre_alt=?, contenu=?, date=?, source_url=?
@@ -265,6 +274,15 @@ jourdoc.put('/:wsId/notes/:id', async (c) => {
     }
   }
 
+  if (media_ids !== undefined) {
+    const old = db.prepare('SELECT media_id FROM jd_note_media WHERE note_id = ?').all(id).map(r => r.media_id)
+    db.prepare('DELETE FROM jd_note_media WHERE note_id = ?').run(id)
+    for (const mediaId of media_ids) {
+      db.prepare('INSERT OR IGNORE INTO jd_note_media (note_id, media_id) VALUES (?,?)').run(id, mediaId)
+    }
+    for (const mediaId of [...new Set([...old, ...media_ids])]) refreshLie(mediaId)
+  }
+
   return c.json({ ok: true })
 })
 
@@ -272,6 +290,101 @@ jourdoc.delete('/:wsId/notes/:id', (c) => {
   const wsId = c.get('wsId')
   const id = Number(c.req.param('id'))
   db.prepare('DELETE FROM jd_notes WHERE id=? AND workspace_id=?').run(id, wsId)
+  return c.json({ ok: true })
+})
+
+// ── MÉDIAS ───────────────────────────────────────────────────
+
+const ALLOWED_EXTS = new Set(['jpg','jpeg','png','gif','webp','heic','heif','avif','pdf'])
+
+jourdoc.post('/:wsId/medias', async (c) => {
+  const wsId = c.get('wsId')
+  const body = await c.req.parseBody({ all: true })
+
+  const raw = body['files'] ?? body['file']
+  const files = Array.isArray(raw) ? raw : raw ? [raw] : []
+  if (files.length === 0) return c.json({ error: 'Aucun fichier' }, 400)
+
+  const datePrise = (typeof body.date_prise === 'string' && body.date_prise)
+    || new Date().toISOString().slice(0, 10)
+
+  const dir = `uploads/jourdoc/${wsId}`
+  mkdirSync(dir, { recursive: true })
+
+  const results = []
+  for (const file of files) {
+    if (!file || typeof file === 'string') continue
+    const ext = (file.name.split('.').pop() ?? '').toLowerCase()
+    if (!ALLOWED_EXTS.has(ext)) continue
+
+    const typeMedia = ext === 'pdf' ? 'pdf' : 'photo'
+    const filename = `${randomUUID()}.${ext}`
+    const filepath = `${dir}/${filename}`
+
+    const buf = await file.arrayBuffer()
+    writeFileSync(filepath, Buffer.from(buf))
+
+    const r = db.prepare(
+      'INSERT INTO jd_medias (workspace_id, fichier, nom_original, type_media, mime_type, taille, date_prise) VALUES (?,?,?,?,?,?,?)'
+    ).run(wsId, filepath, file.name, typeMedia, file.type || null, file.size || null, datePrise)
+
+    results.push({ id: r.lastInsertRowid, fichier: filepath, nom_original: file.name, type_media: typeMedia, date_prise: datePrise })
+  }
+
+  if (results.length === 0) return c.json({ error: 'Aucun fichier valide' }, 400)
+  return c.json({ medias: results }, 201)
+})
+
+jourdoc.get('/:wsId/medias', (c) => {
+  const wsId = c.get('wsId')
+  const { date_from, date_to, type_media, lie } = c.req.query()
+
+  let sql = 'SELECT * FROM jd_medias WHERE workspace_id = ?'
+  const params = [wsId]
+
+  if (date_from)   { sql += ' AND date_prise >= ?'; params.push(date_from) }
+  if (date_to)     { sql += ' AND date_prise <= ?'; params.push(date_to) }
+  if (type_media)  { sql += ' AND type_media = ?';  params.push(type_media) }
+  if (lie !== undefined) { sql += ' AND lie = ?'; params.push(lie === '1' || lie === 'true' ? 1 : 0) }
+
+  sql += ' ORDER BY date_prise DESC, created_at DESC'
+  return c.json({ medias: db.prepare(sql).all(...params) })
+})
+
+jourdoc.delete('/:wsId/medias/:id', (c) => {
+  const wsId = c.get('wsId')
+  const id = Number(c.req.param('id'))
+  const media = db.prepare('SELECT * FROM jd_medias WHERE id=? AND workspace_id=?').get(id, wsId)
+  if (!media) return c.json({ error: 'Not found' }, 404)
+
+  try { unlinkSync(media.fichier) } catch { /* fichier déjà absent */ }
+  db.prepare('DELETE FROM jd_medias WHERE id=?').run(id)
+  return c.json({ ok: true })
+})
+
+// Médias liés à une note
+jourdoc.get('/:wsId/notes/:id/medias', (c) => {
+  const wsId = c.get('wsId')
+  const noteId = Number(c.req.param('id'))
+  const medias = db.prepare(
+    'SELECT m.* FROM jd_note_media nm JOIN jd_medias m ON m.id = nm.media_id WHERE nm.note_id = ? AND m.workspace_id = ? ORDER BY m.created_at'
+  ).all(noteId, wsId)
+  return c.json({ medias })
+})
+
+// Remplacer les médias liés à une note
+jourdoc.put('/:wsId/notes/:id/medias', async (c) => {
+  const wsId = c.get('wsId')
+  const noteId = Number(c.req.param('id'))
+  const { media_ids = [] } = await c.req.json()
+
+  const old = db.prepare('SELECT media_id FROM jd_note_media WHERE note_id = ?').all(noteId).map(r => r.media_id)
+  db.prepare('DELETE FROM jd_note_media WHERE note_id = ?').run(noteId)
+  for (const mediaId of media_ids) {
+    db.prepare('INSERT OR IGNORE INTO jd_note_media (note_id, media_id) VALUES (?,?)').run(noteId, mediaId)
+  }
+  for (const mediaId of [...new Set([...old, ...media_ids])]) refreshLie(mediaId)
+
   return c.json({ ok: true })
 })
 

@@ -8,6 +8,7 @@ import Footer from '../../components/Footer'
 
 const NAV = [
   { path: '',        icon: '📔', label: 'Journal' },
+  { path: 'medias',  icon: '📷', label: 'Médias' },
   { path: 'objets',  icon: '🌿', label: 'Objets' },
   { path: 'themes',  icon: '🏷️', label: 'Thèmes' },
 ]

@@ -14,6 +14,7 @@ import ObjetDetail from './pages/jourdoc/ObjetDetail'
 import ThemeDetail from './pages/jourdoc/ThemeDetail'
 import ObjetManager from './pages/jourdoc/ObjetManager'
 import ThemeManager from './pages/jourdoc/ThemeManager'
+import MediaGallery from './pages/jourdoc/MediaGallery'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 
@@ -43,6 +44,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               <Route path="notes/:noteId" element={<NoteForm />} />
               <Route path="objet/:objetId" element={<ObjetDetail />} />
               <Route path="theme/:themeId" element={<ThemeDetail />} />
+              <Route path="medias" element={<MediaGallery />} />
               <Route path="objets" element={<ObjetManager />} />
               <Route path="themes" element={<ThemeManager />} />
             </Route>

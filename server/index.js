@@ -45,6 +45,9 @@ app.route('/api/me', portalRoutes)
 app.route('/api/admin', adminRoutes)
 app.route('/api/jourdoc', jourdocRoutes)
 
+// User uploads (UUID-based filenames — no auth required on URL)
+app.use('/uploads/*', serveStatic({ root: '.' }))
+
 // Static files (Vite build output)
 app.use('/*', serveStatic({ root: './apps/hub/dist' }))
 

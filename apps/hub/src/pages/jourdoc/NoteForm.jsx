@@ -1,35 +1,43 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
 import { useJdData, authHeader } from './hooks'
 import HierarchyPicker from './HierarchyPicker'
+import MediaPicker from './MediaPicker'
+import MediaCard from './MediaCard'
 
-function today() {
-  return new Date().toISOString().slice(0, 10)
-}
+function today() { return new Date().toISOString().slice(0, 10) }
 
 export default function NoteForm() {
   const { wsId, noteId } = useParams()
   const { token } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const { objets, themes } = useJdData(wsId, token)
   const isEdit = Boolean(noteId)
+
+  // Médias pré-sélectionnés depuis la galerie (navigation state)
+  const initMediaIds = location.state?.media_ids ?? []
 
   const [form, setForm] = useState({
     type: 'journal',
     nature: 'observation',
     theme_id: null,
     objet_ids: [],
+    media_ids: initMediaIds,
     titre: '',
     titre_alt: '',
     contenu: '',
     date: today(),
     source_url: '',
   })
+  const [mediaDetails, setMediaDetails] = useState([])  // détail des médias liés (pour miniatures)
+  const [showPicker, setShowPicker] = useState(initMediaIds.length > 0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // Chargement note existante
   useEffect(() => {
     if (!isEdit) return
     fetch(API_ROUTES.JD_NOTE(wsId, noteId), { headers: authHeader(token) })
@@ -40,14 +48,27 @@ export default function NoteForm() {
           nature: note.nature ?? 'observation',
           theme_id: note.theme_id,
           objet_ids: note.objets.map(o => o.id),
+          media_ids: note.medias?.map(m => m.id) ?? [],
           titre: note.titre,
           titre_alt: note.titre_alt ?? '',
           contenu: note.contenu ?? '',
           date: note.date ?? today(),
           source_url: note.source_url ?? '',
         })
+        setMediaDetails(note.medias ?? [])
+        if ((note.medias?.length ?? 0) > 0) setShowPicker(true)
       })
   }, [isEdit, noteId, wsId, token])
+
+  // Charger les détails des médias pré-sélectionnés depuis location.state
+  useEffect(() => {
+    if (isEdit || initMediaIds.length === 0) return
+    fetch(`${API_ROUTES.JD_MEDIAS(wsId)}`, { headers: authHeader(token) })
+      .then(r => r.json())
+      .then(({ medias }) => {
+        setMediaDetails(medias.filter(m => initMediaIds.includes(m.id)))
+      })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function autoTitle() {
     const selectedObjets = objets.filter(o => form.objet_ids.includes(o.id))
@@ -57,10 +78,24 @@ export default function NoteForm() {
     if (theme) parts.push(theme.nom)
     const titre = parts.join(' → ')
     const titreAlt = [
-      selectedObjets.map(o => o.nom_court || o.nom.slice(0,3)).join('/'),
-      theme ? (theme.nom_court || theme.nom.slice(0,4)) : '',
+      selectedObjets.map(o => o.nom_court || o.nom.slice(0, 3)).join('/'),
+      theme ? (theme.nom_court || theme.nom.slice(0, 4)) : '',
     ].filter(Boolean).join(' → ')
     setForm(f => ({ ...f, titre, titre_alt: titreAlt }))
+  }
+
+  function toggleMedia(id) {
+    setForm(f => ({
+      ...f,
+      media_ids: f.media_ids.includes(id)
+        ? f.media_ids.filter(x => x !== id)
+        : [...f.media_ids, id],
+    }))
+  }
+
+  function removeMedia(id) {
+    setForm(f => ({ ...f, media_ids: f.media_ids.filter(x => x !== id) }))
+    setMediaDetails(d => d.filter(m => m.id !== id))
   }
 
   async function handleSubmit(e) {
@@ -91,9 +126,7 @@ export default function NoteForm() {
 
   async function handleDelete() {
     if (!confirm('Supprimer cette note ?')) return
-    await fetch(API_ROUTES.JD_NOTE(wsId, noteId), {
-      method: 'DELETE', headers: authHeader(token)
-    })
+    await fetch(API_ROUTES.JD_NOTE(wsId, noteId), { method: 'DELETE', headers: authHeader(token) })
     navigate(`/jourdoc/${wsId}`)
   }
 
@@ -123,7 +156,6 @@ export default function NoteForm() {
               ))}
             </div>
           </div>
-
           {form.type === 'journal' && (
             <div className="form-field">
               <label className="form-label">Nature</label>
@@ -140,61 +172,53 @@ export default function NoteForm() {
           )}
         </div>
 
-        {/* Date (journal only) */}
+        {/* Date */}
         {form.type === 'journal' && (
-          <div className="form-field jd-date-field">
+          <div className="form-field">
             <label className="form-label">Date</label>
             <div className="jd-date-row">
               <button type="button" className="jd-date-arrow" onClick={() => {
                 const d = new Date(form.date); d.setDate(d.getDate() - 1)
-                setForm(f => ({ ...f, date: d.toISOString().slice(0,10) }))
+                setForm(f => ({ ...f, date: d.toISOString().slice(0, 10) }))
               }}>‹</button>
               <input className="input" type="date" value={form.date}
                 onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                 style={{ textAlign: 'center', flex: 1 }} />
               <button type="button" className="jd-date-arrow" onClick={() => {
                 const d = new Date(form.date); d.setDate(d.getDate() + 1)
-                setForm(f => ({ ...f, date: d.toISOString().slice(0,10) }))
+                setForm(f => ({ ...f, date: d.toISOString().slice(0, 10) }))
               }}>›</button>
             </div>
           </div>
         )}
 
         {/* Thème */}
-        <HierarchyPicker
-          items={themes}
-          value={form.theme_id}
+        <HierarchyPicker items={themes} value={form.theme_id}
           onChange={v => setForm(f => ({ ...f, theme_id: v }))}
-          mode="single"
-          label="Thème"
-          placeholder="Choisir un thème…"
-        />
+          mode="single" label="Thème" placeholder="Choisir un thème…" />
 
         {/* Objets */}
-        <HierarchyPicker
-          items={objets}
-          value={form.objet_ids}
+        <HierarchyPicker items={objets} value={form.objet_ids}
           onChange={v => setForm(f => ({ ...f, objet_ids: v }))}
-          mode="multi"
-          label="Objets liés"
-          placeholder="Choisir un ou plusieurs objets…"
-        />
+          mode="multi" label="Objets liés" placeholder="Choisir un ou plusieurs objets…" />
 
         {/* Titre */}
         <div className="form-field">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <label className="form-label">Titre *</label>
-            <button type="button" className="jd-auto-btn" onClick={autoTitle}>
-              ✨ Générer
-            </button>
+            <button type="button" className="jd-auto-btn" onClick={autoTitle}>✨ Générer</button>
           </div>
-          <input className="input" value={form.titre} onChange={e => setForm(f => ({ ...f, titre: e.target.value }))} required placeholder="Titre de la note" />
+          <input className="input" value={form.titre}
+            onChange={e => setForm(f => ({ ...f, titre: e.target.value }))}
+            required placeholder="Titre de la note" />
         </div>
 
-        {/* Titre alternatif (compact) */}
+        {/* Titre alternatif */}
         <div className="form-field">
           <label className="form-label">Titre alternatif <span style={{ color: 'var(--text-subtle)', fontWeight: 400 }}>(calendrier compact)</span></label>
-          <input className="input" value={form.titre_alt} onChange={e => setForm(f => ({ ...f, titre_alt: e.target.value }))} placeholder="Ex : Pom/Gol → TrAntif" />
+          <input className="input" value={form.titre_alt}
+            onChange={e => setForm(f => ({ ...f, titre_alt: e.target.value }))}
+            placeholder="Ex : Pom/Gol → TrAntif" />
         </div>
 
         {/* Contenu */}
@@ -205,7 +229,7 @@ export default function NoteForm() {
             placeholder="Détails de la note…" rows={5} />
         </div>
 
-        {/* Source URL (documentation) */}
+        {/* Source URL */}
         {form.type === 'documentation' && (
           <div className="form-field">
             <label className="form-label">Source URL</label>
@@ -215,10 +239,61 @@ export default function NoteForm() {
           </div>
         )}
 
-        <div className="form-actions" style={{ marginTop: '.5rem' }}>
-          {isEdit && (
-            <button type="button" className="btn btn-danger" onClick={handleDelete}>Supprimer</button>
+        {/* ── Médias liés ── */}
+        <div className="form-field">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <label className="form-label">
+              📎 Pièces jointes
+              {form.media_ids.length > 0 && (
+                <span style={{ marginLeft: '.5rem', color: 'var(--accent)', fontWeight: 700 }}>
+                  {form.media_ids.length}
+                </span>
+              )}
+            </label>
+            <button type="button" className="jd-auto-btn"
+              onClick={() => setShowPicker(o => !o)}>
+              {showPicker ? 'Fermer' : 'Choisir des médias'}
+            </button>
+          </div>
+
+          {/* Miniatures des médias déjà sélectionnés */}
+          {form.media_ids.length > 0 && (
+            <div className="jd-media-selected">
+              {form.media_ids.map(id => {
+                const m = mediaDetails.find(x => x.id === id)
+                if (!m) return null
+                return (
+                  <div key={id} className="jd-media-selected__item">
+                    {m.type_media === 'pdf'
+                      ? <div className="jd-thumb jd-thumb--pdf" title={m.nom_original}>📄</div>
+                      : <img className="jd-thumb" src={`/${m.fichier}`} alt="" loading="lazy" />
+                    }
+                    <button type="button" className="jd-media-selected__remove"
+                      onClick={() => removeMedia(id)} title="Retirer">×</button>
+                  </div>
+                )
+              })}
+            </div>
           )}
+
+          {/* Picker inline */}
+          {showPicker && (
+            <MediaPicker
+              wsId={wsId} token={token}
+              date={form.type === 'journal' ? form.date : null}
+              selectedIds={form.media_ids}
+              onToggle={(id, media) => {
+                toggleMedia(id)
+                if (media && !mediaDetails.find(m => m.id === id)) {
+                  setMediaDetails(d => [...d, media])
+                }
+              }}
+            />
+          )}
+        </div>
+
+        <div className="form-actions" style={{ marginTop: '.5rem' }}>
+          {isEdit && <button type="button" className="btn btn-danger" onClick={handleDelete}>Supprimer</button>}
           <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)}>Annuler</button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
             {loading ? '…' : isEdit ? 'Enregistrer' : 'Créer la note'}

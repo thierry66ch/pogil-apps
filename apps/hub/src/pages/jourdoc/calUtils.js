@@ -16,6 +16,10 @@ export function getRange(anchor, period) {
       const sun = new Date(mon); sun.setDate(mon.getDate() + 6)
       return { from: toISO(mon), to: toISO(sun) }
     }
+    case 'last7': {
+      const from = new Date(d); from.setDate(d.getDate() - 6)
+      return { from: toISO(from), to: anchor }
+    }
     case 'month': {
       const f = new Date(d.getFullYear(), d.getMonth(), 1)
       const l = new Date(d.getFullYear(), d.getMonth() + 1, 0)
@@ -38,6 +42,7 @@ export function shiftAnchor(anchor, period, dir) {
   switch (period) {
     case 'day':     d.setDate(d.getDate() + dir); break
     case 'week':    d.setDate(d.getDate() + dir * 7); break
+    case 'last7':   d.setDate(d.getDate() + dir * 7); break
     case 'month':   d.setMonth(d.getMonth() + dir); break
     case 'quarter': d.setMonth(d.getMonth() + dir * 3); break
     case 'year':    d.setFullYear(d.getFullYear() + dir); break
@@ -58,6 +63,8 @@ export function rangeLabel(anchor, period) {
       const wn = Math.ceil(((df - jan1) / 86400000 + jan1.getDay() + 1) / 7)
       return `Sem. ${wn} · ${fmt(df, { day: 'numeric', month: 'short' })} – ${fmt(dt, { day: 'numeric', month: 'short', year: 'numeric' })}`
     }
+    case 'last7':
+      return `7 j · ${fmt(df, { day: 'numeric', month: 'short' })} – ${fmt(dt, { day: 'numeric', month: 'short', year: 'numeric' })}`
     case 'month':
       return fmt(df, { month: 'long', year: 'numeric' })
     case 'quarter': {
@@ -93,6 +100,15 @@ export function daysOfWeek(anchor) {
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(from + 'T00:00:00')
     d.setDate(d.getDate() + i)
+    return toISO(d)
+  })
+}
+
+// Les 7 derniers jours se terminant sur anchor (anchor compris)
+export function daysOfLast7(anchor) {
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(anchor + 'T00:00:00')
+    d.setDate(d.getDate() - 6 + i)
     return toISO(d)
   })
 }

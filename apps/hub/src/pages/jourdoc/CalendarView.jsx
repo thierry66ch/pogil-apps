@@ -11,6 +11,7 @@ import ObjectMatrix from './ObjectMatrix'
 const MODES = [
   { key: 'month',  label: '📅 Mois',    period: 'month'  },
   { key: 'week',   label: '📆 Semaine', period: 'week'   },
+  { key: 'last7',  label: '📋 7 jours', period: 'last7'  },
   { key: 'matrix', label: '📊 Matrice', period: 'month'  },
 ]
 
@@ -91,6 +92,7 @@ export default function CalendarView() {
         <>
           {mode === 'month'  && <CalendarMonth notes={notes} year={year} month={month} />}
           {mode === 'week'   && <CalendarWeek  notes={notes} anchor={anchor} />}
+          {mode === 'last7'  && <CalendarWeek  notes={notes} anchor={anchor} mode="last7" />}
           {mode === 'matrix' && <ObjectMatrix  notes={notes} objets={objets} year={year} month={month} />}
         </>
       )}

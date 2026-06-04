@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { daysOfWeek, fmtDay, fmtDayShort, fmtWeekday, toISO, sortedIds } from './calUtils'
+import { daysOfWeek, daysOfLast7, fmtDay, fmtDayShort, fmtWeekday, toISO, sortedIds } from './calUtils'
 import NoteCard from './NoteCard'
 
 const NATURE_ICO = { observation: '👁', activite: '⚡', documentation: '📄', journal: '📔' }
@@ -25,11 +25,11 @@ function WeekNoteItem({ note, contextNoteIds }) {
   )
 }
 
-export default function CalendarWeek({ notes, anchor }) {
+export default function CalendarWeek({ notes, anchor, mode = 'week' }) {
   const { wsId } = useParams()
   const navigate = useNavigate()
   const [selectedDay, setSelectedDay] = useState(null)
-  const days = daysOfWeek(anchor)
+  const days = mode === 'last7' ? daysOfLast7(anchor) : daysOfWeek(anchor)
   const todayISO = toISO(new Date())
 
   const noteMap = new Map()

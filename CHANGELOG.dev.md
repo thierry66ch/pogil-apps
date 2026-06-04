@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 26 — 2026-06-04
+Validation backlog C+E : (C) ObjetManager et ThemeManager déjà complets — éditeur inline arbre avec renommage, changement de parent (= insertion niveau intermédiaire), ajout enfant, suppression. (E) Nouveau mode "📋 7 jours" dans CalendarView : affiche les 7 derniers jours se terminant sur l'anchor (anchor = aujourd'hui par défaut), navigation par blocs de 7 jours via les flèches, réutilise CalendarWeek avec prop mode="last7". Ajout getRange/shiftAnchor/rangeLabel/daysOfLast7 pour le period "last7" dans calUtils.
+
+---
+
 ## Build 25 — 2026-06-04
 HierarchyPicker scroll : soustraction du offsetTop de la <ul> (l'offsetParent étant le dropdown positionné, el.offsetTop incluait la hauteur de la zone de recherche → item 2 lignes au-dessus du visible). Correction : scrollTop = el.offsetTop - listRef.offsetTop.
 

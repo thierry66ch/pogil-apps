@@ -814,6 +814,20 @@ const TODOIST_API = 'https://api.todoist.com/api/v1'
 function todoistHeaders(token) {
   return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
+// Pour les appels sans corps (ex. close) : pas de Content-Type
+function todoistAuthHeader(token) {
+  return { Authorization: `Bearer ${token}` }
+}
+// Extrait le task peu importe la forme de la réponse API v1
+function extractTask(data) {
+  if (!data) return null
+  if (data.id) return data
+  if (data.task?.id) return data.task
+  if (data.item?.id) return data.item
+  if (Array.isArray(data.results) && data.results[0]?.id) return data.results[0]
+  if (Array.isArray(data) && data[0]?.id) return data[0]
+  return data
+}
 
 // Construit l'URL publique de la note à partir des headers de la requête
 function notePublicUrl(c, wsId, noteId) {
@@ -922,26 +936,32 @@ jourdoc.get('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
 
   try {
     const res = await fetch(`${TODOIST_API}/tasks/${note.tache_todoist_id}`, {
-      headers: todoistHeaders(ws.todoist_token)
+      headers: todoistAuthHeader(ws.todoist_token)
     })
+    // 404 = tâche archivée/terminée (comportement REST v2 et v1)
     if (res.status === 404) {
-      // Tâche complétée/archivée dans Todoist
       return c.json({ linked: true, completed: true, task_id: note.tache_todoist_id })
     }
-    if (!res.ok) return c.json({ linked: true, error: 'Erreur Todoist' })
+    if (!res.ok) {
+      const body = await res.text().catch(() => '')
+      return c.json({ linked: true, error: `Todoist ${res.status}: ${body.slice(0, 100)}` })
+    }
     const data = await res.json()
-    const task = data.id ? data : (data.task ?? data.item ?? data)
+    const task = extractTask(data)
+    const completed = task?.is_completed ?? false
+    // Si terminée via is_completed (API v1 ne supprime pas forcément la tâche)
+    if (completed) return c.json({ linked: true, completed: true, task_id: note.tache_todoist_id })
     return c.json({
       linked:    true,
-      completed: task.is_completed ?? false,
-      content:   task.content,
-      due:       task.due ?? task.deadline ?? null,
-      priority:  task.priority ?? null,
-      url:       `https://app.todoist.com/app/task/${task.id}`,
-      task_id:   task.id,
+      completed: false,
+      content:   task?.content   ?? null,
+      due:       task?.due       ?? task?.deadline ?? null,
+      priority:  task?.priority  ?? null,
+      url:       `https://app.todoist.com/app/task/${task?.id ?? note.tache_todoist_id}`,
+      task_id:   task?.id ?? note.tache_todoist_id,
     })
-  } catch {
-    return c.json({ linked: true, error: 'Impossible de contacter Todoist' })
+  } catch (e) {
+    return c.json({ linked: true, error: `Impossible de contacter Todoist : ${e.message}` })
   }
 })
 
@@ -958,13 +978,12 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/close', wsCheck, async (c) => {
   try {
     const res = await fetch(`${TODOIST_API}/tasks/${note.tache_todoist_id}/close`, {
       method: 'POST',
-      headers: todoistHeaders(ws.todoist_token),
+      headers: todoistAuthHeader(ws.todoist_token),  // pas de Content-Type sur POST sans corps
     })
-    if (!res.ok && res.status !== 204) {
-      const body = await res.text().catch(() => '')
-      return c.json({ error: `Todoist ${res.status}: ${body.slice(0, 100)}` }, 400)
-    }
-    return c.json({ ok: true })
+    // 200, 204, ou tout 2xx = succès
+    if (res.ok || res.status === 204) return c.json({ ok: true })
+    const body = await res.text().catch(() => '')
+    return c.json({ error: `Todoist ${res.status}: ${body.slice(0, 200) || 'pas de détail'}` }, 400)
   } catch (e) {
     return c.json({ error: `Impossible de contacter Todoist : ${e.message}` }, 502)
   }

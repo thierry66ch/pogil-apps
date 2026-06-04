@@ -59,7 +59,14 @@ export default function TodoistPanel({ wsId, token, note }) {
       const res = await fetch(API_ROUTES.JD_NOTE_TODOIST_CLOSE(wsId, note.id), {
         method: 'POST', headers: authHeader(token),
       })
-      if (res.ok) setStatus(s => ({ ...s, completed: true }))
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setStatus(s => ({ ...s, completed: true }))
+      } else {
+        setStatus(s => ({ ...s, error: data.error ?? `Erreur ${res.status}` }))
+      }
+    } catch (e) {
+      setStatus(s => ({ ...s, error: e.message }))
     } finally { setClosing(false) }
   }
 

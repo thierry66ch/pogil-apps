@@ -40,5 +40,6 @@ export const API_ROUTES = {
   JD_NOTE_LIEN:    (wsId, noteId, cibleId) => `/api/jourdoc/${wsId}/notes/${noteId}/liens/${cibleId}`,
   JD_WS_TODOIST:       (wsId) => `/api/jourdoc/${wsId}/todoist`,
   JD_WS_TODOIST_PROJS: (wsId) => `/api/jourdoc/${wsId}/todoist/projects`,
-  JD_NOTE_TODOIST:     (wsId, noteId) => `/api/jourdoc/${wsId}/notes/${noteId}/todoist`,
+  JD_NOTE_TODOIST:       (wsId, noteId) => `/api/jourdoc/${wsId}/notes/${noteId}/todoist`,
+  JD_NOTE_TODOIST_CLOSE: (wsId, noteId) => `/api/jourdoc/${wsId}/notes/${noteId}/todoist/close`,
 }

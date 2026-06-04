@@ -3051,3 +3051,16 @@ button, input, select, textarea { font: inherit; color: inherit }
 
 .todoist-config-form { display: flex; flex-direction: column; gap: .375rem }
 .todoist-config-row  { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap }
+.todoist-refresh-btn {
+  margin-left: auto; width: 24px; height: 24px;
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  background: transparent; color: var(--text-muted); font-size: .9rem;
+  cursor: pointer; line-height: 1; flex-shrink: 0;
+}
+.todoist-refresh-btn:hover { border-color: var(--accent); color: var(--accent) }
+.todoist-task-meta { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-bottom: .375rem }
+.todoist-prio-chip {
+  font-size: .7rem; font-weight: 700; padding: .1rem .4rem;
+  border-radius: var(--r-full); border: 1.5px solid var(--prio-color);
+  color: var(--prio-color); background: transparent; white-space: nowrap;
+}

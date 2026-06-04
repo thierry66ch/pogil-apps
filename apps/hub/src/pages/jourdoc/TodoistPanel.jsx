@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { API_ROUTES } from '@pogil/shared'
 import { authHeader } from './hooks'
 
@@ -19,22 +19,49 @@ const RECURRENCE_HELP = [
   ['every 3 months',  'Tous les 3 mois'],
 ]
 
+function priorityInfo(value) {
+  return PRIORITY_OPTIONS.find(p => p.value === value) ?? null
+}
+
 export default function TodoistPanel({ wsId, token, note }) {
-  const [status, setStatus]     = useState(null)   // null = chargement, objet = résultat polling
+  const [status, setStatus]     = useState(null)
+  const [refreshing, setRefreshing] = useState(false)
   const [creating, setCreating] = useState(false)
   const [form, setForm]         = useState({ due_date: '', priority: 2, recurrence: '' })
   const [saving, setSaving]     = useState(false)
+  const [closing, setClosing]   = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const [err, setErr]           = useState('')
 
-  // Polling au montage si la note a déjà un task_id
-  useEffect(() => {
+  const poll = useCallback(() => {
     if (!note?.tache_todoist_id) { setStatus({ linked: false }); return }
     fetch(API_ROUTES.JD_NOTE_TODOIST(wsId, note.id), { headers: authHeader(token) })
       .then(r => r.json())
       .then(setStatus)
       .catch(() => setStatus({ linked: true, error: 'Erreur réseau' }))
   }, [note?.id, note?.tache_todoist_id, wsId, token])
+
+  // Poll à l'ouverture de la note
+  useEffect(() => { poll() }, [poll])
+
+  async function refresh() {
+    setRefreshing(true)
+    try {
+      const data = await fetch(API_ROUTES.JD_NOTE_TODOIST(wsId, note.id), { headers: authHeader(token) }).then(r => r.json())
+      setStatus(data)
+    } finally { setRefreshing(false) }
+  }
+
+  async function closeTask() {
+    if (!confirm('Marquer cette tâche comme terminée dans Todoist ?')) return
+    setClosing(true)
+    try {
+      const res = await fetch(API_ROUTES.JD_NOTE_TODOIST_CLOSE(wsId, note.id), {
+        method: 'POST', headers: authHeader(token),
+      })
+      if (res.ok) setStatus(s => ({ ...s, completed: true }))
+    } finally { setClosing(false) }
+  }
 
   async function createTask(e) {
     e.preventDefault()
@@ -51,7 +78,8 @@ export default function TodoistPanel({ wsId, token, note }) {
       })
       const data = await res.json()
       if (!res.ok) { setErr(data.error ?? 'Erreur'); return }
-      setStatus({ linked: true, completed: false, url: data.url, task_id: data.task_id, content: note.titre })
+      setStatus({ linked: true, completed: false, url: data.url, task_id: data.task_id,
+        content: note.titre, priority: form.priority })
       setCreating(false)
     } catch { setErr('Erreur réseau') }
     finally { setSaving(false) }
@@ -60,32 +88,36 @@ export default function TodoistPanel({ wsId, token, note }) {
   async function unlink(deleteInTodoist) {
     if (!confirm(deleteInTodoist ? 'Supprimer aussi la tâche dans Todoist ?' : 'Délier la tâche ?')) return
     await fetch(API_ROUTES.JD_NOTE_TODOIST(wsId, note.id), {
-      method: 'DELETE',
-      headers: authHeader(token),
+      method: 'DELETE', headers: authHeader(token),
       body: JSON.stringify({ delete_in_todoist: deleteInTodoist }),
     })
     setStatus({ linked: false })
   }
 
-  // Chargement initial
+  // ── Chargement initial ──
   if (status === null) return (
     <div className="todoist-panel todoist-panel--loading">
-      <span className="todoist-logo">✓</span> <span style={{ color: 'var(--text-muted)', fontSize: '.8rem' }}>Chargement…</span>
+      <span className="todoist-logo">✓</span>
+      <span style={{ color: 'var(--text-muted)', fontSize: '.8rem' }}>Chargement…</span>
     </div>
   )
 
-  // Tâche liée — affichage statut
+  // ── Tâche liée ──
   if (status.linked) {
-    const priorityColor = status.completed ? '#aaa' : '#e44332'
+    const prio = priorityInfo(status.priority)
     return (
       <div className="todoist-panel">
         <div className="todoist-panel__header">
           <span className="todoist-logo">✓</span>
           <span className="todoist-panel__title">Tâche Todoist</span>
           {status.completed
-            ? <span className="todoist-badge todoist-badge--done">Terminée</span>
+            ? <span className="todoist-badge todoist-badge--done">Terminée ✓</span>
             : <span className="todoist-badge todoist-badge--open">En cours</span>
           }
+          <button className="todoist-refresh-btn" onClick={refresh} disabled={refreshing}
+            title="Rafraîchir le statut">
+            {refreshing ? '…' : '↺'}
+          </button>
         </div>
 
         {status.error ? (
@@ -93,12 +125,21 @@ export default function TodoistPanel({ wsId, token, note }) {
         ) : (
           <>
             <p className="todoist-task-content">{status.content ?? note.titre}</p>
-            {status.due && (
-              <p className="todoist-task-due">
-                📅 {status.due.date ?? status.due.string}
-                {status.due.is_recurring && ' 🔁'}
-              </p>
-            )}
+
+            <div className="todoist-task-meta">
+              {prio && (
+                <span className="todoist-prio-chip" style={{ '--prio-color': prio.color }}>
+                  {prio.label.split(' — ')[0]}
+                </span>
+              )}
+              {status.due && (
+                <span className="todoist-task-due">
+                  📅 {status.due.date ?? status.due.string}
+                  {status.due.is_recurring && ' 🔁'}
+                </span>
+              )}
+            </div>
+
             {status.url && (
               <a href={status.url} target="_blank" rel="noopener noreferrer"
                 className="todoist-link">
@@ -109,16 +150,22 @@ export default function TodoistPanel({ wsId, token, note }) {
         )}
 
         <div className="todoist-panel__actions">
+          {!status.completed && (
+            <button className="btn btn-primary" style={{ fontSize: '.75rem', padding: '.25rem .6rem' }}
+              onClick={closeTask} disabled={closing}>
+              {closing ? '…' : '✓ Terminer'}
+            </button>
+          )}
           <button className="btn btn-ghost" style={{ fontSize: '.75rem', padding: '.25rem .5rem' }}
             onClick={() => unlink(false)}>Délier</button>
           <button className="btn btn-danger" style={{ fontSize: '.75rem', padding: '.25rem .5rem' }}
-            onClick={() => unlink(true)}>Supprimer dans Todoist</button>
+            onClick={() => unlink(true)}>Supprimer</button>
         </div>
       </div>
     )
   }
 
-  // Pas de tâche — formulaire création
+  // ── Pas de tâche ──
   return (
     <div className="todoist-panel">
       <div className="todoist-panel__header">

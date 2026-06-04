@@ -936,11 +936,37 @@ jourdoc.get('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
       completed: task.is_completed ?? false,
       content:   task.content,
       due:       task.due ?? task.deadline ?? null,
+      priority:  task.priority ?? null,
       url:       `https://app.todoist.com/app/task/${task.id}`,
       task_id:   task.id,
     })
   } catch {
     return c.json({ linked: true, error: 'Impossible de contacter Todoist' })
+  }
+})
+
+// POST /:wsId/notes/:id/todoist/close — marquer la tâche comme terminée dans Todoist
+jourdoc.post('/:wsId/notes/:noteId/todoist/close', wsCheck, async (c) => {
+  const wsId   = c.get('wsId')
+  const noteId = Number(c.req.param('noteId'))
+
+  const ws   = db.prepare('SELECT todoist_token FROM workspaces WHERE id=?').get(wsId)
+  const note = db.prepare('SELECT tache_todoist_id FROM jd_notes WHERE id=? AND workspace_id=?').get(noteId, wsId)
+  if (!note?.tache_todoist_id) return c.json({ error: 'Aucune tâche liée' }, 400)
+  if (!ws?.todoist_token)      return c.json({ error: 'Todoist non configuré' }, 400)
+
+  try {
+    const res = await fetch(`${TODOIST_API}/tasks/${note.tache_todoist_id}/close`, {
+      method: 'POST',
+      headers: todoistHeaders(ws.todoist_token),
+    })
+    if (!res.ok && res.status !== 204) {
+      const body = await res.text().catch(() => '')
+      return c.json({ error: `Todoist ${res.status}: ${body.slice(0, 100)}` }, 400)
+    }
+    return c.json({ ok: true })
+  } catch (e) {
+    return c.json({ error: `Impossible de contacter Todoist : ${e.message}` }, 502)
   }
 })
 

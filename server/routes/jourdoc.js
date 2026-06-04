@@ -948,17 +948,27 @@ jourdoc.get('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
     }
     const data = await res.json()
     const task = extractTask(data)
-    const completed = task?.is_completed ?? false
-    // Si terminée via is_completed (API v1 ne supprime pas forcément la tâche)
-    if (completed) return c.json({ linked: true, completed: true, task_id: note.tache_todoist_id })
+    // Champs de complétion possibles selon la version de l'API
+    const completed = Boolean(
+      task?.is_completed || task?.checked || task?.completed_at || task?.date_completed
+    )
     return c.json({
       linked:    true,
-      completed: false,
+      completed,
       content:   task?.content   ?? null,
       due:       task?.due       ?? task?.deadline ?? null,
       priority:  task?.priority  ?? null,
       url:       `https://app.todoist.com/app/task/${task?.id ?? note.tache_todoist_id}`,
       task_id:   task?.id ?? note.tache_todoist_id,
+      // Champs bruts pour diagnostic — à retirer une fois le bon champ identifié
+      _debug: {
+        is_completed: task?.is_completed,
+        checked:      task?.checked,
+        completed_at: task?.completed_at,
+        date_completed: task?.date_completed,
+        status:       task?.status,
+        keys: task ? Object.keys(task).join(', ') : null,
+      },
     })
   } catch (e) {
     return c.json({ linked: true, error: `Impossible de contacter Todoist : ${e.message}` })

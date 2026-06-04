@@ -859,8 +859,10 @@ jourdoc.post('/:wsId/todoist/projects', wsCheck, async (c) => {
       const body = await res.text().catch(() => '')
       return c.json({ error: `Todoist a répondu HTTP ${res.status} — ${body.slice(0, 200) || 'pas de détail'}` }, 400)
     }
-    const projects = await res.json()
-    return c.json({ projects: projects.map(p => ({ id: p.id, name: p.name })) })
+    const data = await res.json()
+    // API v1 renvoie { results: [...], next_cursor } ; v2 renvoyait un tableau direct
+    const list = Array.isArray(data) ? data : (data.results ?? data.items ?? [])
+    return c.json({ projects: list.map(p => ({ id: p.id, name: p.name })) })
   } catch (e) {
     return c.json({ error: `Impossible de contacter Todoist : ${e.message}` }, 502)
   }
@@ -898,11 +900,13 @@ jourdoc.post('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
       const err = await res.text()
       return c.json({ error: `Todoist: ${err}` }, 400)
     }
-    const task = await res.json()
+    const data = await res.json()
+    // API v1 peut envelopper dans { task: {...} } ou retourner l'objet directement
+    const task = data.id ? data : (data.task ?? data.item ?? data)
     db.prepare('UPDATE jd_notes SET tache_todoist_id=? WHERE id=?').run(task.id, noteId)
     return c.json({ task_id: task.id, url: `https://app.todoist.com/app/task/${task.id}` })
-  } catch {
-    return c.json({ error: 'Impossible de contacter Todoist' }, 502)
+  } catch (e) {
+    return c.json({ error: `Impossible de contacter Todoist : ${e.message}` }, 502)
   }
 })
 
@@ -925,12 +929,13 @@ jourdoc.get('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
       return c.json({ linked: true, completed: true, task_id: note.tache_todoist_id })
     }
     if (!res.ok) return c.json({ linked: true, error: 'Erreur Todoist' })
-    const task = await res.json()
+    const data = await res.json()
+    const task = data.id ? data : (data.task ?? data.item ?? data)
     return c.json({
       linked:    true,
-      completed: task.is_completed,
+      completed: task.is_completed ?? false,
       content:   task.content,
-      due:       task.due ?? null,
+      due:       task.due ?? task.deadline ?? null,
       url:       `https://app.todoist.com/app/task/${task.id}`,
       task_id:   task.id,
     })

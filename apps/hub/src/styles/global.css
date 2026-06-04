@@ -1233,6 +1233,15 @@ button, input, select, textarea { font: inherit; color: inherit }
 .jd-picker__path { font-size: .75rem; color: var(--text-muted); font-family: var(--font-mono) }
 .jd-picker__check { margin-left: auto; color: var(--accent); font-weight: 700 }
 .jd-picker__empty { padding: .75rem; text-align: center; color: var(--text-muted); font-size: .875rem }
+.jd-picker__item.matched .jd-picker__nom { font-weight: 700; color: var(--accent) }
+.jd-picker__item.matched { background: color-mix(in srgb, var(--accent-bg) 60%, transparent) }
+.jd-picker__match-count {
+  padding: .2rem .75rem;
+  font-size: .75rem;
+  color: var(--text-muted);
+  background: var(--surface-alt);
+  border-bottom: 1px solid var(--border);
+}
 .jd-picker__backdrop {
   position: fixed; inset: 0; z-index: 49;
 }
@@ -1429,7 +1438,7 @@ button, input, select, textarea { font: inherit; color: inherit }
   transition: opacity .15s;
 }
 .media-card:hover .media-card__del { opacity: 1 }
-@media (hover: none) { .media-card__del { opacity: 1 } }
+@media (pointer: coarse) { .media-card__del { opacity: 1 } }
 
 /* Media Gallery */
 .media-gallery { padding-bottom: 5rem }
@@ -1698,7 +1707,7 @@ button, input, select, textarea { font: inherit; color: inherit }
 }
 .media-card:hover .media-card__sel,
 .media-card--selected .media-card__sel { opacity: 1 }
-@media (hover: none) { .media-card__sel { opacity: 1 } }
+@media (pointer: coarse) { .media-card__sel { opacity: 1 } }
 .media-card__sel.active { background: var(--accent); border-color: var(--accent) }
 
 .media-card__linked {
@@ -1712,7 +1721,7 @@ button, input, select, textarea { font: inherit; color: inherit }
 }
 .media-card:hover .media-card__linked { opacity: 1 }
 .media-card__linked:hover { background: var(--accent) }
-@media (hover: none) { .media-card__linked { opacity: 1 } }
+@media (pointer: coarse) { .media-card__linked { opacity: 1 } }
 
 .media-card__date-label {
   position: absolute; bottom: 0; left: 0; right: 0;
@@ -1924,7 +1933,8 @@ button, input, select, textarea { font: inherit; color: inherit }
   border-radius: var(--r-lg);
   overflow: hidden;
 }
-.cal-week-col--today { border-color: var(--accent) }
+.cal-week-col--today    { border-color: var(--accent) }
+.cal-week-col--selected { border-color: var(--accent); background: var(--accent-bg) }
 
 .cal-week-col__header {
   display: flex;

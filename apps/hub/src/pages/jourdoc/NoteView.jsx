@@ -40,6 +40,7 @@ export default function NoteView() {
   const [note, setNote] = useState(null)
   const [loading, setLoading] = useState(true)
   const [lbIdx, setLbIdx] = useState(-1)
+  const touchStart = useRef(null)
 
   useEffect(() => {
     setLoading(true)
@@ -71,7 +72,6 @@ export default function NoteView() {
     navigate(`/jourdoc/${wsId}/notes/${id}`, { state: location.state, replace: true })
   }
 
-  const touchStart = useRef(null)
   function onTouchStart(e) { touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY } }
   function onTouchEnd(e) {
     if (!touchStart.current) return

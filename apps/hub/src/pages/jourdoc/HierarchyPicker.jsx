@@ -47,18 +47,27 @@ export default function HierarchyPicker({
     nullable ? [{ id: null, nom: nullLabel, nom_court: '' }, ...sortedItems] : sortedItems
   , [sortedItems, nullable, nullLabel])
 
-  const filtered = useMemo(() => {
-    if (!q) return baseItems
+  // Ids correspondant à la recherche (highlight + scroll)
+  const matchedIds = useMemo(() => {
+    if (!q) return null
     const lq = q.toLowerCase()
-    return baseItems.filter(i =>
-      i.id === null ||                                  // racine toujours visible
-      i.nom.toLowerCase().includes(lq) ||
-      (i.nom_court ?? '').toLowerCase().includes(lq)
-    )
+    const ids = new Set()
+    for (const i of baseItems) {
+      if (i.id === null) continue
+      if (i.nom.toLowerCase().includes(lq) || (i.nom_court ?? '').toLowerCase().includes(lq))
+        ids.add(i.id)
+    }
+    return ids
   }, [baseItems, q])
 
-  // Réinitialiser le focus sur le premier élément quand la liste change
-  useEffect(() => { setFocusedIdx(0) }, [q])
+  const firstMatchIdx = useMemo(() => {
+    if (!matchedIds) return 0
+    const idx = baseItems.findIndex(i => i.id !== null && matchedIds.has(i.id))
+    return idx >= 0 ? idx : 0
+  }, [baseItems, matchedIds])
+
+  // Positionner le focus sur la première correspondance quand la recherche change
+  useEffect(() => { setFocusedIdx(firstMatchIdx) }, [firstMatchIdx])
 
   // Scroll automatique vers l'élément focalisé
   useEffect(() => {
@@ -111,7 +120,7 @@ export default function HierarchyPicker({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        setFocusedIdx(i => Math.min(i + 1, filtered.length - 1))
+        setFocusedIdx(i => Math.min(i + 1, baseItems.length - 1))
         break
       case 'ArrowUp':
         e.preventDefault()
@@ -119,7 +128,7 @@ export default function HierarchyPicker({
         break
       case 'Enter':
         e.preventDefault()
-        if (filtered.length > 0) select(filtered[focusedIdx]?.id ?? filtered[0].id)
+        if (baseItems.length > 0) select(baseItems[focusedIdx]?.id ?? baseItems[0].id)
         break
       case 'Escape':
         e.preventDefault()
@@ -173,14 +182,17 @@ export default function HierarchyPicker({
               autoFocus
             />
           </div>
+          {matchedIds !== null && (
+            <div className="jd-picker__match-count">
+              {matchedIds.size === 0 ? 'Aucun résultat' : `${matchedIds.size} correspondance${matchedIds.size > 1 ? 's' : ''}`}
+            </div>
+          )}
           <ul ref={listRef} className="jd-picker__list" role="listbox">
-            {filtered.length === 0 && (
-              <li className="jd-picker__empty">Aucun résultat</li>
-            )}
-            {filtered.map((item, idx) => {
+            {baseItems.map((item, idx) => {
               const path = item.id !== null ? (pathMap.get(item.id) ?? '') : ''
               const selected = isSelected(item.id)
               const focused = idx === focusedIdx
+              const matched = matchedIds !== null && item.id !== null && matchedIds.has(item.id)
               return (
                 <li
                   key={item.id ?? '__null__'}
@@ -190,6 +202,7 @@ export default function HierarchyPicker({
                     'jd-picker__item',
                     selected ? 'selected' : '',
                     focused  ? 'focused'  : '',
+                    matched  ? 'matched'  : '',
                     item.id === null ? 'jd-picker__root' : '',
                   ].filter(Boolean).join(' ')}
                   onClick={() => select(item.id)}

@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 23 — 2026-06-04
+Corrections post-test terrain (build 22) : (1) Fix crash NoteView page blanche — useRef placé après les early returns violait les règles des hooks React. (2) Vue semaine : clic sur une colonne jour affiche le panneau notes en dessous (même comportement que la vue mensuelle). (3) HEIC : ajout heic-convert (WASM) comme fallback quand sharp ne peut pas décoder HEIC. (4) Overlay médias mobile : @media pointer:coarse au lieu de hover:none, plus fiable sur iOS/Android. (5) HierarchyPicker : au lieu de filtrer, défile vers la première correspondance et surligne les items matchés en maintenant la hiérarchie complète visible.
+
+---
+
 ## Build 22 — 2026-06-04
 Sprint mobile/UX : (1) Fix timezone — toutes les fonctions de date locale utilisent désormais les méthodes getFullYear/getMonth/getDate au lieu de toISOString() UTC, corrige le recul de 2 jours sur les flèches journal et l'ancrage incorrecte de la vue semaine. (2) HEIC → JPEG : conversion automatique côté serveur via sharp, les images iPhone sont maintenant affichées partout. (3) Swipe mobile dans Lightbox (médias) et NoteView (navigation notes). (4) Vue semaine mobile : header compact, titres masqués, min-width 44px → utilisable en portrait. Dates centrées en paysage. (5) Overlay média toujours visible sur écrans tactiles (@media hover:none). (6) Filtre médias "Tous/Non liés/Liés" remplacé par boutons inline. (7) HierarchyPicker : items triés alphabétiquement par chemin hiérarchique complet.
 

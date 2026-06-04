@@ -7,10 +7,11 @@
     "dev": "node --watch index.js"
   },
   "dependencies": {
-    "@pogil/shared": "*",
     "@hono/node-server": "^1.13.1",
+    "@pogil/shared": "*",
     "bcryptjs": "^3.0.2",
     "exifreader": "^4.23.1",
+    "heic-convert": "^2.1.0",
     "hono": "^4.6.3",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^8.0.10",

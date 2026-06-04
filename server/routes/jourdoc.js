@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { mkdirSync, writeFileSync, unlinkSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import sharp from 'sharp'
+import heicConvert from 'heic-convert'
 import ExifReader from 'exifreader'
 import db from '../db/db.js'
 import { authMiddleware } from '../middleware/authMiddleware.js'
@@ -662,6 +663,13 @@ async function processImage(buffer, ext) {
     const out = await pipeline.withMetadata().toBuffer()
     return { buf: out, outExt: needsConvert ? 'jpg' : ext, size: out.length }
   } catch {
+    if (needsConvert) {
+      // Fallback JS-WASM si sharp ne peut pas décoder HEIC
+      try {
+        const jpegBuf = Buffer.from(await heicConvert({ buffer, format: 'JPEG', quality: 0.9 }))
+        return { buf: jpegBuf, outExt: 'jpg', size: jpegBuf.length }
+      } catch { /* heic-convert a aussi échoué */ }
+    }
     return { buf: buffer, outExt: ext, size: buffer.length }
   }
 }

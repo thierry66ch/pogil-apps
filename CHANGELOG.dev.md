@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 25 — 2026-06-04
+HierarchyPicker scroll : soustraction du offsetTop de la <ul> (l'offsetParent étant le dropdown positionné, el.offsetTop incluait la hauteur de la zone de recherche → item 2 lignes au-dessus du visible). Correction : scrollTop = el.offsetTop - listRef.offsetTop.
+
+---
+
 ## Build 24 — 2026-06-04
 HEIC (3e tentative) : ajout détection magic bytes — iOS envoie souvent du contenu JPEG avec extension .heic ; la détection (FF D8 → jpeg, ftyp → heif) permet de distinguer les deux cas et évite une conversion inutile. Pour les vrais HEIC, la chaîne reste sharp → heic-convert WASM → fallback. HierarchyPicker : scroll vers le haut du container (scrollTop = el.offsetTop) quand une recherche est active, au lieu de scrollIntoView nearest qui plaçait l'item en dernière ligne.
 

@@ -75,7 +75,7 @@ export default function HierarchyPicker({
     const el = listRef.current.querySelectorAll('li')[focusedIdx]
     if (!el) return
     if (q) {
-      listRef.current.scrollTop = el.offsetTop
+      listRef.current.scrollTop = el.offsetTop - listRef.current.offsetTop
     } else {
       el.scrollIntoView({ block: 'nearest' })
     }

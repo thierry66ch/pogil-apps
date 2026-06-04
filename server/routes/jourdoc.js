@@ -917,7 +917,9 @@ jourdoc.post('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
     const data = await res.json()
     // API v1 peut envelopper dans { task: {...} } ou retourner l'objet directement
     const task = data.id ? data : (data.task ?? data.item ?? data)
-    db.prepare('UPDATE jd_notes SET tache_todoist_id=? WHERE id=?').run(task.id, noteId)
+    const cachedDue = task.due?.date ?? due_date ?? null
+    db.prepare('UPDATE jd_notes SET tache_todoist_id=?, tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=0 WHERE id=?')
+      .run(task.id, cachedDue, Number(priority) || 2, noteId)
     return c.json({ task_id: task.id, url: `https://app.todoist.com/app/task/${task.id}` })
   } catch (e) {
     return c.json({ error: `Impossible de contacter Todoist : ${e.message}` }, 502)
@@ -951,12 +953,17 @@ jourdoc.get('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
     const task = extractTask(data)
     // API v1 : champ "checked" (booléen) + "completed_at" (timestamp) — pas "is_completed"
     const completed = Boolean(task?.checked || task?.completed_at || task?.is_completed)
+    const dueDate = task?.due?.date ?? null
+    const priority = task?.priority ?? null
+    // Mise à jour du cache local
+    db.prepare('UPDATE jd_notes SET tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=? WHERE id=?')
+      .run(dueDate, priority, completed ? 1 : 0, noteId)
     return c.json({
       linked:    true,
       completed,
       content:   task?.content  ?? null,
       due:       task?.due      ?? task?.deadline ?? null,
-      priority:  task?.priority ?? null,
+      priority,
       url:       `https://app.todoist.com/app/task/${task?.id ?? taskId}`,
       task_id:   task?.id ?? taskId,
     })
@@ -981,7 +988,10 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/close', wsCheck, async (c) => {
       headers: todoistAuthHeader(ws.todoist_token),  // pas de Content-Type sur POST sans corps
     })
     // 200, 204, ou tout 2xx = succès
-    if (res.ok || res.status === 204) return c.json({ ok: true })
+    if (res.ok || res.status === 204) {
+      db.prepare('UPDATE jd_notes SET tache_todoist_done=1 WHERE id=?').run(noteId)
+      return c.json({ ok: true })
+    }
     const body = await res.text().catch(() => '')
     return c.json({ error: `Todoist ${res.status}: ${body.slice(0, 200) || 'pas de détail'}` }, 400)
   } catch (e) {
@@ -1007,7 +1017,7 @@ jourdoc.delete('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
     } catch { /* on continue même si ça échoue */ }
   }
 
-  db.prepare('UPDATE jd_notes SET tache_todoist_id=NULL WHERE id=?').run(noteId)
+  db.prepare('UPDATE jd_notes SET tache_todoist_id=NULL, tache_todoist_due=NULL, tache_todoist_priority=NULL, tache_todoist_done=0 WHERE id=?').run(noteId)
   return c.json({ ok: true })
 })
 

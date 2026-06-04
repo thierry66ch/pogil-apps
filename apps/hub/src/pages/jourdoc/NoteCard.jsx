@@ -5,6 +5,14 @@ import Lightbox from './Lightbox'
 const NATURE_ICON = { observation: '👁', activite: '⚡' }
 const TYPE_ICON   = { journal: '📔', documentation: '📄' }
 
+const PRIO_COLOR = { 4: '#db4035', 3: '#ff9933', 2: '#4073ff', 1: '#aaa' }
+const PRIO_LABEL = { 4: 'P1', 3: 'P2', 2: 'P3', 1: 'P4' }
+
+function fmtDue(iso) {
+  if (!iso) return ''
+  return new Date(iso + 'T00:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })
+}
+
 export default function NoteCard({ note, contextNoteIds }) {
   const { wsId } = useParams()
   const navigate = useNavigate()
@@ -54,6 +62,27 @@ export default function NoteCard({ note, contextNoteIds }) {
           {note.medias.length > 5 && (
             <div className="jd-thumb jd-thumb--more">+{note.medias.length - 5}</div>
           )}
+        </div>
+      )}
+
+      {/* Chip Todoist */}
+      {note.tache_todoist_id && (
+        <div className="jd-note-card__todoist" onClick={e => e.stopPropagation()}>
+          <span className="todoist-logo-sm">✓</span>
+          {note.tache_todoist_done
+            ? <span className="jd-note-card__todoist-done">Terminée</span>
+            : <>
+                {note.tache_todoist_priority && (
+                  <span className="jd-note-card__todoist-prio"
+                    style={{ color: PRIO_COLOR[note.tache_todoist_priority] }}>
+                    {PRIO_LABEL[note.tache_todoist_priority]}
+                  </span>
+                )}
+                {note.tache_todoist_due && (
+                  <span className="jd-note-card__todoist-due">📅 {fmtDue(note.tache_todoist_due)}</span>
+                )}
+              </>
+          }
         </div>
       )}
 

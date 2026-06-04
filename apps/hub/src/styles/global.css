@@ -3064,3 +3064,17 @@ button, input, select, textarea { font: inherit; color: inherit }
   border-radius: var(--r-full); border: 1.5px solid var(--prio-color);
   color: var(--prio-color); background: transparent; white-space: nowrap;
 }
+.jd-note-card__todoist {
+  display: flex; align-items: center; gap: .375rem;
+  margin-top: .375rem; padding-top: .375rem;
+  border-top: 1px solid var(--border);
+  font-size: .75rem; color: var(--text-muted);
+}
+.todoist-logo-sm {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: #e44332; color: #fff; font-size: .55rem; font-weight: 900; flex-shrink: 0;
+}
+.jd-note-card__todoist-done { color: #16a34a; font-weight: 600 }
+.jd-note-card__todoist-prio { font-weight: 700; font-size: .72rem }
+.jd-note-card__todoist-due  { font-size: .72rem }

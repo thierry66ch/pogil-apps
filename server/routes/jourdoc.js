@@ -838,7 +838,7 @@ jourdoc.put('/:wsId/todoist', wsCheck, async (c) => {
   const wsId = c.get('wsId')
   const { token, project_id, project_nom } = await c.req.json()
   db.prepare('UPDATE workspaces SET todoist_token=?, todoist_project_id=?, todoist_project_nom=? WHERE id=?')
-    .run(token || null, project_id || null, project_nom || null, wsId)
+    .run(token?.trim() || null, project_id || null, project_nom || null, wsId)
   return c.json({ ok: true })
 })
 
@@ -846,20 +846,23 @@ jourdoc.put('/:wsId/todoist', wsCheck, async (c) => {
 jourdoc.post('/:wsId/todoist/projects', wsCheck, async (c) => {
   const wsId = c.get('wsId')
   const body = await c.req.json().catch(() => ({}))
-  // Utilise le token fourni (test) ou le token stocké
-  let token = body.token
+  // Utilise le token fourni (test) ou le token stocké ; trim() pour éviter les espaces de copier-coller
+  let token = (body.token ?? '').trim()
   if (!token) {
     const ws = db.prepare('SELECT todoist_token FROM workspaces WHERE id=?').get(wsId)
-    token = ws?.todoist_token
+    token = (ws?.todoist_token ?? '').trim()
   }
   if (!token) return c.json({ error: 'Aucun token' }, 400)
   try {
     const res = await fetch(`${TODOIST_API}/projects`, { headers: todoistHeaders(token) })
-    if (!res.ok) return c.json({ error: 'Token invalide ou erreur Todoist' }, 400)
+    if (!res.ok) {
+      const body = await res.text().catch(() => '')
+      return c.json({ error: `Todoist a répondu HTTP ${res.status} — ${body.slice(0, 200) || 'pas de détail'}` }, 400)
+    }
     const projects = await res.json()
     return c.json({ projects: projects.map(p => ({ id: p.id, name: p.name })) })
-  } catch {
-    return c.json({ error: 'Impossible de contacter Todoist' }, 502)
+  } catch (e) {
+    return c.json({ error: `Impossible de contacter Todoist : ${e.message}` }, 502)
   }
 })
 

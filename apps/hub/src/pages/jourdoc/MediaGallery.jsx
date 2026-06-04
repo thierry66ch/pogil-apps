@@ -8,7 +8,9 @@ import Lightbox from './Lightbox'
 
 // ── Utilitaires de période ────────────────────────────────────
 
-function toISO(d) { return d.toISOString().slice(0, 10) }
+function toISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
 function today()  { return toISO(new Date()) }
 
 const PERIODS = [
@@ -218,12 +220,15 @@ export default function MediaGallery() {
           <option value="photo">Photos</option>
           <option value="pdf">PDF</option>
         </select>
-        <select className="input" style={{ width: 'auto', padding: '.35rem .6rem', fontSize: '.875rem' }}
-          value={filterLie} onChange={e => setFilterLie(e.target.value)}>
-          <option value="">Tous</option>
-          <option value="0">Non liés</option>
-          <option value="1">Liés à une note</option>
-        </select>
+        <div className="period-nav__pills" style={{ gap: '.25rem' }}>
+          {[['', 'Tous'], ['0', 'Non liés'], ['1', 'Liés']].map(([val, label]) => (
+            <button key={val}
+              className={`period-pill${filterLie === val ? ' active' : ''}`}
+              onClick={() => setFilterLie(val)}>
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Zone d'upload */}

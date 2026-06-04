@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
@@ -71,8 +71,20 @@ export default function NoteView() {
     navigate(`/jourdoc/${wsId}/notes/${id}`, { state: location.state, replace: true })
   }
 
+  const touchStart = useRef(null)
+  function onTouchStart(e) { touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY } }
+  function onTouchEnd(e) {
+    if (!touchStart.current) return
+    const dx = e.changedTouches[0].clientX - touchStart.current.x
+    const dy = e.changedTouches[0].clientY - touchStart.current.y
+    touchStart.current = null
+    if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.7) return
+    if (dx > 0 && prevId) navTo(prevId)
+    else if (dx < 0 && nextId) navTo(nextId)
+  }
+
   return (
-    <div className="note-view">
+    <div className="note-view" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       {/* Barre d'actions */}
       <div className="note-view__bar">
         <button className="btn btn-ghost" style={{ padding: '.35rem .6rem', fontSize: '.875rem' }}

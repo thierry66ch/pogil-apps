@@ -1,6 +1,8 @@
 // Utilitaires calendrier partagés entre CalendarView et MediaGallery
 
-export function toISO(d) { return d.toISOString().slice(0, 10) }
+export function toISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
 export function todayISO() { return toISO(new Date()) }
 
 export function getRange(anchor, period) {

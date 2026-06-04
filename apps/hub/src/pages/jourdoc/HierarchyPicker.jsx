@@ -1,6 +1,22 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { buildPathMap } from './hooks'
 
+function buildSortPath(items) {
+  const map = new Map(items.map(i => [i.id, i]))
+  const cache = new Map()
+  function get(id) {
+    if (cache.has(id)) return cache.get(id)
+    const item = map.get(id)
+    if (!item) return ''
+    const seg = item.nom
+    const path = item.parent_id ? `${get(item.parent_id)}/${seg}` : seg
+    cache.set(id, path)
+    return path
+  }
+  for (const i of items) get(i.id)
+  return cache
+}
+
 /**
  * Sélecteur hiérarchique avec recherche textuelle et navigation clavier.
  * mode="single"  → valeur unique (id ou null)
@@ -18,11 +34,18 @@ export default function HierarchyPicker({
   const searchRef = useRef(null)
   const listRef = useRef(null)
   const pathMap = useMemo(() => buildPathMap(items), [items])
+  const sortPathMap = useMemo(() => buildSortPath(items), [items])
 
-  // Liste complète : option racine éventuelle + items normaux
+  const sortedItems = useMemo(() =>
+    [...items].sort((a, b) =>
+      (sortPathMap.get(a.id) ?? a.nom).localeCompare(sortPathMap.get(b.id) ?? b.nom, 'fr', { sensitivity: 'base' })
+    )
+  , [items, sortPathMap])
+
+  // Liste complète : option racine éventuelle + items triés
   const baseItems = useMemo(() =>
-    nullable ? [{ id: null, nom: nullLabel, nom_court: '' }, ...items] : items
-  , [items, nullable, nullLabel])
+    nullable ? [{ id: null, nom: nullLabel, nom_court: '' }, ...sortedItems] : sortedItems
+  , [sortedItems, nullable, nullLabel])
 
   const filtered = useMemo(() => {
     if (!q) return baseItems

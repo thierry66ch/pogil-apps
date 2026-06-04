@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 22 — 2026-06-04
+Sprint mobile/UX : (1) Fix timezone — toutes les fonctions de date locale utilisent désormais les méthodes getFullYear/getMonth/getDate au lieu de toISOString() UTC, corrige le recul de 2 jours sur les flèches journal et l'ancrage incorrecte de la vue semaine. (2) HEIC → JPEG : conversion automatique côté serveur via sharp, les images iPhone sont maintenant affichées partout. (3) Swipe mobile dans Lightbox (médias) et NoteView (navigation notes). (4) Vue semaine mobile : header compact, titres masqués, min-width 44px → utilisable en portrait. Dates centrées en paysage. (5) Overlay média toujours visible sur écrans tactiles (@media hover:none). (6) Filtre médias "Tous/Non liés/Liés" remplacé par boutons inline. (7) HierarchyPicker : items triés alphabétiquement par chemin hiérarchique complet.
+
+---
+
 ## Build 21 — 2026-06-03
 Import CSV objets + thèmes : backend parseur (BOM, séparateur ; ou , auto-détecté, commentaires #), format chemin hiérarchique (Arbres/Fruitiers/Pommiers) ou nom+parent, idempotent (doublons ignorés). Routes POST /import/objets et /import/themes. CsvImporter : upload drag&drop + coller, prévisualisation table, résultats (créés/existants). Section import dans WorkspaceManager avec onglets Objets/Thèmes et exemples chargeables.
 

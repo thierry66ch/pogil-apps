@@ -1,6 +1,8 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 export default function Lightbox({ media, onClose, onPrev, onNext }) {
+  const touchX = useRef(null)
+
   useEffect(() => {
     function onKey(e) {
       if (e.key === 'Escape')      onClose()
@@ -13,8 +15,18 @@ export default function Lightbox({ media, onClose, onPrev, onNext }) {
 
   if (!media) return null
 
+  function onTouchStart(e) { touchX.current = e.touches[0].clientX }
+  function onTouchEnd(e) {
+    if (touchX.current === null) return
+    const dx = e.changedTouches[0].clientX - touchX.current
+    touchX.current = null
+    if (dx > 60) onPrev?.()
+    else if (dx < -60) onNext?.()
+  }
+
   return (
-    <div className="lightbox" onClick={onClose}>
+    <div className="lightbox" onClick={onClose}
+      onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       {/* Précédent */}
       {onPrev && (
         <button className="lightbox__nav lightbox__nav--prev"

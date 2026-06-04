@@ -6,7 +6,10 @@ import { authHeader } from './hooks'
 import { sortedIds } from './calUtils'
 import NoteCard from './NoteCard'
 
-function isoToday() { return new Date().toISOString().slice(0, 10) }
+function localISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+function isoToday() { return localISO(new Date()) }
 function fmtDate(iso) {
   if (!iso) return ''
   const d = new Date(iso + 'T00:00:00')
@@ -15,7 +18,7 @@ function fmtDate(iso) {
 function shiftDate(iso, days) {
   const d = new Date(iso + 'T00:00:00')
   d.setDate(d.getDate() + days)
-  return d.toISOString().slice(0, 10)
+  return localISO(d)
 }
 
 export default function JourDocJournal() {

@@ -9,7 +9,10 @@ import MediaCard from './MediaCard'
 import NoteLinkPicker from './NoteLinkPicker'
 import RichTextEditor from './RichTextEditor'
 
-function today() { return new Date().toISOString().slice(0, 10) }
+function today() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
 
 const NATURE_ICO = { observation: '👁', activite: '⚡', documentation: '📄', journal: '📔' }
 

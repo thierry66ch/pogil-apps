@@ -629,6 +629,7 @@ jourdoc.delete('/:wsId/notes/:id', (c) => {
 
 const ALLOWED_EXTS = new Set(['jpg','jpeg','png','gif','webp','heic','heif','avif','pdf'])
 const IMAGE_EXTS   = new Set(['jpg','jpeg','png','gif','webp','heic','heif','avif'])
+const HEIC_EXTS    = new Set(['heic','heif'])
 const MAX_DIM = 1600
 
 // Extrait la date de prise depuis les métadonnées EXIF (format ISO YYYY-MM-DD)
@@ -643,22 +644,26 @@ function extractExifDate(buffer) {
   return null
 }
 
-// Réduit l'image à MAX_DIM px sur le grand côté, préserve les métadonnées EXIF
-async function resizeImage(buffer, ext) {
-  if (!IMAGE_EXTS.has(ext)) return { buf: buffer, size: buffer.length }
+// Traite l'image : convertit HEIC→JPEG et réduit à MAX_DIM si nécessaire
+async function processImage(buffer, ext) {
+  if (!IMAGE_EXTS.has(ext)) return { buf: buffer, outExt: ext, size: buffer.length }
+  const needsConvert = HEIC_EXTS.has(ext)
   try {
     const img = sharp(buffer)
     const meta = await img.metadata()
     const w = meta.width ?? 0
     const h = meta.height ?? 0
-    if (w <= MAX_DIM && h <= MAX_DIM) return { buf: buffer, size: buffer.length }
-    const out = await img
-      .resize({ width: MAX_DIM, height: MAX_DIM, fit: 'inside', withoutEnlargement: true })
-      .withMetadata()
-      .toBuffer()
-    return { buf: out, size: out.length }
-  } catch { /* Sharp ne supporte pas ce format (ex. HEIC sans libheif) */ }
-  return { buf: buffer, size: buffer.length }
+    const needsResize = w > MAX_DIM || h > MAX_DIM
+    if (!needsResize && !needsConvert) return { buf: buffer, outExt: ext, size: buffer.length }
+    let pipeline = needsResize
+      ? img.resize({ width: MAX_DIM, height: MAX_DIM, fit: 'inside', withoutEnlargement: true })
+      : img
+    if (needsConvert) pipeline = pipeline.jpeg({ quality: 90 })
+    const out = await pipeline.withMetadata().toBuffer()
+    return { buf: out, outExt: needsConvert ? 'jpg' : ext, size: out.length }
+  } catch {
+    return { buf: buffer, outExt: ext, size: buffer.length }
+  }
 }
 
 jourdoc.post('/:wsId/medias', async (c) => {
@@ -684,14 +689,14 @@ jourdoc.post('/:wsId/medias', async (c) => {
     const typeMedia = ext === 'pdf' ? 'pdf' : 'photo'
     const rawBuf = Buffer.from(await file.arrayBuffer())
 
-    // 1. Date EXIF en priorité
+    // 1. Date EXIF en priorité (lire depuis le buffer d'origine avant conversion)
     const exifDate = extractExifDate(rawBuf)
     const datePrise = exifDate ?? fallbackDate
 
-    // 2. Réduction si image > 1600 px
-    const { buf, size } = await resizeImage(rawBuf, ext)
+    // 2. Conversion HEIC→JPEG + réduction si > MAX_DIM
+    const { buf, outExt, size } = await processImage(rawBuf, ext)
 
-    const filename = `${randomUUID()}.${ext}`
+    const filename = `${randomUUID()}.${outExt}`
     const filepath = `${dir}/${filename}`
     writeFileSync(filepath, buf)
 

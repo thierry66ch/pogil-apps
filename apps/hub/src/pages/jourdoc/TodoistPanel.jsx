@@ -131,7 +131,7 @@ export default function TodoistPanel({ wsId, token, note }) {
           <p style={{ color: 'var(--danger)', fontSize: '.8rem' }}>{status.error}</p>
         ) : (
           <>
-            {status._debug && !status.completed && (
+            {status._debug && (
               <details style={{ fontSize: '.7rem', color: 'var(--text-muted)', marginBottom: '.375rem' }}>
                 <summary style={{ cursor: 'pointer' }}>debug Todoist</summary>
                 <pre style={{ fontSize: '.65rem', whiteSpace: 'pre-wrap', margin: '.25rem 0 0' }}>

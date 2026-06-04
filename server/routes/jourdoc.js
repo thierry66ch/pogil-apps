@@ -935,43 +935,54 @@ jourdoc.get('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
   if (!ws?.todoist_token)      return c.json({ linked: true, error: 'Token manquant' })
 
   try {
-    const res = await fetch(`${TODOIST_API}/tasks/${note.tache_todoist_id}`, {
+    const taskId = note.tache_todoist_id
+    // include_completed=true pour voir les tâches terminées qui ne retournent pas 404
+    const res = await fetch(`${TODOIST_API}/tasks/${taskId}?include_completed=true`, {
       headers: todoistAuthHeader(ws.todoist_token)
     })
-    // 404 = tâche archivée/terminée (comportement REST v2 et v1)
+    const debugBase = { http_status: res.status, task_id: taskId }
+
     if (res.status === 404) {
-      return c.json({ linked: true, completed: true, task_id: note.tache_todoist_id })
+      console.log('[Todoist poll] 404 → completed', taskId)
+      return c.json({ linked: true, completed: true, task_id: taskId, _debug: { ...debugBase, path: '404' } })
     }
     if (!res.ok) {
       const body = await res.text().catch(() => '')
-      return c.json({ linked: true, error: `Todoist ${res.status}: ${body.slice(0, 100)}` })
+      console.log('[Todoist poll] error', res.status, body.slice(0, 200))
+      return c.json({ linked: true, error: `Todoist ${res.status}: ${body.slice(0, 100)}`, _debug: { ...debugBase, path: 'error', body: body.slice(0, 200) } })
     }
     const data = await res.json()
     const task = extractTask(data)
-    // Champs de complétion possibles selon la version de l'API
+    console.log('[Todoist poll] task keys:', task ? Object.keys(task).join(', ') : 'null')
+    console.log('[Todoist poll] completion fields:', JSON.stringify({
+      is_completed: task?.is_completed, checked: task?.checked,
+      completed_at: task?.completed_at, date_completed: task?.date_completed, status: task?.status
+    }))
     const completed = Boolean(
       task?.is_completed || task?.checked || task?.completed_at || task?.date_completed
     )
+    const debug = {
+      ...debugBase, path: '200',
+      is_completed:   task?.is_completed,
+      checked:        task?.checked,
+      completed_at:   task?.completed_at,
+      date_completed: task?.date_completed,
+      status:         task?.status,
+      keys: task ? Object.keys(task).join(', ') : null,
+    }
     return c.json({
       linked:    true,
       completed,
-      content:   task?.content   ?? null,
-      due:       task?.due       ?? task?.deadline ?? null,
-      priority:  task?.priority  ?? null,
-      url:       `https://app.todoist.com/app/task/${task?.id ?? note.tache_todoist_id}`,
-      task_id:   task?.id ?? note.tache_todoist_id,
-      // Champs bruts pour diagnostic — à retirer une fois le bon champ identifié
-      _debug: {
-        is_completed: task?.is_completed,
-        checked:      task?.checked,
-        completed_at: task?.completed_at,
-        date_completed: task?.date_completed,
-        status:       task?.status,
-        keys: task ? Object.keys(task).join(', ') : null,
-      },
+      content:   task?.content  ?? null,
+      due:       task?.due      ?? task?.deadline ?? null,
+      priority:  task?.priority ?? null,
+      url:       `https://app.todoist.com/app/task/${task?.id ?? taskId}`,
+      task_id:   task?.id ?? taskId,
+      _debug:    debug,
     })
   } catch (e) {
-    return c.json({ linked: true, error: `Impossible de contacter Todoist : ${e.message}` })
+    console.log('[Todoist poll] exception:', e.message)
+    return c.json({ linked: true, error: `Impossible de contacter Todoist : ${e.message}`, _debug: { error: e.message } })
   }
 })
 

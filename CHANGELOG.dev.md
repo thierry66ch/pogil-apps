@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 27 — 2026-06-04
+Intégration Todoist (CDC §6) : migration DB (todoist_token/project_id/project_nom sur workspaces). 5 endpoints serveur proxy (config GET/PUT, projects POST, task POST/GET/DELETE). TodoistPanel.jsx : création tâche (titre=note, lien retour, échéance, priorité P1-P4, récurrence texte libre avec popup aide syntaxe), statut polling au chargement, délier/supprimer. NoteView : TodoistPanel dans la sidebar. WorkspaceManager : section Todoist (saisie token masqué, test+chargement projets, sélection projet, enregistrement). Tous les appels Todoist passent par le serveur (clé jamais exposée au client).
+
+---
+
 ## Build 26 — 2026-06-04
 Validation backlog C+E : (C) ObjetManager et ThemeManager déjà complets — éditeur inline arbre avec renommage, changement de parent (= insertion niveau intermédiaire), ajout enfant, suppression. (E) Nouveau mode "📋 7 jours" dans CalendarView : affiche les 7 derniers jours se terminant sur l'anchor (anchor = aujourd'hui par défaut), navigation par blocs de 7 jours via les flèches, réutilise CalendarWeek avec prop mode="last7". Ajout getRange/shiftAnchor/rangeLabel/daysOfLast7 pour le period "last7" dans calUtils.
 

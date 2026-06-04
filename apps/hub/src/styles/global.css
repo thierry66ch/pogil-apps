@@ -2983,3 +2983,71 @@ button, input, select, textarea { font: inherit; color: inherit }
 }
 .ws-manager__import-tab.active { background: var(--accent); color: #fff; border-color: var(--accent) }
 .ws-manager__import-tab:not(.active):hover { border-color: var(--accent); color: var(--accent) }
+
+/* ── Todoist ──────────────────────────────── */
+.todoist-panel {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: .75rem;
+}
+.todoist-panel--loading { opacity: .6 }
+.todoist-panel__header {
+  display: flex; align-items: center; gap: .5rem;
+  margin-bottom: .625rem;
+}
+.todoist-logo {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #e44332; color: #fff; font-size: .7rem; font-weight: 900; flex-shrink: 0;
+}
+.todoist-panel__title { font-weight: 600; font-size: .875rem; flex: 1 }
+.todoist-badge {
+  font-size: .7rem; font-weight: 700; padding: .1rem .45rem;
+  border-radius: var(--r-full);
+}
+.todoist-badge--open { background: #fff3cd; color: #856404 }
+.todoist-badge--done { background: #d1fae5; color: #065f46 }
+.todoist-task-content { font-size: .8125rem; margin: 0 0 .3rem; color: var(--text) }
+.todoist-task-due     { font-size: .75rem; color: var(--text-muted); margin: 0 0 .5rem }
+.todoist-link {
+  display: inline-block; font-size: .75rem; color: var(--accent);
+  text-decoration: none; margin-bottom: .5rem;
+}
+.todoist-link:hover { text-decoration: underline }
+.todoist-panel__actions { display: flex; gap: .375rem; flex-wrap: wrap }
+
+.todoist-form { display: flex; flex-direction: column; gap: .5rem }
+.todoist-form__row { display: flex; flex-direction: column; gap: .2rem }
+.todoist-form__label { font-size: .75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .04em }
+
+.todoist-priority-group { display: flex; gap: .25rem; flex-wrap: wrap }
+.todoist-prio-btn {
+  padding: .2rem .5rem; border-radius: var(--r-sm); font-size: .75rem; font-weight: 600;
+  border: 1.5px solid var(--border); background: transparent; cursor: pointer;
+  color: var(--text-muted); transition: all .12s;
+}
+.todoist-prio-btn:hover { border-color: var(--prio-color); color: var(--prio-color) }
+.todoist-prio-btn.active { background: var(--prio-color); border-color: var(--prio-color); color: #fff }
+
+.todoist-help-btn {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: transparent;
+  font-size: .7rem; font-weight: 700; color: var(--text-muted); cursor: pointer;
+  line-height: 1; flex-shrink: 0;
+}
+.todoist-help-btn:hover { border-color: var(--accent); color: var(--accent) }
+.todoist-help-popup {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: .625rem .75rem;
+  box-shadow: var(--shadow-lg); margin-top: .25rem;
+}
+.todoist-help-row { display: flex; align-items: baseline; gap: .625rem; margin-bottom: .25rem; font-size: .78rem }
+.todoist-help-code {
+  background: var(--surface-alt); padding: .1rem .35rem; border-radius: var(--r-sm);
+  font-family: var(--font-mono); font-size: .75rem; color: var(--accent); cursor: pointer; white-space: nowrap;
+}
+.todoist-help-code:hover { background: var(--accent-bg) }
+
+.todoist-config-form { display: flex; flex-direction: column; gap: .375rem }
+.todoist-config-row  { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap }

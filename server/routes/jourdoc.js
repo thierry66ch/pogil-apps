@@ -807,4 +807,155 @@ jourdoc.put('/:wsId/notes/:id/medias', async (c) => {
   return c.json({ ok: true })
 })
 
+// ── TODOIST ──────────────────────────────────────────────────
+
+const TODOIST_API = 'https://api.todoist.com/rest/v2'
+
+function todoistHeaders(token) {
+  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+}
+
+// Construit l'URL publique de la note à partir des headers de la requête
+function notePublicUrl(c, wsId, noteId) {
+  const proto = c.req.header('x-forwarded-proto') || 'https'
+  const host  = c.req.header('x-forwarded-host') || c.req.header('host') || 'localhost'
+  return `${proto}://${host}/jourdoc/${wsId}/notes/${noteId}`
+}
+
+// GET /:wsId/todoist — config du workspace (token masqué)
+jourdoc.get('/:wsId/todoist', wsCheck, (c) => {
+  const wsId = c.get('wsId')
+  const ws = db.prepare('SELECT todoist_token, todoist_project_id, todoist_project_nom FROM workspaces WHERE id=?').get(wsId)
+  return c.json({
+    configured: Boolean(ws?.todoist_token),
+    project_id:  ws?.todoist_project_id  ?? null,
+    project_nom: ws?.todoist_project_nom ?? null,
+  })
+})
+
+// PUT /:wsId/todoist — enregistrer token + projet
+jourdoc.put('/:wsId/todoist', wsCheck, async (c) => {
+  const wsId = c.get('wsId')
+  const { token, project_id, project_nom } = await c.req.json()
+  db.prepare('UPDATE workspaces SET todoist_token=?, todoist_project_id=?, todoist_project_nom=? WHERE id=?')
+    .run(token || null, project_id || null, project_nom || null, wsId)
+  return c.json({ ok: true })
+})
+
+// POST /:wsId/todoist/projects — tester un token et retourner les projets
+jourdoc.post('/:wsId/todoist/projects', wsCheck, async (c) => {
+  const wsId = c.get('wsId')
+  const body = await c.req.json().catch(() => ({}))
+  // Utilise le token fourni (test) ou le token stocké
+  let token = body.token
+  if (!token) {
+    const ws = db.prepare('SELECT todoist_token FROM workspaces WHERE id=?').get(wsId)
+    token = ws?.todoist_token
+  }
+  if (!token) return c.json({ error: 'Aucun token' }, 400)
+  try {
+    const res = await fetch(`${TODOIST_API}/projects`, { headers: todoistHeaders(token) })
+    if (!res.ok) return c.json({ error: 'Token invalide ou erreur Todoist' }, 400)
+    const projects = await res.json()
+    return c.json({ projects: projects.map(p => ({ id: p.id, name: p.name })) })
+  } catch {
+    return c.json({ error: 'Impossible de contacter Todoist' }, 502)
+  }
+})
+
+// POST /:wsId/notes/:id/todoist — créer une tâche Todoist
+jourdoc.post('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
+  const wsId  = c.get('wsId')
+  const noteId = Number(c.req.param('noteId'))
+  const { due_date, priority = 2, recurrence } = await c.req.json()
+
+  const ws   = db.prepare('SELECT todoist_token, todoist_project_id FROM workspaces WHERE id=?').get(wsId)
+  if (!ws?.todoist_token) return c.json({ error: 'Todoist non configuré' }, 400)
+
+  const note = db.prepare('SELECT titre FROM jd_notes WHERE id=? AND workspace_id=?').get(noteId, wsId)
+  if (!note) return c.json({ error: 'Note introuvable' }, 404)
+
+  const noteUrl = notePublicUrl(c, wsId, noteId)
+  const taskBody = {
+    content:    note.titre,
+    description: `Source : [${note.titre}](${noteUrl})`,
+    project_id: ws.todoist_project_id || undefined,
+    priority:   Number(priority) || 2,
+  }
+  if (recurrence) taskBody.due_string = recurrence
+  else if (due_date) taskBody.due_date = due_date
+
+  try {
+    const res = await fetch(`${TODOIST_API}/tasks`, {
+      method: 'POST',
+      headers: { ...todoistHeaders(ws.todoist_token), 'X-Request-Id': randomUUID() },
+      body: JSON.stringify(taskBody),
+    })
+    if (!res.ok) {
+      const err = await res.text()
+      return c.json({ error: `Todoist: ${err}` }, 400)
+    }
+    const task = await res.json()
+    db.prepare('UPDATE jd_notes SET tache_todoist_id=? WHERE id=?').run(task.id, noteId)
+    return c.json({ task_id: task.id, url: `https://app.todoist.com/app/task/${task.id}` })
+  } catch {
+    return c.json({ error: 'Impossible de contacter Todoist' }, 502)
+  }
+})
+
+// GET /:wsId/notes/:id/todoist — statut de la tâche (polling)
+jourdoc.get('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
+  const wsId   = c.get('wsId')
+  const noteId = Number(c.req.param('noteId'))
+
+  const ws   = db.prepare('SELECT todoist_token FROM workspaces WHERE id=?').get(wsId)
+  const note = db.prepare('SELECT tache_todoist_id FROM jd_notes WHERE id=? AND workspace_id=?').get(noteId, wsId)
+  if (!note?.tache_todoist_id) return c.json({ linked: false })
+  if (!ws?.todoist_token)      return c.json({ linked: true, error: 'Token manquant' })
+
+  try {
+    const res = await fetch(`${TODOIST_API}/tasks/${note.tache_todoist_id}`, {
+      headers: todoistHeaders(ws.todoist_token)
+    })
+    if (res.status === 404) {
+      // Tâche complétée/archivée dans Todoist
+      return c.json({ linked: true, completed: true, task_id: note.tache_todoist_id })
+    }
+    if (!res.ok) return c.json({ linked: true, error: 'Erreur Todoist' })
+    const task = await res.json()
+    return c.json({
+      linked:    true,
+      completed: task.is_completed,
+      content:   task.content,
+      due:       task.due ?? null,
+      url:       `https://app.todoist.com/app/task/${task.id}`,
+      task_id:   task.id,
+    })
+  } catch {
+    return c.json({ linked: true, error: 'Impossible de contacter Todoist' })
+  }
+})
+
+// DELETE /:wsId/notes/:id/todoist — délier (et supprimer dans Todoist si souhaité)
+jourdoc.delete('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
+  const wsId   = c.get('wsId')
+  const noteId = Number(c.req.param('noteId'))
+  const { delete_in_todoist = false } = await c.req.json().catch(() => ({}))
+
+  const ws   = db.prepare('SELECT todoist_token FROM workspaces WHERE id=?').get(wsId)
+  const note = db.prepare('SELECT tache_todoist_id FROM jd_notes WHERE id=? AND workspace_id=?').get(noteId, wsId)
+  if (!note) return c.json({ error: 'Note introuvable' }, 404)
+
+  if (delete_in_todoist && note.tache_todoist_id && ws?.todoist_token) {
+    try {
+      await fetch(`${TODOIST_API}/tasks/${note.tache_todoist_id}`, {
+        method: 'DELETE', headers: todoistHeaders(ws.todoist_token)
+      })
+    } catch { /* on continue même si ça échoue */ }
+  }
+
+  db.prepare('UPDATE jd_notes SET tache_todoist_id=NULL WHERE id=?').run(noteId)
+  return c.json({ ok: true })
+})
+
 export default jourdoc

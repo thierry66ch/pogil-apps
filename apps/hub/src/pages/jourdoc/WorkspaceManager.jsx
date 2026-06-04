@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
@@ -25,6 +25,62 @@ export default function WorkspaceManager() {
   const [inviteRole, setInviteRole] = useState('member')
   const [inviteError, setInviteError] = useState('')
   const [inviteLoading, setInviteLoading] = useState(false)
+
+  // ── Todoist ──
+  const [tdConfig, setTdConfig]         = useState(null)   // { configured, project_id, project_nom }
+  const [tdToken, setTdToken]           = useState('')
+  const [tdProjects, setTdProjects]     = useState(null)   // liste après test
+  const [tdProjectId, setTdProjectId]   = useState('')
+  const [tdProjectNom, setTdProjectNom] = useState('')
+  const [tdEditing, setTdEditing]       = useState(false)
+  const [tdLoading, setTdLoading]       = useState(false)
+  const [tdError, setTdError]           = useState('')
+
+  const loadTodoist = useCallback(async () => {
+    const data = await fetch(API_ROUTES.JD_WS_TODOIST(wsId), { headers: authHeader(token) }).then(r => r.json())
+    setTdConfig(data)
+    setTdProjectId(data.project_id ?? '')
+    setTdProjectNom(data.project_nom ?? '')
+  }, [wsId, token])
+
+  async function testAndLoadProjects() {
+    setTdLoading(true); setTdError('')
+    try {
+      const res = await fetch(API_ROUTES.JD_WS_TODOIST_PROJS(wsId), {
+        method: 'POST', headers: authHeader(token),
+        body: JSON.stringify({ token: tdToken || undefined }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setTdError(data.error ?? 'Erreur'); return }
+      setTdProjects(data.projects)
+    } catch { setTdError('Erreur réseau') }
+    finally { setTdLoading(false) }
+  }
+
+  async function saveTodoist() {
+    setTdLoading(true); setTdError('')
+    try {
+      await fetch(API_ROUTES.JD_WS_TODOIST(wsId), {
+        method: 'PUT', headers: authHeader(token),
+        body: JSON.stringify({ token: tdToken || undefined, project_id: tdProjectId, project_nom: tdProjectNom }),
+      })
+      await loadTodoist()
+      setTdEditing(false); setTdToken(''); setTdProjects(null)
+      setMsg('Configuration Todoist enregistrée.')
+    } catch { setTdError('Erreur réseau') }
+    finally { setTdLoading(false) }
+  }
+
+  async function clearTodoist() {
+    if (!confirm('Supprimer la configuration Todoist de ce workspace ?')) return
+    await fetch(API_ROUTES.JD_WS_TODOIST(wsId), {
+      method: 'PUT', headers: authHeader(token),
+      body: JSON.stringify({ token: null, project_id: null, project_nom: null }),
+    })
+    await loadTodoist(); setMsg('Configuration Todoist supprimée.')
+  }
+
+  useEffect(() => { loadTodoist() }, [loadTodoist])
 
   const [importTab, setImportTab] = useState('objets')
   const [newWsName, setNewWsName] = useState('')
@@ -245,6 +301,69 @@ export default function WorkspaceManager() {
             onClick={() => setShowCreate(true)}>
             ✚ Créer un nouveau workspace
           </button>
+        )}
+      </section>
+
+      {/* ── Todoist ── */}
+      <section className="ws-manager__section">
+        <h3 className="ws-manager__title">✓ Intégration Todoist</h3>
+
+        {tdConfig === null ? (
+          <p style={{ color: 'var(--text-muted)', fontSize: '.875rem' }}>Chargement…</p>
+        ) : !tdEditing && tdConfig.configured ? (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.75rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '.875rem' }}>
+              Configuré ✓ — Projet : <strong>{tdConfig.project_nom ?? '(aucun)'}</strong>
+            </span>
+            <button className="btn btn-secondary" style={{ fontSize: '.8rem', padding: '.3rem .6rem' }}
+              onClick={() => setTdEditing(true)}>Modifier</button>
+            <button className="btn btn-ghost" style={{ fontSize: '.8rem', padding: '.3rem .6rem', color: 'var(--danger)' }}
+              onClick={clearTodoist}>Supprimer</button>
+          </div>
+        ) : (
+          <div className="todoist-config-form">
+            <p style={{ fontSize: '.8125rem', color: 'var(--text-muted)', marginBottom: '.75rem' }}>
+              Entrez votre clé API Todoist (disponible dans Todoist → Paramètres → Intégrations → API token).
+            </p>
+            {tdError && <p style={{ color: 'var(--danger)', fontSize: '.8rem', marginBottom: '.5rem' }}>{tdError}</p>}
+
+            <div className="todoist-config-row">
+              <input className="input" type="password" placeholder="Clé API Todoist…"
+                value={tdToken} onChange={e => setTdToken(e.target.value)}
+                style={{ flex: 1, fontSize: '.875rem' }} />
+              <button className="btn btn-secondary" onClick={testAndLoadProjects}
+                disabled={tdLoading || (!tdToken && !tdConfig.configured)}>
+                {tdLoading ? '…' : 'Tester & Charger projets'}
+              </button>
+            </div>
+
+            {tdProjects && (
+              <div className="todoist-config-row" style={{ marginTop: '.5rem' }}>
+                <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap' }}>Projet cible</label>
+                <select className="input" style={{ flex: 1, fontSize: '.875rem' }}
+                  value={tdProjectId}
+                  onChange={e => {
+                    const proj = tdProjects.find(p => p.id === e.target.value)
+                    setTdProjectId(e.target.value)
+                    setTdProjectNom(proj?.name ?? '')
+                  }}>
+                  <option value="">— Boîte de réception —</option>
+                  {tdProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                </select>
+              </div>
+            )}
+
+            {(tdProjects || tdConfig.configured) && (
+              <div style={{ display: 'flex', gap: '.5rem', marginTop: '.75rem' }}>
+                <button className="btn btn-primary" onClick={saveTodoist} disabled={tdLoading}>
+                  {tdLoading ? '…' : 'Enregistrer'}
+                </button>
+                <button className="btn btn-ghost" onClick={() => {
+                  setTdEditing(false); setTdToken(''); setTdProjects(null); setTdError('')
+                }}>Annuler</button>
+              </div>
+            )}
+          </div>
         )}
       </section>
 

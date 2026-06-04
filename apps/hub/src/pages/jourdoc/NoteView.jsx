@@ -6,6 +6,7 @@ import { authHeader } from './hooks'
 import RichTextView from './RichTextView'
 import MediaCard from './MediaCard'
 import Lightbox from './Lightbox'
+import TodoistPanel from './TodoistPanel'
 
 const NATURE_ICON = { observation: '👁', activite: '⚡', documentation: '📄', journal: '📔' }
 const NATURE_LABEL = { observation: 'Observation', activite: 'Activité', documentation: 'Documentation', journal: 'Journal' }
@@ -216,6 +217,11 @@ export default function NoteView() {
               )}
             </div>
           )}
+
+          {/* Tâche Todoist */}
+          <div className="note-view__sidebar-block">
+            <TodoistPanel wsId={wsId} token={token} note={note} />
+          </div>
 
           {/* Créée le */}
           <div className="note-view__sidebar-block note-view__meta-footer">

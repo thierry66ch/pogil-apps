@@ -20,11 +20,14 @@ CREATE TABLE IF NOT EXISTS apps (
 );
 
 CREATE TABLE IF NOT EXISTS workspaces (
-  id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  app_id      INTEGER REFERENCES apps(id) ON DELETE CASCADE,
-  name        TEXT NOT NULL,
-  created_by  INTEGER REFERENCES users(id),
-  created_at  DATETIME DEFAULT CURRENT_TIMESTAMP
+  id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+  app_id               INTEGER REFERENCES apps(id) ON DELETE CASCADE,
+  name                 TEXT NOT NULL,
+  created_by           INTEGER REFERENCES users(id),
+  created_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
+  todoist_token        TEXT,
+  todoist_project_id   TEXT,
+  todoist_project_nom  TEXT
 );
 
 CREATE TABLE IF NOT EXISTS user_app_access (

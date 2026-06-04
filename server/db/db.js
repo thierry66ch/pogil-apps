@@ -16,4 +16,9 @@ db.exec('PRAGMA foreign_keys=ON')
 const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf8')
 db.exec(schema)
 
+// Migrations incrémentales (idempotentes — SQLite lève une erreur si la colonne existe déjà)
+for (const col of ['todoist_token TEXT', 'todoist_project_id TEXT', 'todoist_project_nom TEXT']) {
+  try { db.exec(`ALTER TABLE workspaces ADD COLUMN ${col}`) } catch { /* déjà présente */ }
+}
+
 export default db

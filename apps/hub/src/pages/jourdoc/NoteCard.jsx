@@ -69,20 +69,9 @@ export default function NoteCard({ note, contextNoteIds }) {
       {note.tache_todoist_id && (
         <div className="jd-note-card__todoist" onClick={e => e.stopPropagation()}>
           <span className="todoist-logo-sm">✓</span>
-          {note.tache_todoist_done
-            ? <span className="jd-note-card__todoist-done">Terminée</span>
-            : <>
-                {note.tache_todoist_priority && (
-                  <span className="jd-note-card__todoist-prio"
-                    style={{ color: PRIO_COLOR[note.tache_todoist_priority] }}>
-                    {PRIO_LABEL[note.tache_todoist_priority]}
-                  </span>
-                )}
-                {note.tache_todoist_due && (
-                  <span className="jd-note-card__todoist-due">📅 {fmtDue(note.tache_todoist_due)}</span>
-                )}
-              </>
-          }
+          <span style={{ fontSize: '.63rem', color: 'var(--text-subtle)' }}>
+            p={String(note.tache_todoist_priority)} due={String(note.tache_todoist_due)} done={String(note.tache_todoist_done)}
+          </span>
         </div>
       )}
 

@@ -633,6 +633,16 @@ const IMAGE_EXTS   = new Set(['jpg','jpeg','png','gif','webp','heic','heif','avi
 const HEIC_EXTS    = new Set(['heic','heif'])
 const MAX_DIM = 1600
 
+// Détecte le vrai format depuis les magic bytes (ignore l'extension)
+function detectMagicFormat(buf) {
+  if (buf.length < 12) return null
+  if (buf[0] === 0xFF && buf[1] === 0xD8) return 'jpeg'
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return 'png'
+  if (buf.slice(0, 4).toString('ascii') === 'RIFF' && buf.slice(8, 12).toString('ascii') === 'WEBP') return 'webp'
+  if (buf.slice(4, 8).toString('ascii') === 'ftyp') return 'heif'
+  return null
+}
+
 // Extrait la date de prise depuis les métadonnées EXIF (format ISO YYYY-MM-DD)
 function extractExifDate(buffer) {
   try {
@@ -648,29 +658,38 @@ function extractExifDate(buffer) {
 // Traite l'image : convertit HEIC→JPEG et réduit à MAX_DIM si nécessaire
 async function processImage(buffer, ext) {
   if (!IMAGE_EXTS.has(ext)) return { buf: buffer, outExt: ext, size: buffer.length }
-  const needsConvert = HEIC_EXTS.has(ext)
+
+  // iOS envoie souvent du JPEG avec extension .heic — détecter le vrai format
+  const magic = detectMagicFormat(buffer)
+  const isActuallyHeic = HEIC_EXTS.has(ext) && magic !== 'jpeg' && magic !== 'png' && magic !== 'webp'
+  // Sortie toujours en .jpg pour tout fichier portant extension heic/heif
+  const outExt = HEIC_EXTS.has(ext) ? 'jpg' : (ext === 'jpeg' ? 'jpg' : ext)
+
   try {
     const img = sharp(buffer)
     const meta = await img.metadata()
     const w = meta.width ?? 0
     const h = meta.height ?? 0
     const needsResize = w > MAX_DIM || h > MAX_DIM
-    if (!needsResize && !needsConvert) return { buf: buffer, outExt: ext, size: buffer.length }
+    const needsConvert = isActuallyHeic
+    if (!needsResize && !needsConvert) return { buf: buffer, outExt, size: buffer.length }
     let pipeline = needsResize
       ? img.resize({ width: MAX_DIM, height: MAX_DIM, fit: 'inside', withoutEnlargement: true })
       : img
     if (needsConvert) pipeline = pipeline.jpeg({ quality: 90 })
     const out = await pipeline.withMetadata().toBuffer()
-    return { buf: out, outExt: needsConvert ? 'jpg' : ext, size: out.length }
+    return { buf: out, outExt, size: out.length }
   } catch {
-    if (needsConvert) {
-      // Fallback JS-WASM si sharp ne peut pas décoder HEIC
+    if (isActuallyHeic) {
+      // Fallback WASM si sharp ne peut pas décoder le HEIC natif
       try {
         const jpegBuf = Buffer.from(await heicConvert({ buffer, format: 'JPEG', quality: 0.9 }))
         return { buf: jpegBuf, outExt: 'jpg', size: jpegBuf.length }
-      } catch { /* heic-convert a aussi échoué */ }
+      } catch (e2) {
+        console.error('[HEIC] heic-convert failed:', e2?.message)
+      }
     }
-    return { buf: buffer, outExt: ext, size: buffer.length }
+    return { buf: buffer, outExt, size: buffer.length }
   }
 }
 

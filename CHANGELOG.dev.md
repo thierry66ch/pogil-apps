@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 24 — 2026-06-04
+HEIC (3e tentative) : ajout détection magic bytes — iOS envoie souvent du contenu JPEG avec extension .heic ; la détection (FF D8 → jpeg, ftyp → heif) permet de distinguer les deux cas et évite une conversion inutile. Pour les vrais HEIC, la chaîne reste sharp → heic-convert WASM → fallback. HierarchyPicker : scroll vers le haut du container (scrollTop = el.offsetTop) quand une recherche est active, au lieu de scrollIntoView nearest qui plaçait l'item en dernière ligne.
+
+---
+
 ## Build 23 — 2026-06-04
 Corrections post-test terrain (build 22) : (1) Fix crash NoteView page blanche — useRef placé après les early returns violait les règles des hooks React. (2) Vue semaine : clic sur une colonne jour affiche le panneau notes en dessous (même comportement que la vue mensuelle). (3) HEIC : ajout heic-convert (WASM) comme fallback quand sharp ne peut pas décoder HEIC. (4) Overlay médias mobile : @media pointer:coarse au lieu de hover:none, plus fiable sur iOS/Android. (5) HierarchyPicker : au lieu de filtrer, défile vers la première correspondance et surligne les items matchés en maintenant la hiérarchie complète visible.
 

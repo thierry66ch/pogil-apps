@@ -69,12 +69,17 @@ export default function HierarchyPicker({
   // Positionner le focus sur la première correspondance quand la recherche change
   useEffect(() => { setFocusedIdx(firstMatchIdx) }, [firstMatchIdx])
 
-  // Scroll automatique vers l'élément focalisé
+  // Scroll : si recherche active → item en tête de liste ; sinon → nearest
   useEffect(() => {
     if (!listRef.current) return
     const el = listRef.current.querySelectorAll('li')[focusedIdx]
-    el?.scrollIntoView({ block: 'nearest' })
-  }, [focusedIdx])
+    if (!el) return
+    if (q) {
+      listRef.current.scrollTop = el.offsetTop
+    } else {
+      el.scrollIntoView({ block: 'nearest' })
+    }
+  }, [focusedIdx, q])
 
   const close = useCallback(() => {
     setOpen(false)

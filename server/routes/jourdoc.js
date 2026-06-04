@@ -809,7 +809,7 @@ jourdoc.put('/:wsId/notes/:id/medias', async (c) => {
 
 // ── TODOIST ──────────────────────────────────────────────────
 
-const TODOIST_API = 'https://api.todoist.com/rest/v2'
+const TODOIST_API = 'https://api.todoist.com/api/v1'
 
 function todoistHeaders(token) {
   return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }

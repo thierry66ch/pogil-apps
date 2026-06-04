@@ -131,12 +131,6 @@ export default function TodoistPanel({ wsId, token, note }) {
           <p style={{ color: 'var(--danger)', fontSize: '.8rem' }}>{status.error}</p>
         ) : (
           <>
-            <details style={{ fontSize: '.7rem', color: 'var(--text-muted)', marginBottom: '.375rem' }}>
-              <summary style={{ cursor: 'pointer' }}>debug Todoist</summary>
-              <pre style={{ fontSize: '.65rem', whiteSpace: 'pre-wrap', margin: '.25rem 0 0' }}>
-                {JSON.stringify(status, null, 2)}
-              </pre>
-            </details>
             <p className="todoist-task-content">{status.content ?? note.titre}</p>
 
             <div className="todoist-task-meta">

@@ -940,36 +940,17 @@ jourdoc.get('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
     const res = await fetch(`${TODOIST_API}/tasks/${taskId}?include_completed=true`, {
       headers: todoistAuthHeader(ws.todoist_token)
     })
-    const debugBase = { http_status: res.status, task_id: taskId }
-
     if (res.status === 404) {
-      console.log('[Todoist poll] 404 → completed', taskId)
-      return c.json({ linked: true, completed: true, task_id: taskId, _debug: { ...debugBase, path: '404' } })
+      return c.json({ linked: true, completed: true, task_id: taskId })
     }
     if (!res.ok) {
       const body = await res.text().catch(() => '')
-      console.log('[Todoist poll] error', res.status, body.slice(0, 200))
-      return c.json({ linked: true, error: `Todoist ${res.status}: ${body.slice(0, 100)}`, _debug: { ...debugBase, path: 'error', body: body.slice(0, 200) } })
+      return c.json({ linked: true, error: `Todoist ${res.status}: ${body.slice(0, 100)}` })
     }
     const data = await res.json()
     const task = extractTask(data)
-    console.log('[Todoist poll] task keys:', task ? Object.keys(task).join(', ') : 'null')
-    console.log('[Todoist poll] completion fields:', JSON.stringify({
-      is_completed: task?.is_completed, checked: task?.checked,
-      completed_at: task?.completed_at, date_completed: task?.date_completed, status: task?.status
-    }))
-    const completed = Boolean(
-      task?.is_completed || task?.checked || task?.completed_at || task?.date_completed
-    )
-    const debug = {
-      ...debugBase, path: '200',
-      is_completed:   task?.is_completed,
-      checked:        task?.checked,
-      completed_at:   task?.completed_at,
-      date_completed: task?.date_completed,
-      status:         task?.status,
-      keys: task ? Object.keys(task).join(', ') : null,
-    }
+    // API v1 : champ "checked" (booléen) + "completed_at" (timestamp) — pas "is_completed"
+    const completed = Boolean(task?.checked || task?.completed_at || task?.is_completed)
     return c.json({
       linked:    true,
       completed,
@@ -978,11 +959,9 @@ jourdoc.get('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
       priority:  task?.priority ?? null,
       url:       `https://app.todoist.com/app/task/${task?.id ?? taskId}`,
       task_id:   task?.id ?? taskId,
-      _debug:    debug,
     })
   } catch (e) {
-    console.log('[Todoist poll] exception:', e.message)
-    return c.json({ linked: true, error: `Impossible de contacter Todoist : ${e.message}`, _debug: { error: e.message } })
+    return c.json({ linked: true, error: `Impossible de contacter Todoist : ${e.message}` })
   }
 })
 

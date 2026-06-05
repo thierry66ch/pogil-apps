@@ -882,20 +882,21 @@ jourdoc.post('/:wsId/todoist/projects', wsCheck, async (c) => {
 jourdoc.post('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
   const wsId  = c.get('wsId')
   const noteId = Number(c.req.param('noteId'))
-  const { due_date, priority = 2, recurrence } = await c.req.json()
+  const { due_date, priority = 2, recurrence, titre: titreTask } = await c.req.json()
 
   const ws   = db.prepare('SELECT todoist_token, todoist_project_id FROM workspaces WHERE id=?').get(wsId)
   if (!ws?.todoist_token) return c.json({ error: 'Todoist non configuré' }, 400)
 
-  const note = db.prepare('SELECT titre FROM jd_notes WHERE id=? AND workspace_id=?').get(noteId, wsId)
+  const note = db.prepare('SELECT titre, date FROM jd_notes WHERE id=? AND workspace_id=?').get(noteId, wsId)
   if (!note) return c.json({ error: 'Note introuvable' }, 404)
 
   const noteUrl = notePublicUrl(c, wsId, noteId)
+  const dateStr = note.date ? `\nDate : ${note.date}` : ''
   const taskBody = {
-    content:    note.titre,
-    description: `Source : [${note.titre}](${noteUrl})`,
-    project_id: ws.todoist_project_id || undefined,
-    priority:   Number(priority) || 2,
+    content:     titreTask?.trim() || note.titre,
+    description: `Source : [${note.titre}](${noteUrl})${dateStr}`,
+    project_id:  ws.todoist_project_id || undefined,
+    priority:    Number(priority) || 2,
   }
   if (recurrence) taskBody.due_string = recurrence
   else if (due_date) taskBody.due_date = due_date
@@ -1015,6 +1016,52 @@ jourdoc.delete('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
 
   db.prepare('UPDATE jd_notes SET tache_todoist_id=NULL, tache_todoist_due=NULL, tache_todoist_priority=NULL, tache_todoist_done=0 WHERE id=?').run(noteId)
   return c.json({ ok: true })
+})
+
+// GET /:wsId/notes/:noteId/todoist/details — date exécution + commentaires
+jourdoc.get('/:wsId/notes/:noteId/todoist/details', wsCheck, async (c) => {
+  const wsId   = c.get('wsId')
+  const noteId = Number(c.req.param('noteId'))
+  const ws   = db.prepare('SELECT todoist_token FROM workspaces WHERE id=?').get(wsId)
+  const note = db.prepare('SELECT tache_todoist_id FROM jd_notes WHERE id=? AND workspace_id=?').get(noteId, wsId)
+  if (!note?.tache_todoist_id) return c.json({ error: 'Aucune tâche liée' }, 400)
+  if (!ws?.todoist_token) return c.json({ error: 'Token manquant' }, 400)
+  const taskId = note.tache_todoist_id
+  try {
+    const [taskRes, commRes] = await Promise.all([
+      fetch(`${TODOIST_API}/tasks/${taskId}?include_completed=true`, { headers: todoistAuthHeader(ws.todoist_token) }),
+      fetch(`${TODOIST_API}/comments?task_id=${taskId}`, { headers: todoistAuthHeader(ws.todoist_token) }),
+    ])
+    const task = taskRes.ok ? extractTask(await taskRes.json()) : null
+    const commData = commRes.ok ? await commRes.json() : null
+    const comments = Array.isArray(commData) ? commData : (commData?.results ?? [])
+    return c.json({
+      completed_at: task?.completed_at ?? null,
+      comments: comments.map(cm => ({ content: cm.content, posted_at: cm.posted_at })),
+    })
+  } catch (e) {
+    return c.json({ error: `Impossible de contacter Todoist : ${e.message}` }, 502)
+  }
+})
+
+// POST /:wsId/notes/:noteId/todoist/import — ajoute date+commentaires à la fin du contenu de la note
+jourdoc.post('/:wsId/notes/:noteId/todoist/import', wsCheck, async (c) => {
+  const wsId   = c.get('wsId')
+  const noteId = Number(c.req.param('noteId'))
+  const { completed_at, comments = [] } = await c.req.json()
+  const note = db.prepare('SELECT contenu FROM jd_notes WHERE id=? AND workspace_id=?').get(noteId, wsId)
+  if (!note) return c.json({ error: 'Note introuvable' }, 404)
+  const dateStr = completed_at
+    ? new Date(completed_at).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' })
+    : ''
+  let append = `<hr><p><strong>✓ Tâche exécutée${dateStr ? ` le ${dateStr}` : ''}</strong></p>`
+  for (const cm of comments) {
+    const html = (cm.content ?? '').replace(/\n/g, '</p><p>')
+    append += `<blockquote><p>${html}</p></blockquote>`
+  }
+  const newContenu = (note.contenu ?? '') + append
+  db.prepare('UPDATE jd_notes SET contenu=? WHERE id=?').run(newContenu, noteId)
+  return c.json({ ok: true, contenu: newContenu })
 })
 
 export default jourdoc

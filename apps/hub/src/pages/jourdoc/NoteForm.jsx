@@ -51,15 +51,15 @@ export default function NoteForm() {
   const initMediaIds = location.state?.media_ids ?? []
 
   const [form, setForm] = useState({
-    type: 'journal',
-    nature: 'observation',
-    theme_id: null,
+    type:      location.state?.type    ?? 'journal',
+    nature:    location.state?.nature  ?? 'observation',
+    theme_id:  null,
     objet_ids: location.state?.objet_ids ?? [],
     media_ids: initMediaIds,
-    titre: '',
+    titre:     location.state?.titre   ?? '',
     titre_alt: '',
-    contenu: '',
-    date: location.state?.note_date ?? today(),  // date de la 1ère image si venue de la galerie
+    contenu:   location.state?.contenu ?? '',
+    date:      location.state?.note_date ?? today(),
     source_url: '',
   })
   const [noteLoaded, setNoteLoaded] = useState(!isEdit) // pour la clé de RichTextEditor
@@ -67,7 +67,7 @@ export default function NoteForm() {
   const [showPicker, setShowPicker] = useState(initMediaIds.length > 0)
   const [liens, setLiens] = useState([])           // notes sortantes (cette note → autres)
   const [liensEntrants, setLiensEntrants] = useState([])   // notes entrantes (autres → cette note)
-  const [pendingLinks, setPendingLinks] = useState([])      // liens en attente (mode création)
+  const [pendingLinks, setPendingLinks] = useState(location.state?.pending_links ?? [])  // liens en attente (mode création)
   const [showLinkPicker, setShowLinkPicker] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

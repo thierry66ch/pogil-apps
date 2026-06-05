@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { API_ROUTES } from '@pogil/shared'
 import { authHeader } from './hooks'
 
@@ -24,14 +25,19 @@ function priorityInfo(value) {
 }
 
 export default function TodoistPanel({ wsId, token, note }) {
-  const [status, setStatus]     = useState(null)
+  const navigate = useNavigate()
+  const { wsId: wsIdParam } = useParams()
+  const [status, setStatus]         = useState(null)
   const [refreshing, setRefreshing] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [form, setForm]         = useState({ due_date: '', priority: 2, recurrence: '' })
-  const [saving, setSaving]     = useState(false)
-  const [closing, setClosing]   = useState(false)
-  const [showHelp, setShowHelp] = useState(false)
-  const [err, setErr]           = useState('')
+  const [creating, setCreating]     = useState(false)
+  const [form, setForm]             = useState({ titre: note?.titre ?? '', due_date: '', priority: 2, recurrence: '' })
+  const [saving, setSaving]         = useState(false)
+  const [closing, setClosing]       = useState(false)
+  const [showHelp, setShowHelp]     = useState(false)
+  const [err, setErr]               = useState('')
+  const [details, setDetails]       = useState(null)   // { completed_at, comments }
+  const [loadingDetails, setLoadingDetails] = useState(false)
+  const [importing, setImporting]   = useState(false)
 
   const poll = useCallback(() => {
     if (!note?.tache_todoist_id) { setStatus({ linked: false }); return }
@@ -78,6 +84,7 @@ export default function TodoistPanel({ wsId, token, note }) {
         method: 'POST',
         headers: authHeader(token),
         body: JSON.stringify({
+          titre:      form.titre      || undefined,
           due_date:   form.due_date   || undefined,
           priority:   form.priority,
           recurrence: form.recurrence || undefined,
@@ -86,10 +93,65 @@ export default function TodoistPanel({ wsId, token, note }) {
       const data = await res.json()
       if (!res.ok) { setErr(data.error ?? 'Erreur'); return }
       setStatus({ linked: true, completed: false, url: data.url, task_id: data.task_id,
-        content: note.titre, priority: form.priority })
+        content: form.titre || note.titre, priority: form.priority })
       setCreating(false)
     } catch { setErr('Erreur réseau') }
     finally { setSaving(false) }
+  }
+
+  async function fetchDetails() {
+    if (details) return details
+    setLoadingDetails(true)
+    try {
+      const d = await fetch(API_ROUTES.JD_NOTE_TODOIST_DETAILS(wsId, note.id), { headers: authHeader(token) }).then(r => r.json())
+      setDetails(d)
+      return d
+    } finally { setLoadingDetails(false) }
+  }
+
+  async function importToNote() {
+    const d = await fetchDetails()
+    if (!d || d.error) { setStatus(s => ({ ...s, error: d?.error ?? 'Erreur' })); return }
+    setImporting(true)
+    try {
+      const res = await fetch(API_ROUTES.JD_NOTE_TODOIST_IMPORT(wsId, note.id), {
+        method: 'POST', headers: authHeader(token),
+        body: JSON.stringify({ completed_at: d.completed_at, comments: d.comments }),
+      })
+      if (res.ok) {
+        setStatus(s => ({ ...s, _imported: true }))
+        window.location.reload()  // recharge la note pour afficher le contenu mis à jour
+      }
+    } finally { setImporting(false) }
+  }
+
+  async function createFollowUp() {
+    const d = await fetchDetails()
+    if (!d || d.error) { setStatus(s => ({ ...s, error: d?.error ?? 'Erreur' })); return }
+    // Date d'exécution
+    const execDate = d.completed_at ? d.completed_at.slice(0, 10) : null
+    // Contenu pré-rempli avec les commentaires
+    let contenu = ''
+    if (d.completed_at) {
+      const dateStr = new Date(d.completed_at).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' })
+      contenu += `<p><strong>Exécuté le ${dateStr}</strong></p>`
+    }
+    for (const cm of d.comments) {
+      contenu += `<blockquote><p>${(cm.content ?? '').replace(/\n/g, '</p><p>')}</p></blockquote>`
+    }
+    navigate(`/jourdoc/${wsId}/new`, {
+      state: {
+        type:    'journal',
+        nature:  'activite',
+        note_date: execDate,
+        objet_ids: (note.objets ?? []).map(o => o.id),
+        contenu,
+        pending_links: [{
+          id: note.id, titre: note.titre,
+          type: note.type, nature: note.nature, date: note.date,
+        }],
+      }
+    })
   }
 
   async function unlink(deleteInTodoist) {
@@ -163,6 +225,20 @@ export default function TodoistPanel({ wsId, token, note }) {
               {closing ? '…' : '✓ Terminer'}
             </button>
           )}
+          {status.completed && !status._imported && (
+            <button className="btn btn-secondary" style={{ fontSize: '.75rem', padding: '.25rem .6rem' }}
+              onClick={importToNote} disabled={importing || loadingDetails}
+              title="Ajoute la date d'exécution et les commentaires Todoist à la fin de cette note">
+              {importing || loadingDetails ? '…' : '↓ Importer dans la note'}
+            </button>
+          )}
+          {status.completed && (
+            <button className="btn btn-secondary" style={{ fontSize: '.75rem', padding: '.25rem .6rem' }}
+              onClick={createFollowUp} disabled={loadingDetails}
+              title="Crée une note de suivi pré-remplie avec la date d'exécution et les commentaires">
+              {loadingDetails ? '…' : '→ Note de suivi'}
+            </button>
+          )}
           <button className="btn btn-ghost" style={{ fontSize: '.75rem', padding: '.25rem .5rem' }}
             onClick={() => unlink(false)}>Délier</button>
           <button className="btn btn-danger" style={{ fontSize: '.75rem', padding: '.25rem .5rem' }}
@@ -188,6 +264,14 @@ export default function TodoistPanel({ wsId, token, note }) {
       ) : (
         <form onSubmit={createTask} className="todoist-form">
           {err && <p style={{ color: 'var(--danger)', fontSize: '.8rem', margin: '0 0 .5rem' }}>{err}</p>}
+
+          <div className="todoist-form__row">
+            <label className="todoist-form__label">Titre de la tâche</label>
+            <input className="input" style={{ padding: '.3rem .5rem', fontSize: '.85rem' }}
+              value={form.titre}
+              onChange={e => setForm(f => ({ ...f, titre: e.target.value }))}
+              placeholder={note?.titre} />
+          </div>
 
           <div className="todoist-form__row">
             <label className="todoist-form__label">Échéance</label>

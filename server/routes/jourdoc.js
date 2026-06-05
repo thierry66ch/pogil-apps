@@ -1056,8 +1056,11 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/import', wsCheck, async (c) => {
     : ''
   let append = `<hr><p><strong>✓ Tâche exécutée${dateStr ? ` le ${dateStr}` : ''}</strong></p>`
   for (const cm of comments) {
+    const cmDate = cm.posted_at
+      ? new Date(cm.posted_at).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' })
+      : ''
     const html = (cm.content ?? '').replace(/\n/g, '</p><p>')
-    append += `<blockquote><p>${html}</p></blockquote>`
+    append += `<blockquote><p>${cmDate ? `<em>${cmDate}</em> — ` : ''}${html}</p></blockquote>`
   }
   const newContenu = (note.contenu ?? '') + append
   db.prepare('UPDATE jd_notes SET contenu=? WHERE id=?').run(newContenu, noteId)

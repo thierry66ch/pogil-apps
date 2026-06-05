@@ -137,7 +137,10 @@ export default function TodoistPanel({ wsId, token, note }) {
       contenu += `<p><strong>Exécuté le ${dateStr}</strong></p>`
     }
     for (const cm of d.comments) {
-      contenu += `<blockquote><p>${(cm.content ?? '').replace(/\n/g, '</p><p>')}</p></blockquote>`
+      const cmDate = cm.posted_at
+        ? new Date(cm.posted_at).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' })
+        : ''
+      contenu += `<blockquote><p>${cmDate ? `<em>${cmDate}</em> — ` : ''}${(cm.content ?? '').replace(/\n/g, '</p><p>')}</p></blockquote>`
     }
     navigate(`/jourdoc/${wsId}/new`, {
       state: {

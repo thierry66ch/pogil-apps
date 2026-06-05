@@ -51,3 +51,5 @@ coverage/
 
 # User uploads (stored on server, not in repo)
 uploads/
+apps/hub/src/pages/jourdoc/RichTextView_blacklisted_20260603_144405_taAf2ptYIi.jsx
+apps/hub/src/pages/jourdoc/RichTextView_blacklisted_*

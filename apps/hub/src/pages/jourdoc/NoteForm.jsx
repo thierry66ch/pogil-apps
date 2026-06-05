@@ -29,7 +29,7 @@ function NoteLienChip({ note, onClick, onRemove }) {
     <div className={`note-lien-chip note-lien-chip--${typeKey}`}>
       <button type="button" className="note-lien-chip__main" onClick={onClick}>
         <span className="note-lien-chip__icon">{icon}</span>
-        <span className="note-lien-chip__title">{note.titre}</span>
+        <span className="note-lien-chip__title" title={note.titre}>{note.titre_alt ?? note.titre}</span>
         {d && <span className="note-lien-chip__date">{d}</span>}
       </button>
       {onRemove && (

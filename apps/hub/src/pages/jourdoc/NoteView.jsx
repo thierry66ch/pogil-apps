@@ -27,7 +27,7 @@ function ChainChip({ note, onClick }) {
   return (
     <button className={`note-view__chain-chip note-view__chain-chip--${typeKey}`} onClick={onClick} title={note.titre}>
       <span className="note-view__chain-chip__icon">{NATURE_ICON[typeKey] ?? '📔'}</span>
-      <span className="note-view__chain-chip__title">{note.titre}</span>
+      <span className="note-view__chain-chip__title">{note.titre_alt ?? note.titre}</span>
       {note.date && <em className="note-view__chain-chip__date">{fmtDateShort(note.date)}</em>}
     </button>
   )

@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 44 — 2026-06-05
+Fix PWA Android — installation vraie app au lieu de raccourci : (1) Middleware Hono pour servir manifest.webmanifest avec Content-Type application/manifest+json (Hono serveStatic pouvait envoyer octet-stream, Chrome ignorait silencieusement le manifest). (2) Génération d'une icône maskable dédiée (icon-maskable-512.png) : logo centré sur fond #0f0f1a avec 10% de marge (safe zone 80%) via sharp. (3) Manifest : champ id "/" ajouté pour identification stable de la PWA. Résout l'impossibilité de partager images/PDF avec l'app via le Share Target Android.
+
+---
+
 ## Build 27 — 2026-06-04
 Intégration Todoist (CDC §6) : migration DB (todoist_token/project_id/project_nom sur workspaces). 5 endpoints serveur proxy (config GET/PUT, projects POST, task POST/GET/DELETE). TodoistPanel.jsx : création tâche (titre=note, lien retour, échéance, priorité P1-P4, récurrence texte libre avec popup aide syntaxe), statut polling au chargement, délier/supprimer. NoteView : TodoistPanel dans la sidebar. WorkspaceManager : section Todoist (saisie token masqué, test+chargement projets, sélection projet, enregistrement). Tous les appels Todoist passent par le serveur (clé jamais exposée au client).
 

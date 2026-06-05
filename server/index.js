@@ -45,6 +45,14 @@ app.route('/api/me', portalRoutes)
 app.route('/api/admin', adminRoutes)
 app.route('/api/jourdoc', jourdocRoutes)
 
+// Correct MIME type for PWA manifest (serveStatic may default to octet-stream)
+app.use('/*.webmanifest', async (c, next) => {
+  await next()
+  if (c.res.status === 200) {
+    c.res.headers.set('Content-Type', 'application/manifest+json; charset=utf-8')
+  }
+})
+
 // User uploads (UUID-based filenames — no auth required on URL)
 app.use('/uploads/*', serveStatic({ root: '.' }))
 

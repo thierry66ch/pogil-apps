@@ -45,11 +45,14 @@ app.route('/api/me', portalRoutes)
 app.route('/api/admin', adminRoutes)
 app.route('/api/jourdoc', jourdocRoutes)
 
-// Correct MIME type for PWA manifest (serveStatic may default to octet-stream)
-app.use('/*.webmanifest', async (c, next) => {
-  await next()
-  if (c.res.status === 200) {
-    c.res.headers.set('Content-Type', 'application/manifest+json; charset=utf-8')
+// Serve PWA manifest with correct MIME type — dedicated route, not serveStatic
+// (Hono middleware wildcards don't suffix-match; proxy may also override headers)
+app.get('/manifest.webmanifest', (c) => {
+  try {
+    const content = readFileSync('./apps/hub/dist/manifest.webmanifest', 'utf8')
+    return c.body(content, 200, { 'Content-Type': 'application/manifest+json; charset=utf-8' })
+  } catch {
+    return c.notFound()
   }
 })
 

@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 45 — 2026-06-05
+Fix PWA Android (2e passe) : (1) Middleware Hono `/*.webmanifest` ne matchait pas `/manifest.webmanifest` — remplacé par une route GET dédiée lisant le fichier et forçant Content-Type application/manifest+json. (2) Le template index.html avait déjà `<link rel="manifest">` ET vite-plugin-pwa en injectait un second → manifest dupliqué ; suppression du lien du template (vite-plugin-pwa l'injecte seul).
+
+---
+
 ## Build 44 — 2026-06-05
 Fix PWA Android — installation vraie app au lieu de raccourci : (1) Middleware Hono pour servir manifest.webmanifest avec Content-Type application/manifest+json (Hono serveStatic pouvait envoyer octet-stream, Chrome ignorait silencieusement le manifest). (2) Génération d'une icône maskable dédiée (icon-maskable-512.png) : logo centré sur fond #0f0f1a avec 10% de marge (safe zone 80%) via sharp. (3) Manifest : champ id "/" ajouté pour identification stable de la PWA. Résout l'impossibilité de partager images/PDF avec l'app via le Share Target Android.
 

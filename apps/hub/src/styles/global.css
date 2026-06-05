@@ -3078,3 +3078,65 @@ button, input, select, textarea { font: inherit; color: inherit }
 .jd-note-card__todoist-done { color: #16a34a; font-weight: 600 }
 .jd-note-card__todoist-prio { font-weight: 700; font-size: .72rem }
 .jd-note-card__todoist-due  { font-size: .72rem }
+
+/* ── Share Target ─────────────────────────────────────── */
+.share-screen {
+  min-height: 100dvh;
+  display: flex; flex-direction: column;
+  background: var(--bg); padding: 1.25rem;
+  max-width: 480px; margin: 0 auto;
+  gap: 1.25rem;
+}
+.share-screen--center { align-items: center; justify-content: center; text-align: center }
+.share-screen__header { display: flex; align-items: center; gap: .875rem }
+.share-screen__title { font-size: 1.125rem; font-weight: 700; margin: 0 }
+.share-screen__subtitle { font-size: .8rem; color: var(--text-muted); margin: 0 }
+.share-screen__actions {
+  display: flex; gap: .75rem; margin-top: auto; padding-top: .5rem;
+}
+.share-screen__actions .btn { flex: 1 }
+
+.share-previews {
+  display: flex; gap: .5rem; flex-wrap: wrap;
+  background: var(--surface); border-radius: var(--r-lg);
+  padding: .75rem;
+}
+.share-preview__thumb {
+  width: 72px; height: 72px; object-fit: cover;
+  border-radius: var(--r); flex-shrink: 0;
+}
+.share-preview__pdf {
+  width: 72px; height: 72px; border-radius: var(--r);
+  background: var(--surface-alt); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: .25rem;
+  font-size: 1.5rem; flex-shrink: 0;
+}
+.share-preview__pdf span { font-size: .6rem; color: var(--text-muted); word-break: break-all; text-align: center }
+
+.share-section__title {
+  font-size: .75rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .07em; color: var(--text-muted); margin: 0 0 .625rem;
+}
+.share-apps { display: flex; flex-direction: column; gap: .5rem }
+.share-app-btn {
+  display: flex; align-items: center; gap: .75rem; padding: .75rem 1rem;
+  background: var(--surface); border: 2px solid var(--border);
+  border-radius: var(--r-lg); cursor: pointer; text-align: left; width: 100%;
+  transition: all .15s;
+}
+.share-app-btn.active { border-color: var(--accent); background: var(--accent-bg) }
+.share-app-btn__icon { font-size: 1.5rem; flex-shrink: 0 }
+.share-app-btn__name { font-weight: 600; font-size: .9375rem }
+.share-app-btn__desc { font-size: .75rem; color: var(--text-muted) }
+.share-app-btn__check { margin-left: auto; color: var(--accent); font-weight: 700; font-size: 1.1rem }
+
+.share-ws-list { display: flex; flex-direction: column; gap: .375rem }
+.share-ws-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .75rem 1rem; background: var(--surface); border: 2px solid var(--border);
+  border-radius: var(--r-lg); cursor: pointer; width: 100%; text-align: left;
+  transition: all .15s;
+}
+.share-ws-btn.active { border-color: var(--accent); background: var(--accent-bg) }
+.share-ws-btn__name { font-weight: 500 }
+.share-ws-btn__check { color: var(--accent); font-weight: 700 }

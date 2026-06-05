@@ -14,12 +14,18 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'],
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+      },
       manifest: {
-        name: 'JourDoc — pogil',
-        short_name: 'JourDoc',
-        description: 'Bloc-notes de terrain : notes, objets, médias, tâches',
+        name: 'pogil apps',
+        short_name: 'pogil',
+        description: 'Vos applications de terrain pogil',
         theme_color: '#6366f1',
         background_color: '#0f0f1a',
         display: 'standalone',
@@ -31,9 +37,17 @@ export default defineConfig({
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        share_target: {
+          action: '/share-target',
+          method: 'POST',
+          enctype: 'multipart/form-data',
+          params: {
+            files: [{
+              name: 'files',
+              accept: ['image/*', 'application/pdf', '.heic', '.heif'],
+            }],
+          },
+        },
       },
     }),
   ],

@@ -19,6 +19,7 @@ import MediaDetail from './pages/jourdoc/MediaDetail'
 import CalendarView from './pages/jourdoc/CalendarView'
 import NoteView from './pages/jourdoc/NoteView'
 import WorkspaceManager from './pages/jourdoc/WorkspaceManager'
+import ShareTarget from './pages/ShareTarget'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 
@@ -41,6 +42,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="/login" element={<Login />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/share-target" element={<ShareTarget />} />
             <Route path="/" element={<PrivateRoute><Portal /></PrivateRoute>} />
             <Route path="/jourdoc/:wsId" element={<PrivateRoute><JourDocApp /></PrivateRoute>}>
               <Route index element={<JourDocJournal />} />

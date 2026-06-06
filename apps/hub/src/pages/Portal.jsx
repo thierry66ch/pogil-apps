@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
+import { getSharedFiles } from '../utils/shareDB'
 import AppCard from '../components/AppCard'
 import TopBar from '../components/TopBar'
 import Footer from '../components/Footer'
@@ -9,8 +11,22 @@ import Footer from '../components/Footer'
 export default function Portal() {
   const { t } = useTranslation()
   const { token, logout } = useAuth()
+  const navigate = useNavigate()
   const [apps, setApps] = useState([])
   const [user, setUser] = useState(null)
+
+  // TWA share target : si des fichiers attendent dans IDB (cas où l'app était
+  // déjà ouverte et la navigation du SW n'a pas eu lieu), rediriger vers le picker.
+  useEffect(() => {
+    function checkPending() {
+      getSharedFiles().then(files => {
+        if (files?.length) navigate('/share-target?shared=1', { replace: true })
+      })
+    }
+    checkPending()
+    document.addEventListener('visibilitychange', checkPending)
+    return () => document.removeEventListener('visibilitychange', checkPending)
+  }, [navigate])
 
   useEffect(() => {
     fetch(API_ROUTES.ME_APPS, {

@@ -15,7 +15,7 @@ function localISO(d) {
 export default function ShareTarget() {
   const { token } = useAuth()
   const navigate = useNavigate()
-  const isShared = new URLSearchParams(window.location.search).get('shared') === '1'
+  const isShared = new URLSearchParams(window.location.search).has('shared')
 
   const [files, setFiles]           = useState([])
   const [previews, setPreviews]     = useState([])
@@ -27,8 +27,10 @@ export default function ShareTarget() {
   const urlsRef = useRef([])
 
   // Charger les fichiers depuis IDB + les workspaces
+  // isShared (URL) est indicatif ; on charge toujours si token présent
+  // pour couvrir le cas TWA où la navigation arrive sans paramètre.
   useEffect(() => {
-    if (!isShared || !token) return
+    if (!token) return
 
     getSharedFiles().then(f => {
       setFiles(f)
@@ -53,7 +55,7 @@ export default function ShareTarget() {
       })
 
     return () => urlsRef.current.forEach(u => URL.revokeObjectURL(u))
-  }, [isShared, token])
+  }, [token])
 
   async function doImport() {
     if (!selectedWs || files.length === 0) return
@@ -98,7 +100,7 @@ export default function ShareTarget() {
   )
 
   // ── Pas de partage en cours ────────────────────────────
-  if (!isShared) return (
+  if (!isShared && files.length === 0) return (
     <div className="share-screen share-screen--center">
       <p style={{ color: 'var(--text-muted)' }}>Aucun fichier partagé.</p>
       <button className="btn btn-ghost" onClick={() => navigate('/')} style={{ marginTop: '1rem' }}>

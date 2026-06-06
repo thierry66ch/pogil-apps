@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 48 — 2026-06-06
+Fix partage TWA Android : quand l'app est déjà ouverte en arrière-plan, le redirect 303 du SW ne déclenche pas de navigation. Fix : (1) Portal.jsx vérifie IndexedDB au mount ET sur visibilitychange → redirige vers /share-target?shared=1 si fichiers en attente. (2) ShareTarget : charge les fichiers IDB dès que le token est présent (sans attendre ?shared dans l'URL) ; affiche le picker si files.length > 0 même sans paramètre URL.
+
+---
+
 ## Build 47 — 2026-06-06
 TWA assetlinks.json : fingerprint SHA-256 réel (DB:C1:55:...) généré par PWABuilder pour ch.pogil.apps / signing.keystore. L'APK pogil apps.apk peut être sideloadé sur Android.
 

@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 53 — 2026-06-06
+APK Bubblewrap : mise à jour assetlinks.json avec le fingerprint SHA-256 du keystore Bubblewrap (4C:6A:EC:6F:...). L'APK app-release-signed.apk généré sur ~/Desktop remplace le package PWABuilder.
+
+---
+
 ## Build 52 — 2026-06-06
 Diagnostic confirmé : POST /share-target n'arrive jamais sur le serveur (sessions_disk et sessions_memory vides). Ajout check IDB dans ShareIntentDetector : si le SW a intercepté le POST et stocké en IDB sans que le redirect ne cause une navigation, le polling le détecte et redirige vers /share-target?shared=1.
 

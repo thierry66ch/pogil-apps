@@ -135,7 +135,7 @@ const ASSET_LINKS = JSON.stringify([{
   target: {
     namespace: 'android_app',
     package_name: 'ch.pogil.apps',
-    sha256_cert_fingerprints: ['DB:C1:55:04:12:2A:31:EA:2C:98:1A:F1:16:EC:FE:DF:D3:2C:C4:EF:A5:4D:19:4E:F8:10:68:FF:C9:B9:C8:8A'],
+    sha256_cert_fingerprints: ['4C:6A:EC:6F:4B:49:A4:C2:89:8B:4F:98:BA:F4:C5:9F:D2:30:CE:50:EB:E2:71:AF:98:74:92:48:80:44:45:C6'],
   },
 }])
 app.get('/.well-known/assetlinks.json', (c) =>

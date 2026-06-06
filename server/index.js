@@ -72,6 +72,8 @@ app.post('/share-target', async (c) => {
     rmSync(dir, { recursive: true, force: true })
     return c.redirect('/')
   }
+  // Cookie : détection côté client même si la TWA n'suit pas le redirect de page
+  c.header('Set-Cookie', `share_session=${sessionId}; Path=/; Max-Age=3600; SameSite=Lax`)
   return c.redirect(`/share-target?session=${sessionId}`, 303)
 })
 

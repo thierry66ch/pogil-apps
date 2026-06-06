@@ -91,6 +91,7 @@ export default function ShareTarget() {
   }, [token, sessionId])
 
   async function cleanup() {
+    document.cookie = 'share_session=; Path=/; Max-Age=0'
     if (sessionId) await fetch(`/share-session/${sessionId}`, { method: 'DELETE' }).catch(() => {})
     await clearSharedFiles()
   }

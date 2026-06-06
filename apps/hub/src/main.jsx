@@ -20,8 +20,27 @@ import CalendarView from './pages/jourdoc/CalendarView'
 import NoteView from './pages/jourdoc/NoteView'
 import WorkspaceManager from './pages/jourdoc/WorkspaceManager'
 import ShareTarget from './pages/ShareTarget'
+import { useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+
+// Détecte le cookie share_session posé par le POST /share-target du serveur.
+// Nécessaire car la TWA Android navigue vers start_url (/) sans suivre le redirect.
+function ShareIntentDetector() {
+  const navigate = useNavigate()
+  useEffect(() => {
+    function detect() {
+      if (window.location.pathname.startsWith('/share-target')) return
+      const m = document.cookie.match(/(?:^|;\s*)share_session=([^;]+)/)
+      if (m) navigate(`/share-target?session=${m[1]}`, { replace: true })
+    }
+    detect()
+    document.addEventListener('visibilitychange', detect)
+    return () => document.removeEventListener('visibilitychange', detect)
+  }, [navigate])
+  return null
+}
 
 function PrivateRoute({ children }) {
   const { token } = useAuth()
@@ -38,6 +57,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
+          <ShareIntentDetector />
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/admin/login" element={<AdminLogin />} />

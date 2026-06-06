@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 51 — 2026-06-06
+Diagnostic + polling TWA share : endpoint GET /api/share-pending (session la plus récente < 5 min en mémoire), endpoint GET /debug/share (sessions disque + mémoire, temporaire). ShareIntentDetector passe en polling actif : toutes les 500ms pendant 10s au mount et à chaque visibilitychange, vérifie cookie ET /api/share-pending. pendingSessions Map côté serveur, nettoyée au DELETE et après 10 min.
+
+---
+
 ## Build 50 — 2026-06-06
 Fix TWA share target — cookie comme mécanisme de détection : la TWA Android navigue vers start_url (/) sans suivre le redirect 303 du POST. Le serveur pose maintenant un cookie share_session=<uuid> (Max-Age 1h) dans la réponse du POST /share-target. Nouveau composant ShareIntentDetector dans main.jsx (top-level, à l'intérieur du BrowserRouter) : détecte le cookie au mount ET sur visibilitychange, redirige vers /share-target?session=<uuid> quelle que soit la route courante. ShareTarget nettoie le cookie au cleanup (import ou annulation). Suppression du check IDB dans Portal (remplacé par la détection globale).
 

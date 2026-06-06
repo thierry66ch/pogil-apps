@@ -1,4 +1,4 @@
-import { readFileSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { readFileSync, mkdirSync, writeFileSync, rmSync, readdirSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
@@ -20,6 +20,9 @@ try {
 } catch { /* .env absent en production */ }
 
 mkdirSync('./data/share-sessions', { recursive: true })
+
+// Sessions en attente (mémoire) — accès depuis le client via polling
+const pendingSessions = new Map()
 
 // Simple in-memory rate limiter for auth routes
 const loginAttempts = new Map()
@@ -72,7 +75,11 @@ app.post('/share-target', async (c) => {
     rmSync(dir, { recursive: true, force: true })
     return c.redirect('/')
   }
-  // Cookie : détection côté client même si la TWA n'suit pas le redirect de page
+  // Enregistrer en mémoire pour que le client puisse poller
+  pendingSessions.set(sessionId, Date.now())
+  for (const [id, ts] of pendingSessions)
+    if (Date.now() - ts > 10 * 60 * 1000) pendingSessions.delete(id)
+  // Cookie : mécanisme de détection alternatif
   c.header('Set-Cookie', `share_session=${sessionId}; Path=/; Max-Age=3600; SameSite=Lax`)
   return c.redirect(`/share-target?session=${sessionId}`, 303)
 })
@@ -98,8 +105,27 @@ app.get('/share-session/:id/file/:name', (c) => {
 
 // Suppression de session après import ou annulation
 app.delete('/share-session/:id', (c) => {
-  try { rmSync(`./data/share-sessions/${c.req.param('id')}`, { recursive: true, force: true }) } catch { }
+  const id = c.req.param('id')
+  pendingSessions.delete(id)
+  try { rmSync(`./data/share-sessions/${id}`, { recursive: true, force: true }) } catch { }
   return c.json({ ok: true })
+})
+
+// Client poll : session en attente la plus récente (< 5 min)
+app.get('/api/share-pending', (c) => {
+  const cutoff = Date.now() - 5 * 60 * 1000
+  for (const [id, ts] of pendingSessions)
+    if (ts > cutoff) return c.json({ session: id })
+  return c.json({ session: null })
+})
+
+// Diagnostic temporaire — visiter /debug/share depuis le téléphone après un partage
+app.get('/debug/share', (c) => {
+  try {
+    const sessions = readdirSync('./data/share-sessions')
+    const pending = [...pendingSessions.entries()].map(([id, ts]) => ({ id, age: Math.round((Date.now()-ts)/1000)+'s' }))
+    return c.json({ sessions_disk: sessions, sessions_memory: pending })
+  } catch (e) { return c.json({ error: e.message }) }
 })
 
 // TWA digital asset links — links apps.pogil.ch to the signed APK (ch.pogil.apps)

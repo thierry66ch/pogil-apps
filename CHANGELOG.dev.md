@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 47 — 2026-06-06
+TWA assetlinks.json : fingerprint SHA-256 réel (DB:C1:55:...) généré par PWABuilder pour ch.pogil.apps / signing.keystore. L'APK pogil apps.apk peut être sideloadé sur Android.
+
+---
+
 ## Build 46 — 2026-06-06
 Préparation TWA/APK Android : route GET /.well-known/assetlinks.json (Digital Asset Links) liant apps.pogil.ch au package ch.pogil.apps. Le SHA256 fingerprint est un placeholder à remplacer après génération de l'APK via PWABuilder.
 

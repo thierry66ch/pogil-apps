@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 46 — 2026-06-06
+Préparation TWA/APK Android : route GET /.well-known/assetlinks.json (Digital Asset Links) liant apps.pogil.ch au package ch.pogil.apps. Le SHA256 fingerprint est un placeholder à remplacer après génération de l'APK via PWABuilder.
+
+---
+
 ## Build 45 — 2026-06-05
 Fix PWA Android (2e passe) : (1) Middleware Hono `/*.webmanifest` ne matchait pas `/manifest.webmanifest` — remplacé par une route GET dédiée lisant le fichier et forçant Content-Type application/manifest+json. (2) Le template index.html avait déjà `<link rel="manifest">` ET vite-plugin-pwa en injectait un second → manifest dupliqué ; suppression du lien du template (vite-plugin-pwa l'injecte seul).
 

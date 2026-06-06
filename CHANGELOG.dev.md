@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 54 — 2026-06-06
+Suppression complète du share target (fonctionnalité abandonnée) : ShareTarget.jsx, shareDB.js, ShareIntentDetector, routes serveur share-session/share-pending/debug/share, pendingSessions, POST /share-target, share_target du manifest, handler SW. Le serveur retrouve son état minimal.
+
+---
+
 ## Build 53 — 2026-06-06
 APK Bubblewrap : mise à jour assetlinks.json avec le fingerprint SHA-256 du keystore Bubblewrap (4C:6A:EC:6F:...). L'APK app-release-signed.apk généré sur ~/Desktop remplace le package PWABuilder.
 

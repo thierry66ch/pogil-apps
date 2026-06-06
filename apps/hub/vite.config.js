@@ -38,17 +38,6 @@ export default defineConfig({
           { src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
           { src: '/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
-        share_target: {
-          action: '/share-target',
-          method: 'POST',
-          enctype: 'multipart/form-data',
-          params: {
-            files: [{
-              name: 'files',
-              accept: ['image/*', 'application/pdf', '.heic', '.heif'],
-            }],
-          },
-        },
       },
     }),
   ],

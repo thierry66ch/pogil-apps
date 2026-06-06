@@ -24,6 +24,7 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { getSharedFiles } from './utils/shareDB'
 
 // Détecte une session de partage TWA — cookie ET polling serveur.
 // La TWA navigue vers start_url (/) sans suivre le redirect 303 du POST ;
@@ -46,9 +47,14 @@ function ShareIntentDetector() {
         const r = await fetch('/api/share-pending', { cache: 'no-store' })
         if (r.ok) {
           const { session } = await r.json()
-          if (session) navigate(`/share-target?session=${session}`, { replace: true })
+          if (session) { navigate(`/share-target?session=${session}`, { replace: true }); return }
         }
       } catch { /* réseau indisponible */ }
+      // 3. IDB — SW a intercepté le POST mais le redirect n'a pas causé de navigation
+      try {
+        const files = await getSharedFiles()
+        if (files?.length) navigate('/share-target?shared=1', { replace: true })
+      } catch { /* IDB indisponible */ }
     }
 
     function startPolling() {

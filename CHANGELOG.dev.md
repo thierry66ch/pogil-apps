@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 52 — 2026-06-06
+Diagnostic confirmé : POST /share-target n'arrive jamais sur le serveur (sessions_disk et sessions_memory vides). Ajout check IDB dans ShareIntentDetector : si le SW a intercepté le POST et stocké en IDB sans que le redirect ne cause une navigation, le polling le détecte et redirige vers /share-target?shared=1.
+
+---
+
 ## Build 51 — 2026-06-06
 Diagnostic + polling TWA share : endpoint GET /api/share-pending (session la plus récente < 5 min en mémoire), endpoint GET /debug/share (sessions disque + mémoire, temporaire). ShareIntentDetector passe en polling actif : toutes les 500ms pendant 10s au mount et à chaque visibilitychange, vérifie cookie ET /api/share-pending. pendingSessions Map côté serveur, nettoyée au DELETE et après 10 min.
 

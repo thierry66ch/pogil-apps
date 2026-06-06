@@ -19,6 +19,7 @@ export default function Portal() {
   // déjà ouverte et la navigation du SW n'a pas eu lieu), rediriger vers le picker.
   useEffect(() => {
     function checkPending() {
+      if (window.location.pathname.startsWith('/share-target')) return
       getSharedFiles().then(files => {
         if (files?.length) navigate('/share-target?shared=1', { replace: true })
       })

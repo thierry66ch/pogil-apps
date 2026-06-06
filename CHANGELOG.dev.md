@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 49 — 2026-06-06
+Fix partage TWA Android cold start : le SW n'est pas actif au premier démarrage → le POST /share-target arrivait sur Hono sans handler → Chrome naviguait vers start_url (/). Ajout d'un handler POST /share-target côté serveur : sauvegarde les fichiers dans data/share-sessions/<uuid>/, redirige vers /share-target?session=<uuid>. Trois routes serveur supplémentaires : GET /share-session/:id/meta.json, GET /share-session/:id/file/:name, DELETE /share-session/:id. ShareTarget.jsx gère les deux chemins : session (serveur, cold start) et IDB (SW actif, warm start). Cleanup de session après import ou annulation.
+
+---
+
 ## Build 48 — 2026-06-06
 Fix partage TWA Android : quand l'app est déjà ouverte en arrière-plan, le redirect 303 du SW ne déclenche pas de navigation. Fix : (1) Portal.jsx vérifie IndexedDB au mount ET sur visibilitychange → redirige vers /share-target?shared=1 si fichiers en attente. (2) ShareTarget : charge les fichiers IDB dès que le token est présent (sans attendre ?shared dans l'URL) ; affiche le picker si files.length > 0 même sans paramètre URL.
 

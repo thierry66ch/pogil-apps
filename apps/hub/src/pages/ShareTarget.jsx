@@ -15,38 +15,71 @@ function localISO(d) {
 export default function ShareTarget() {
   const { token } = useAuth()
   const navigate = useNavigate()
-  const isShared = new URLSearchParams(window.location.search).has('shared')
+  const params = new URLSearchParams(window.location.search)
+  // sessionId : cold-start TWA (fichiers côté serveur)
+  // isShared  : warm-start PWA/SW (fichiers en IndexedDB)
+  const sessionId = params.get('session')
+  const isShared  = !!sessionId || params.has('shared')
 
-  const [files, setFiles]           = useState([])
-  const [previews, setPreviews]     = useState([])
-  const [workspaces, setWorkspaces] = useState([])
+  const [files, setFiles]             = useState([])
+  const [previews, setPreviews]       = useState([])
+  const [workspaces, setWorkspaces]   = useState([])
   const [selectedApp, setSelectedApp] = useState('jourdoc')
-  const [selectedWs, setSelectedWs] = useState(null)
-  const [uploading, setUploading]   = useState(false)
-  const [error, setError]           = useState('')
+  const [selectedWs, setSelectedWs]   = useState(null)
+  const [uploading, setUploading]     = useState(false)
+  const [loading, setLoading]         = useState(isShared)
+  const [error, setError]             = useState('')
   const urlsRef = useRef([])
 
-  // Charger les fichiers depuis IDB + les workspaces
-  // isShared (URL) est indicatif ; on charge toujours si token présent
-  // pour couvrir le cas TWA où la navigation arrive sans paramètre.
   useEffect(() => {
     if (!token) return
 
-    getSharedFiles().then(f => {
-      setFiles(f)
-      const urls = f.map(file => ({
-        name: file.name,
-        objectUrl: URL.createObjectURL(file),
-        isImage: file.type.startsWith('image/') || /\.(heic|heif)$/i.test(file.name),
-        isPdf: file.type === 'application/pdf',
-      }))
-      urlsRef.current = urls.map(u => u.objectUrl)
-      setPreviews(urls)
-    })
+    async function loadFiles() {
+      setLoading(true)
+      try {
+        if (sessionId) {
+          // Chemin cold-start : fichiers sauvés sur le serveur
+          const meta = await fetch(`/share-session/${sessionId}/meta.json`).then(r => {
+            if (!r.ok) throw new Error('Session introuvable ou expirée')
+            return r.json()
+          })
+          const fileObjs = await Promise.all(
+            meta.map(async m => {
+              const blob = await fetch(`/share-session/${sessionId}/file/${m.filename}`).then(r => r.blob())
+              return new File([blob], m.name, { type: m.type })
+            })
+          )
+          setFiles(fileObjs)
+          setPreviews(meta.map(m => ({
+            name: m.name,
+            // URL directe serveur — pas besoin de createObjectURL
+            objectUrl: `/share-session/${sessionId}/file/${m.filename}`,
+            isImage: m.type.startsWith('image/') || /\.(heic|heif)$/i.test(m.name),
+            isPdf: m.type === 'application/pdf',
+          })))
+        } else {
+          // Chemin warm-start : fichiers en IndexedDB (SW actif)
+          const f = await getSharedFiles()
+          setFiles(f)
+          const urls = f.map(file => ({
+            name: file.name,
+            objectUrl: URL.createObjectURL(file),
+            isImage: file.type.startsWith('image/') || /\.(heic|heif)$/i.test(file.name),
+            isPdf: file.type === 'application/pdf',
+          }))
+          urlsRef.current = urls.map(u => u.objectUrl)
+          setPreviews(urls)
+        }
+      } catch (e) {
+        setError(e.message || 'Erreur lors du chargement des fichiers')
+      } finally {
+        setLoading(false)
+      }
+    }
 
-    fetch(API_ROUTES.JD_WORKSPACES(), {
-      headers: { Authorization: `Bearer ${token}` }
-    })
+    loadFiles()
+
+    fetch(API_ROUTES.JD_WORKSPACES(), { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => {
         const ws = d.workspaces ?? []
@@ -55,7 +88,12 @@ export default function ShareTarget() {
       })
 
     return () => urlsRef.current.forEach(u => URL.revokeObjectURL(u))
-  }, [token])
+  }, [token, sessionId])
+
+  async function cleanup() {
+    if (sessionId) await fetch(`/share-session/${sessionId}`, { method: 'DELETE' }).catch(() => {})
+    await clearSharedFiles()
+  }
 
   async function doImport() {
     if (!selectedWs || files.length === 0) return
@@ -70,7 +108,7 @@ export default function ShareTarget() {
         body: fd,
       })
       if (!res.ok) throw new Error(`Erreur serveur ${res.status}`)
-      await clearSharedFiles()
+      await cleanup()
       navigate(`/jourdoc/${selectedWs}/medias`)
     } catch (e) {
       setError(e.message)
@@ -80,7 +118,7 @@ export default function ShareTarget() {
   }
 
   async function cancel() {
-    await clearSharedFiles()
+    await cleanup()
     navigate('/')
   }
 
@@ -96,6 +134,13 @@ export default function ShareTarget() {
       <button className="btn btn-primary" onClick={() => navigate('/login')}>
         Se connecter
       </button>
+    </div>
+  )
+
+  // ── Chargement ─────────────────────────────────────────
+  if (loading) return (
+    <div className="share-screen share-screen--center">
+      <p style={{ color: 'var(--text-muted)' }}>Chargement…</p>
     </div>
   )
 
@@ -123,7 +168,6 @@ export default function ShareTarget() {
         </div>
       </div>
 
-      {/* Préviews */}
       {previews.length > 0 && (
         <div className="share-previews">
           {previews.map((p, i) => (
@@ -134,7 +178,6 @@ export default function ShareTarget() {
         </div>
       )}
 
-      {/* Choix de l'application */}
       <div className="share-section">
         <h3 className="share-section__title">Application</h3>
         <div className="share-apps">
@@ -153,7 +196,6 @@ export default function ShareTarget() {
         </div>
       </div>
 
-      {/* Choix du workspace */}
       <div className="share-section">
         <h3 className="share-section__title">Workspace</h3>
         {workspaces.length === 0 ? (
@@ -174,15 +216,12 @@ export default function ShareTarget() {
 
       {error && <p style={{ color: 'var(--danger)', fontSize: '.875rem', padding: '0 1rem' }}>{error}</p>}
 
-      {/* Actions */}
       <div className="share-screen__actions">
         <button className="btn btn-ghost" onClick={cancel}>Annuler</button>
         <button className="btn btn-primary"
           onClick={doImport}
           disabled={!selectedWs || uploading || files.length === 0}>
-          {uploading
-            ? 'Import en cours…'
-            : `Importer ${files.length} fichier${files.length > 1 ? 's' : ''}`}
+          {uploading ? 'Import en cours…' : `Importer ${files.length} fichier${files.length > 1 ? 's' : ''}`}
         </button>
       </div>
     </div>

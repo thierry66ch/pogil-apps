@@ -6,14 +6,27 @@ import { useJdData, authHeader, buildPathMap } from './hooks'
 import { sortedIds } from './calUtils'
 import NoteCard from './NoteCard'
 
+function getDescendants(items, rootId) {
+  const ids = new Set([rootId])
+  let added = true
+  while (added) {
+    added = false
+    for (const item of items) {
+      if (!ids.has(item.id) && ids.has(item.parent_id)) { ids.add(item.id); added = true }
+    }
+  }
+  return ids
+}
+
 export default function ObjetDetail() {
   const { wsId, objetId } = useParams()
   const { token } = useAuth()
   const navigate = useNavigate()
-  const { objets } = useJdData(wsId, token)
+  const { objets, themes } = useJdData(wsId, token)
 
   const [notes, setNotes] = useState([])
   const [direction, setDirection] = useState('both')
+  const [themeFilter, setThemeFilter] = useState('')
   const [loading, setLoading] = useState(true)
 
   const objet = objets.find(o => o.id === Number(objetId))
@@ -32,9 +45,15 @@ export default function ObjetDetail() {
       .finally(() => setLoading(false))
   }, [wsId, objetId, token, direction])
 
-  // Chemin depuis la racine
   const pathMap = buildPathMap(objets)
   const path = pathMap.get(Number(objetId)) ?? ''
+
+  const filteredNotes = themeFilter
+    ? notes.filter(n => n.theme_id != null && getDescendants(themes, Number(themeFilter)).has(n.theme_id))
+    : notes
+
+  // Thèmes présents dans les notes (pour le filtre)
+  const themesInNotes = themes.filter(t => notes.some(n => n.theme_id === t.id))
 
   return (
     <div className="jd-objet-detail">
@@ -49,13 +68,10 @@ export default function ObjetDetail() {
           onClick={newNoteForObjet}>+ Note</button>
       </div>
 
-      {objet?.description && (
-        <p className="jd-objet-desc">{objet.description}</p>
-      )}
+      {objet?.description && <p className="jd-objet-desc">{objet.description}</p>}
 
-      {/* Contrôle direction de recherche */}
       <div className="jd-direction-ctrl">
-        <span className="form-label" style={{ marginRight: '.5rem' }}>Portée de la recherche :</span>
+        <span className="form-label" style={{ marginRight: '.5rem' }}>Portée :</span>
         <div className="jd-segmented" style={{ display: 'inline-flex' }}>
           {[['both', '↕ Les deux'], ['down', '↓ Descendants'], ['up', '↑ Ancêtres']].map(([v, l]) => (
             <button key={v} type="button"
@@ -63,18 +79,25 @@ export default function ObjetDetail() {
               onClick={() => setDirection(v)}>{l}</button>
           ))}
         </div>
+        {themesInNotes.length > 0 && (
+          <select value={themeFilter} onChange={e => setThemeFilter(e.target.value)}
+            className="jd-filter-select" style={{ marginLeft: '.75rem' }}>
+            <option value="">Tous les thèmes</option>
+            {themesInNotes.map(t => <option key={t.id} value={t.id}>{t.nom}</option>)}
+          </select>
+        )}
       </div>
 
       {loading ? (
         <div className="jd-loading">Chargement…</div>
-      ) : notes.length === 0 ? (
+      ) : filteredNotes.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state__icon">📋</div>
-          <p>Aucune note pour cet objet.</p>
+          <p>{themeFilter ? 'Aucune note pour ce filtre.' : 'Aucune note pour cet objet.'}</p>
         </div>
       ) : (
         <div className="jd-notes-list">
-          {notes.map(note => <NoteCard key={note.id} note={note} contextNoteIds={sortedIds(notes)} />)}
+          {filteredNotes.map(note => <NoteCard key={note.id} note={note} showDate contextNoteIds={sortedIds(filteredNotes)} />)}
         </div>
       )}
     </div>

@@ -36,9 +36,14 @@ export default function Lightbox({ media, onClose, onPrev, onNext }) {
       {/* Contenu */}
       <div className="lightbox__content" onClick={e => e.stopPropagation()}>
         {media.type_media === 'pdf' ? (
-          <div className="lightbox__pdf">
-            <span style={{ fontSize: '4rem' }}>📄</span>
-            <p>{media.nom_original}</p>
+          <div className="lightbox__pdf" onClick={e => e.stopPropagation()}>
+            <iframe
+              src={`/${media.fichier}`}
+              title={media.nom_original}
+              className="lightbox__pdf-frame"
+            />
+            <a href={`/${media.fichier}`} target="_blank" rel="noopener noreferrer"
+              className="lightbox__pdf-open">Ouvrir dans un nouvel onglet ↗</a>
           </div>
         ) : (
           <img src={`/${media.fichier}`} alt={media.nom_original} className="lightbox__img" />

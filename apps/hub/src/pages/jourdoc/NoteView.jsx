@@ -60,7 +60,7 @@ export default function NoteView() {
   )
 
   const typeKey = note.nature ?? note.type ?? 'journal'
-  const photoMedias = (note.medias ?? []).filter(m => m.type_media !== 'pdf')
+  const photoMedias = note.medias ?? []
   const hasChain = (note.liens?.length ?? 0) > 0 || (note.liensEntrants?.length ?? 0) > 0
 
   // Navigation précédent / suivant dans le contexte d'origine
@@ -142,9 +142,7 @@ export default function NoteView() {
               <div className="media-grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: '.5rem' }}>
                 {note.medias.map(m => (
                   <MediaCard key={m.id} media={m} size="sm"
-                    onExpand={m.type_media !== 'pdf'
-                      ? () => setLbIdx(photoMedias.findIndex(pm => pm.id === m.id))
-                      : null}
+                    onExpand={() => setLbIdx(photoMedias.findIndex(pm => pm.id === m.id))}
                     onNotes={() => navigate(`/jourdoc/${wsId}/media/${m.id}`)}
                   />
                 ))}

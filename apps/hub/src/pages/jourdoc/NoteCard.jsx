@@ -13,7 +13,12 @@ function fmtDue(iso) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })
 }
 
-export default function NoteCard({ note, contextNoteIds }) {
+function fmtNoteDate(iso) {
+  if (!iso) return ''
+  return new Date(iso + 'T00:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+export default function NoteCard({ note, contextNoteIds, showDate = false }) {
   const { wsId } = useParams()
   const navigate = useNavigate()
   const [lbIdx, setLbIdx] = useState(-1)
@@ -28,6 +33,7 @@ export default function NoteCard({ note, contextNoteIds }) {
           {note.nature ? NATURE_ICON[note.nature] : TYPE_ICON[note.type]}
           {note.nature ?? note.type}
         </span>
+        {showDate && note.date_note && <span className="jd-note-card__date">{fmtNoteDate(note.date_note)}</span>}
         {note.theme_nom && <span className="jd-note-card__theme">{note.theme_nom}</span>}
       </div>
 

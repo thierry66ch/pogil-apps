@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 55 — 2026-06-08
+6 retouches UX : (1) Swipe tactile sur la page journal (gauche/droite = jour suivant/précédent). (2) Toolbar mobile scrollable horizontalement au doigt (overflow-x auto, justify flex-start, items flex-shrink:0). (3) Arbres objets/thèmes : interligne réduit d'1/3 (padding .1rem, min-height 24px, toggle 32px). (4) NoteCard : prop showDate pour afficher la date — activée dans ObjetDetail et ThemeDetail. (5) ObjetDetail : filtre par thème (descendants inclus) ; ThemeDetail : filtre par objet (descendants inclus). (6) PDF viewer : Lightbox affiche iframe inline + lien "ouvrir dans nouvel onglet" ; NoteView inclut les PDFs dans la lightbox.
+
+---
+
 ## Build 54 — 2026-06-06
 Suppression complète du share target (fonctionnalité abandonnée) : ShareTarget.jsx, shareDB.js, ShareIntentDetector, routes serveur share-session/share-pending/debug/share, pendingSessions, POST /share-target, share_target du manifest, handler SW. Le serveur retrouve son état minimal.
 

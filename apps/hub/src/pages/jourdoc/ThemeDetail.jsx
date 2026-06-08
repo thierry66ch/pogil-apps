@@ -6,13 +6,26 @@ import { useJdData, authHeader, buildPathMap } from './hooks'
 import { sortedIds } from './calUtils'
 import NoteCard from './NoteCard'
 
+function getDescendants(items, rootId) {
+  const ids = new Set([rootId])
+  let added = true
+  while (added) {
+    added = false
+    for (const item of items) {
+      if (!ids.has(item.id) && ids.has(item.parent_id)) { ids.add(item.id); added = true }
+    }
+  }
+  return ids
+}
+
 export default function ThemeDetail() {
   const { wsId, themeId } = useParams()
   const { token } = useAuth()
   const navigate = useNavigate()
-  const { themes } = useJdData(wsId, token)
+  const { objets, themes } = useJdData(wsId, token)
 
   const [notes, setNotes] = useState([])
+  const [objetFilter, setObjetFilter] = useState('')
   const [loading, setLoading] = useState(true)
 
   const theme = themes.find(t => t.id === Number(themeId))
@@ -27,6 +40,13 @@ export default function ThemeDetail() {
       .finally(() => setLoading(false))
   }, [wsId, themeId, token])
 
+  const filteredNotes = objetFilter
+    ? notes.filter(n => n.objets?.some(o => getDescendants(objets, Number(objetFilter)).has(o.id)))
+    : notes
+
+  // Objets présents dans les notes (pour le filtre)
+  const objetsInNotes = objets.filter(o => notes.some(n => n.objets?.some(no => no.id === o.id)))
+
   return (
     <div className="jd-objet-detail">
       <div className="jd-form-header">
@@ -38,16 +58,26 @@ export default function ThemeDetail() {
         </div>
       </div>
 
+      {objetsInNotes.length > 0 && (
+        <div className="jd-direction-ctrl">
+          <select value={objetFilter} onChange={e => setObjetFilter(e.target.value)}
+            className="jd-filter-select">
+            <option value="">Tous les objets</option>
+            {objetsInNotes.map(o => <option key={o.id} value={o.id}>{o.nom}</option>)}
+          </select>
+        </div>
+      )}
+
       {loading ? (
         <div className="jd-loading">Chargement…</div>
-      ) : notes.length === 0 ? (
+      ) : filteredNotes.length === 0 ? (
         <div className="empty-state">
           <div className="empty-state__icon">📋</div>
-          <p>Aucune note pour ce thème.</p>
+          <p>{objetFilter ? 'Aucune note pour ce filtre.' : 'Aucune note pour ce thème.'}</p>
         </div>
       ) : (
         <div className="jd-notes-list">
-          {notes.map(note => <NoteCard key={note.id} note={note} contextNoteIds={sortedIds(notes)} />)}
+          {filteredNotes.map(note => <NoteCard key={note.id} note={note} showDate contextNoteIds={sortedIds(filteredNotes)} />)}
         </div>
       )}
     </div>

@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 58 — 2026-06-08
+Vue annuelle + filtres calendrier : (1) CalendarYear.jsx — grille de semaines (lun→dim) par mois, puces de couleur, clic → notes de la semaine. weeksOfYear() dans calUtils. (2) Filtres objet et thème (HierarchyPicker) sur les vues mois et année, avec contrôle de portée ↕/↓/↑ activé dès qu'un filtre est sélectionné. getRelated() dans calUtils pour descendants/ancêtres. filteredNotes calculé avec useMemo.
+
+---
+
 ## Build 57 — 2026-06-08
 Fix ThemeDetail notes : route /:wsId/themes/:id/notes réécrite sans CTE SQLite (probable cause d'erreur silencieuse → 0 notes affichées). Calcul hiérarchique descendants/ancêtres en JS pur sur la liste des thèmes du workspace.
 

@@ -137,6 +137,45 @@ export function fmtWeekday(iso) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('fr-CH', { weekday: 'short' })
 }
 
+// Toutes les semaines (lundi→dimanche) d'une année civile
+export function weeksOfYear(year) {
+  const weeks = []
+  const jan1 = new Date(year, 0, 1)
+  const dow = (jan1.getDay() + 6) % 7   // 0=lundi
+  const cur = new Date(jan1)
+  cur.setDate(1 - dow)                   // lundi de la première semaine
+  const yearEnd = new Date(year, 11, 31)
+  while (cur <= yearEnd) {
+    const monday = toISO(cur)
+    const sun = new Date(cur); sun.setDate(cur.getDate() + 6)
+    weeks.push({ monday, sunday: toISO(sun), month: cur.getMonth() })
+    cur.setDate(cur.getDate() + 7)
+  }
+  return weeks
+}
+
+// Compute IDs related to rootId based on direction (down/up/both) in items list
+export function getRelated(items, rootId, direction) {
+  const ids = new Set([rootId])
+  if (direction === 'down' || direction === 'both') {
+    let added = true
+    while (added) {
+      added = false
+      for (const item of items)
+        if (!ids.has(item.id) && ids.has(item.parent_id)) { ids.add(item.id); added = true }
+    }
+  }
+  if (direction === 'up' || direction === 'both') {
+    let current = rootId
+    while (true) {
+      const t = items.find(x => x.id === current)
+      if (!t || !t.parent_id) break
+      ids.add(t.parent_id); current = t.parent_id
+    }
+  }
+  return ids
+}
+
 // Aplatir la hiérarchie d'objets avec profondeur
 export function flattenObjects(objects) {
   const map = new Map(objects.map(o => [o.id, { ...o, children: [] }]))

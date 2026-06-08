@@ -1830,6 +1830,94 @@ button, input, select, textarea { font: inherit; color: inherit }
   margin-bottom: 1rem;
 }
 
+/* ── Filtres calendrier ───────────────────── */
+.cal-filters {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  margin-bottom: 1rem;
+  padding: .75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+}
+.cal-filter-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+}
+.cal-filter-label {
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  width: 44px;
+  flex-shrink: 0;
+}
+.cal-filter-picker { flex: 1; min-width: 160px; max-width: 280px }
+.cal-filter-dir { flex-shrink: 0 }
+
+/* ── Calendrier Année ─────────────────────── */
+.cal-year {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+.cal-year__month {
+  display: flex;
+  flex-direction: column;
+  gap: .375rem;
+}
+.cal-year__month-label {
+  font-size: .75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.cal-year__weeks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+.cal-year__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 52px;
+  padding: .25rem .375rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: border-color .15s;
+  background: var(--surface-glass);
+}
+.cal-year__cell:hover { border-color: var(--accent) }
+.cal-year__cell--today { border-color: var(--accent); background: var(--accent-bg) }
+.cal-year__cell--selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) }
+.cal-year__cell--has-notes { background: var(--surface) }
+.cal-year__day {
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  line-height: 1;
+  margin-bottom: .2rem;
+}
+.cal-year__cell--today .cal-year__day { color: var(--accent) }
+.cal-year__expanded {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: .75rem;
+  margin-top: .25rem;
+}
+.cal-year__expanded-header {
+  font-size: .8125rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: .75rem;
+}
+
 /* ── Calendrier Mois ──────────────────────── */
 .cal-month { }
 

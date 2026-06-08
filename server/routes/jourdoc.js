@@ -429,46 +429,40 @@ jourdoc.get('/:wsId/themes/:id/notes', (c) => {
   const wsId = c.get('wsId')
   const id = Number(c.req.param('id'))
   const direction = c.req.query('direction') ?? 'both'
-  const maxDepth = 5
-  let ids = []
+
+  // Calcul hiérarchique en JS (pas de CTE) — charge tous les thèmes du workspace
+  const allThemes = db.prepare('SELECT id, parent_id FROM jd_themes WHERE workspace_id = ?').all(wsId)
+  const ids = new Set([id])
 
   if (direction === 'down' || direction === 'both') {
-    const rows = db.prepare(`
-      WITH RECURSIVE desc(id, depth) AS (
-        SELECT id, 0 FROM jd_themes WHERE id = ? AND workspace_id = ?
-        UNION ALL
-        SELECT t.id, d.depth + 1 FROM jd_themes t
-        JOIN desc d ON t.parent_id = d.id WHERE d.depth < ?
-      )
-      SELECT id FROM desc
-    `).all(id, wsId, maxDepth)
-    ids.push(...rows.map(r => r.id))
+    let added = true
+    while (added) {
+      added = false
+      for (const t of allThemes) {
+        if (!ids.has(t.id) && ids.has(t.parent_id)) { ids.add(t.id); added = true }
+      }
+    }
   }
 
   if (direction === 'up' || direction === 'both') {
-    const rows = db.prepare(`
-      WITH RECURSIVE anc(id, parent_id, depth) AS (
-        SELECT id, parent_id, 0 FROM jd_themes WHERE id = ? AND workspace_id = ?
-        UNION ALL
-        SELECT t.id, t.parent_id, a.depth + 1 FROM jd_themes t
-        JOIN anc a ON t.id = a.parent_id WHERE a.depth < ?
-      )
-      SELECT id FROM anc
-    `).all(id, wsId, maxDepth)
-    ids.push(...rows.map(r => r.id))
+    let current = id
+    while (true) {
+      const t = allThemes.find(x => x.id === current)
+      if (!t || !t.parent_id) break
+      ids.add(t.parent_id)
+      current = t.parent_id
+    }
   }
 
-  ids = [...new Set(ids)]
-  if (ids.length === 0) return c.json({ notes: [] })
-
-  const placeholders = ids.map(() => '?').join(',')
+  const idsArr = [...ids]
+  const placeholders = idsArr.map(() => '?').join(',')
   const notes = db.prepare(`
     SELECT DISTINCT n.*, t.nom AS theme_nom
     FROM jd_notes n
     LEFT JOIN jd_themes t ON t.id = n.theme_id
     WHERE n.theme_id IN (${placeholders}) AND n.workspace_id = ?
     ORDER BY n.date DESC, n.created_at DESC
-  `).all(...ids, wsId)
+  `).all(...idsArr, wsId)
 
   return c.json({ notes: withData(notes) })
 })

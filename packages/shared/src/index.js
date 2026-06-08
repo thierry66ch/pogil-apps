@@ -24,6 +24,7 @@ export const API_ROUTES = {
   JD_OBJET_NOTES:  (wsId, id) => `/api/jourdoc/${wsId}/objets/${id}/notes`,
   JD_THEMES:       (wsId) => `/api/jourdoc/${wsId}/themes`,
   JD_THEME:        (wsId, id) => `/api/jourdoc/${wsId}/themes/${id}`,
+  JD_THEME_NOTES:  (wsId, id) => `/api/jourdoc/${wsId}/themes/${id}/notes`,
   JD_NOTES:        (wsId) => `/api/jourdoc/${wsId}/notes`,
   JD_NOTE:         (wsId, id) => `/api/jourdoc/${wsId}/notes/${id}`,
   JD_MEDIAS:       (wsId) => `/api/jourdoc/${wsId}/medias`,

@@ -33,7 +33,7 @@ export default function NoteCard({ note, contextNoteIds, showDate = false }) {
           {note.nature ? NATURE_ICON[note.nature] : TYPE_ICON[note.type]}
           {note.nature ?? note.type}
         </span>
-        {showDate && note.date_note && <span className="jd-note-card__date">{fmtNoteDate(note.date_note)}</span>}
+        {showDate && note.date && <span className="jd-note-card__date">{fmtNoteDate(note.date)}</span>}
         {note.theme_nom && <span className="jd-note-card__theme">{note.theme_nom}</span>}
       </div>
 

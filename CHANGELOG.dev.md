@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 56 — 2026-06-08
+Fix build 55 : (4) NoteCard date : champ note.date (pas date_note). (5) ThemeDetail : nouvelle route serveur GET /themes/:id/notes avec direction hiérarchique (CTE récursif descendants/ancêtres, maxDepth 5) + JD_THEME_NOTES dans shared + contrôle portée ↕/↓/↑ comme ObjetDetail + filtre objet en même ligne.
+
+---
+
 ## Build 55 — 2026-06-08
 6 retouches UX : (1) Swipe tactile sur la page journal (gauche/droite = jour suivant/précédent). (2) Toolbar mobile scrollable horizontalement au doigt (overflow-x auto, justify flex-start, items flex-shrink:0). (3) Arbres objets/thèmes : interligne réduit d'1/3 (padding .1rem, min-height 24px, toggle 32px). (4) NoteCard : prop showDate pour afficher la date — activée dans ObjetDetail et ThemeDetail. (5) ObjetDetail : filtre par thème (descendants inclus) ; ThemeDetail : filtre par objet (descendants inclus). (6) PDF viewer : Lightbox affiche iframe inline + lien "ouvrir dans nouvel onglet" ; NoteView inclut les PDFs dans la lightbox.
 

@@ -424,6 +424,55 @@ jourdoc.get('/:wsId/objets/:id/notes', (c) => {
   return c.json({ notes: withData(notes) })
 })
 
+// ── THEME NOTES (avec direction hiérarchique) ─────────────────
+jourdoc.get('/:wsId/themes/:id/notes', (c) => {
+  const wsId = c.get('wsId')
+  const id = Number(c.req.param('id'))
+  const direction = c.req.query('direction') ?? 'both'
+  const maxDepth = 5
+  let ids = []
+
+  if (direction === 'down' || direction === 'both') {
+    const rows = db.prepare(`
+      WITH RECURSIVE desc(id, depth) AS (
+        SELECT id, 0 FROM jd_themes WHERE id = ? AND workspace_id = ?
+        UNION ALL
+        SELECT t.id, d.depth + 1 FROM jd_themes t
+        JOIN desc d ON t.parent_id = d.id WHERE d.depth < ?
+      )
+      SELECT id FROM desc
+    `).all(id, wsId, maxDepth)
+    ids.push(...rows.map(r => r.id))
+  }
+
+  if (direction === 'up' || direction === 'both') {
+    const rows = db.prepare(`
+      WITH RECURSIVE anc(id, parent_id, depth) AS (
+        SELECT id, parent_id, 0 FROM jd_themes WHERE id = ? AND workspace_id = ?
+        UNION ALL
+        SELECT t.id, t.parent_id, a.depth + 1 FROM jd_themes t
+        JOIN anc a ON t.id = a.parent_id WHERE a.depth < ?
+      )
+      SELECT id FROM anc
+    `).all(id, wsId, maxDepth)
+    ids.push(...rows.map(r => r.id))
+  }
+
+  ids = [...new Set(ids)]
+  if (ids.length === 0) return c.json({ notes: [] })
+
+  const placeholders = ids.map(() => '?').join(',')
+  const notes = db.prepare(`
+    SELECT DISTINCT n.*, t.nom AS theme_nom
+    FROM jd_notes n
+    LEFT JOIN jd_themes t ON t.id = n.theme_id
+    WHERE n.theme_id IN (${placeholders}) AND n.workspace_id = ?
+    ORDER BY n.date DESC, n.created_at DESC
+  `).all(...ids, wsId)
+
+  return c.json({ notes: withData(notes) })
+})
+
 // ── THEMES ───────────────────────────────────────────────────
 
 jourdoc.get('/:wsId/themes', (c) => {

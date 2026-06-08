@@ -25,6 +25,7 @@ export default function ThemeDetail() {
   const { objets, themes } = useJdData(wsId, token)
 
   const [notes, setNotes] = useState([])
+  const [direction, setDirection] = useState('both')
   const [objetFilter, setObjetFilter] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -34,17 +35,18 @@ export default function ThemeDetail() {
 
   useEffect(() => {
     setLoading(true)
-    fetch(`${API_ROUTES.JD_NOTES(wsId)}?theme_id=${themeId}`, { headers: authHeader(token) })
+    fetch(API_ROUTES.JD_THEME_NOTES(wsId, themeId) + `?direction=${direction}`, {
+      headers: authHeader(token)
+    })
       .then(r => r.json())
       .then(data => setNotes(data.notes ?? []))
       .finally(() => setLoading(false))
-  }, [wsId, themeId, token])
+  }, [wsId, themeId, token, direction])
 
   const filteredNotes = objetFilter
     ? notes.filter(n => n.objets?.some(o => getDescendants(objets, Number(objetFilter)).has(o.id)))
     : notes
 
-  // Objets présents dans les notes (pour le filtre)
   const objetsInNotes = objets.filter(o => notes.some(n => n.objets?.some(no => no.id === o.id)))
 
   return (
@@ -52,21 +54,29 @@ export default function ThemeDetail() {
       <div className="jd-form-header">
         <button className="btn btn-ghost" style={{ padding: '.35rem .6rem', fontSize: '.875rem' }}
           onClick={() => navigate(-1)}>← Retour</button>
-        <div>
+        <div style={{ flex: 1 }}>
           <h2 style={{ marginBottom: '.125rem' }}>🏷️ {theme?.nom ?? `Thème #${themeId}`}</h2>
           {path && <span className="jd-path-label">{path}</span>}
         </div>
       </div>
 
-      {objetsInNotes.length > 0 && (
-        <div className="jd-direction-ctrl">
+      <div className="jd-direction-ctrl">
+        <span className="form-label" style={{ marginRight: '.5rem' }}>Portée :</span>
+        <div className="jd-segmented" style={{ display: 'inline-flex' }}>
+          {[['both', '↕ Les deux'], ['down', '↓ Descendants'], ['up', '↑ Ancêtres']].map(([v, l]) => (
+            <button key={v} type="button"
+              className={`jd-seg-btn${direction === v ? ' active' : ''}`}
+              onClick={() => setDirection(v)}>{l}</button>
+          ))}
+        </div>
+        {objetsInNotes.length > 0 && (
           <select value={objetFilter} onChange={e => setObjetFilter(e.target.value)}
-            className="jd-filter-select">
+            className="jd-filter-select" style={{ marginLeft: '.75rem' }}>
             <option value="">Tous les objets</option>
             {objetsInNotes.map(o => <option key={o.id} value={o.id}>{o.nom}</option>)}
           </select>
-        </div>
-      )}
+        )}
+      </div>
 
       {loading ? (
         <div className="jd-loading">Chargement…</div>

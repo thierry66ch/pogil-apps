@@ -6,7 +6,12 @@ import NoteCard from './NoteCard'
 const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin',
                    'Juillet','Août','Septembre','Octobre','Novembre','Décembre']
 const NATURE_COLOR = { observation: 'obs', activite: 'act', documentation: 'doc', journal: 'jrn' }
+const NATURE_ICO   = { observation: '👁', activite: '⚡', documentation: '📄', journal: '📔' }
 function dotClass(n) { return NATURE_COLOR[n.nature ?? n.type] ?? 'jrn' }
+
+function fmtShort(iso) {
+  return new Date(iso + 'T00:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })
+}
 
 export default function CalendarYear({ notes, year }) {
   const { wsId } = useParams()
@@ -73,7 +78,6 @@ export default function CalendarYear({ notes, year }) {
                       wNotes.length ? 'cal-year__cell--has-notes' : '',
                     ].filter(Boolean).join(' ')}
                     onClick={() => setSelectedWeek(isSelected ? null : monday)}
-                    title={`${monday} → ${sunday}`}
                   >
                     <span className="cal-year__day">{dayNum}</span>
                     <div className="cal-cell__dots">
@@ -82,6 +86,26 @@ export default function CalendarYear({ notes, year }) {
                       ))}
                       {wNotes.length > 8 && <span className="cal-dot-more">+{wNotes.length - 8}</span>}
                     </div>
+
+                    {/* Popup au survol — même mécanique CSS que la vue mensuelle */}
+                    {wNotes.length > 0 && (
+                      <div className="cal-cell__popup" onClick={e => e.stopPropagation()}>
+                        <div className="cal-cell__popup-date">
+                          {fmtShort(monday)} – {fmtShort(sunday)}
+                        </div>
+                        {wNotes.slice(0, 8).map(n => (
+                          <button key={n.id} className="cal-cell__popup-item"
+                            onClick={() => navigate(`/jourdoc/${wsId}/notes/${n.id}`,
+                              { state: { noteIds: sortedIds(wNotes) } })}>
+                            <span>{NATURE_ICO[n.nature ?? n.type] ?? '📔'}</span>
+                            <span className="cal-cell__popup-title">{n.titre_alt ?? n.titre}</span>
+                          </button>
+                        ))}
+                        {wNotes.length > 8 && (
+                          <span className="cal-cell__popup-more">+{wNotes.length - 8} autres</span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )
               })}

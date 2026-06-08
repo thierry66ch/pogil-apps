@@ -1891,6 +1891,7 @@ button, input, select, textarea { font: inherit; color: inherit }
   cursor: pointer;
   transition: border-color .15s;
   background: var(--surface-glass);
+  position: relative;
 }
 .cal-year__cell:hover { border-color: var(--accent) }
 .cal-year__cell--today { border-color: var(--accent); background: var(--accent-bg) }
@@ -2354,6 +2355,8 @@ button, input, select, textarea { font: inherit; color: inherit }
 }
 .cal-cell:hover .cal-cell__popup,
 .cal-cell__popup:hover { display: block }
+.cal-year__cell:hover .cal-cell__popup,
+.cal-year__cell .cal-cell__popup:hover { display: block }
 
 .cal-cell__popup-date {
   font-size: .75rem;

@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 59 — 2026-06-08
+Vue annuelle : popup au survol identique à la vue mensuelle — 1ère ligne plage de dates (ex. "3 jan – 9 jan"), puis liste notes avec icône + titre court, navigation directe. CSS :hover réutilise les classes cal-cell__popup existantes.
+
+---
+
 ## Build 58 — 2026-06-08
 Vue annuelle + filtres calendrier : (1) CalendarYear.jsx — grille de semaines (lun→dim) par mois, puces de couleur, clic → notes de la semaine. weeksOfYear() dans calUtils. (2) Filtres objet et thème (HierarchyPicker) sur les vues mois et année, avec contrôle de portée ↕/↓/↑ activé dès qu'un filtre est sélectionné. getRelated() dans calUtils pour descendants/ancêtres. filteredNotes calculé avec useMemo.
 

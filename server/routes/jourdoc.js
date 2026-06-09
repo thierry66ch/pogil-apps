@@ -898,7 +898,7 @@ jourdoc.post('/:wsId/todoist/sync', wsCheck, async (c) => {
     if (!ws?.todoist_token) return c.json({ ok: false, error: 'Todoist non configuré' })
 
     const notes = db.prepare(
-      'SELECT id, tache_todoist_id FROM jd_notes WHERE workspace_id=? AND tache_todoist_id IS NOT NULL AND (tache_todoist_done IS NULL OR tache_todoist_done = 0)'
+      'SELECT id, tache_todoist_id, tache_todoist_due FROM jd_notes WHERE workspace_id=? AND tache_todoist_id IS NOT NULL AND (tache_todoist_done IS NULL OR tache_todoist_done = 0)'
     ).all(wsId)
 
     let completed = 0, errors = 0
@@ -914,9 +914,18 @@ jourdoc.post('/:wsId/todoist/sync', wsCheck, async (c) => {
         if (!res.ok) { errors++; continue }
         const task = extractTask(await res.json())
         const isDone = Boolean(task?.checked || task?.completed_at || task?.is_completed)
-        db.prepare('UPDATE jd_notes SET tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=? WHERE id=?')
-          .run(task?.due?.date ?? null, task?.priority ?? null, isDone ? 1 : 0, note.id)
-        if (isDone) completed++
+        const currentDue = task?.due?.date ?? null
+        // Détection tâche récurrente : due date avancée sans complétion classique
+        const isRecurring = !isDone && note.tache_todoist_due && currentDue && currentDue > note.tache_todoist_due
+        if (isRecurring) {
+          db.prepare('UPDATE jd_notes SET tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_recurrence_done=1 WHERE id=?')
+            .run(currentDue, task?.priority ?? null, note.id)
+          completed++
+        } else {
+          db.prepare('UPDATE jd_notes SET tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=? WHERE id=?')
+            .run(currentDue, task?.priority ?? null, isDone ? 1 : 0, note.id)
+          if (isDone) completed++
+        }
       } catch { errors++ }
     }
 
@@ -926,6 +935,27 @@ jourdoc.post('/:wsId/todoist/sync', wsCheck, async (c) => {
   } catch (e) {
     return c.json({ ok: false, error: String(e?.message ?? e) }, 500)
   }
+})
+
+// GET /:wsId/todoist/tasks — toutes les notes avec tâche Todoist liée
+jourdoc.get('/:wsId/todoist/tasks', wsCheck, (c) => {
+  const wsId = c.get('wsId')
+  const notes = db.prepare(`
+    SELECT n.id, n.titre, n.titre_alt, n.date, n.type, n.nature,
+           n.tache_todoist_id, n.tache_todoist_done, n.tache_todoist_due,
+           n.tache_todoist_priority, n.tache_todoist_recurrence_done,
+           t.nom AS theme_nom
+    FROM jd_notes n
+    LEFT JOIN jd_themes t ON t.id = n.theme_id
+    WHERE n.workspace_id = ? AND n.tache_todoist_id IS NOT NULL
+    ORDER BY n.tache_todoist_done ASC, n.tache_todoist_recurrence_done DESC,
+             n.tache_todoist_due ASC, n.date DESC
+  `).all(wsId)
+  const withObjets = notes.map(n => ({
+    ...n,
+    objets: db.prepare('SELECT o.id, o.nom FROM jd_note_objet no JOIN jd_objets o ON o.id = no.objet_id WHERE no.note_id = ?').all(n.id),
+  }))
+  return c.json({ notes: withObjets })
 })
 
 // PUT /:wsId/todoist — enregistrer token + projet
@@ -1154,7 +1184,7 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/import', wsCheck, async (c) => {
     append += `<blockquote><p>${cmDate ? `<em>${cmDate}</em> — ` : ''}${html}</p></blockquote>`
   }
   const newContenu = (note.contenu ?? '') + append
-  db.prepare('UPDATE jd_notes SET contenu=? WHERE id=?').run(newContenu, noteId)
+  db.prepare('UPDATE jd_notes SET contenu=?, tache_todoist_recurrence_done=0 WHERE id=?').run(newContenu, noteId)
   return c.json({ ok: true, contenu: newContenu })
 })
 

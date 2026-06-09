@@ -3251,3 +3251,31 @@ button, input, select, textarea { font: inherit; color: inherit }
 .share-ws-btn.active { border-color: var(--accent); background: var(--accent-bg) }
 .share-ws-btn__name { font-weight: 500 }
 .share-ws-btn__check { color: var(--accent); font-weight: 700 }
+
+/* ── Page Tâches Todoist ──────────────────── */
+.todoist-tasks-section { margin-bottom: 1.5rem }
+.todoist-tasks-section__title {
+  font-size: .8125rem; font-weight: 700; color: var(--text-muted);
+  text-transform: uppercase; letter-spacing: .05em;
+  margin-bottom: .5rem; padding-bottom: .375rem;
+  border-bottom: 1px solid var(--border);
+}
+.todoist-task-row {
+  display: flex; align-items: flex-start; gap: .75rem;
+  padding: .625rem 0; border-bottom: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+.todoist-task-row__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .2rem }
+.todoist-task-row__title { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap }
+.todoist-task-row__objets { font-size: .75rem; color: var(--text-muted) }
+.todoist-task-row__meta { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap }
+.todoist-task-row__date { font-size: .75rem; color: var(--text-subtle) }
+.todoist-task-row__prio { font-size: .75rem; font-weight: 700 }
+.todoist-task-row__due  { font-size: .75rem; color: var(--text-muted) }
+.todoist-task-row__badge {
+  font-size: .7rem; font-weight: 600; padding: .1em .45em;
+  border-radius: var(--r-full);
+}
+.todoist-task-row__badge--done { background: var(--success-bg, #d1fae5); color: var(--success) }
+.todoist-task-row__badge--rec  { background: var(--accent-bg); color: var(--accent) }
+.todoist-task-row__actions { display: flex; gap: .375rem; align-items: center; flex-shrink: 0 }

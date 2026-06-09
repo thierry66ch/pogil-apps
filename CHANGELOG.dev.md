@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 66 — 2026-06-09
+Page "✓ Tâches" Todoist : route GET /todoist/tasks, composant TodoistTasks.jsx (sections À traiter / En cours), actions "↓ Consigner" et "✎ Suivi" inline. Détection tâches récurrentes : champ tache_todoist_recurrence_done, comparaison due date en sync. Auto-sync : ajout visibilitychange (retour au premier plan) + navigation automatique vers /todoist-tasks si d.completed > 0. Import remet recurrence_done à 0.
+
+---
+
 ## Build 65 — 2026-06-09
 Diagnostic sync Todoist : client affiche le message d'erreur réel (status HTTP + body ou exception) au lieu de "Erreur réseau" générique, pour identifier la cause de l'échec.
 

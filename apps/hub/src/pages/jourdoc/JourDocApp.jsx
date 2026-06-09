@@ -7,12 +7,13 @@ import TopBar from '../../components/TopBar'
 import Footer from '../../components/Footer'
 
 const NAV = [
-  { path: '',          icon: '📔', label: 'Journal' },
-  { path: 'calendar',  icon: '📅', label: 'Calendrier' },
-  { path: 'medias',    icon: '📷', label: 'Médias' },
-  { path: 'objets',    icon: '🌿', label: 'Objets' },
-  { path: 'themes',    icon: '🏷️', label: 'Thèmes' },
-  { path: 'settings',  icon: '⚙️', label: 'Workspace' },
+  { path: '',               icon: '📔', label: 'Journal' },
+  { path: 'calendar',       icon: '📅', label: 'Calendrier' },
+  { path: 'medias',         icon: '📷', label: 'Médias' },
+  { path: 'objets',         icon: '🌿', label: 'Objets' },
+  { path: 'themes',         icon: '🏷️', label: 'Thèmes' },
+  { path: 'todoist-tasks',  icon: '✓',  label: 'Tâches' },
+  { path: 'settings',       icon: '⚙️', label: 'Workspace' },
 ]
 
 export default function JourDocApp() {
@@ -43,15 +44,25 @@ export default function JourDocApp() {
     if (found && ws && found.name !== ws.name) setWs(w => ({ ...w, name: found.name }))
   }, [allWs, wsId])
 
-  // Sync Todoist silencieuse au montage — au plus une fois toutes les 5 min par workspace
+  // Sync Todoist silencieuse — au montage, changement workspace, et retour au premier plan
   useEffect(() => {
-    const key = `todoist_sync_${wsId}`
-    const last = Number(sessionStorage.getItem(key) ?? 0)
-    if (Date.now() - last < 5 * 60 * 1000) return
-    fetch(API_ROUTES.JD_WS_TODOIST_SYNC(wsId), { method: 'POST', headers: authHeader(token) })
-      .then(r => r.json())
-      .then(d => { if (d.ok) sessionStorage.setItem(key, Date.now().toString()) })
-      .catch(() => {})
+    function runSync() {
+      if (document.hidden) return
+      const key = `todoist_sync_${wsId}`
+      const last = Number(sessionStorage.getItem(key) ?? 0)
+      if (Date.now() - last < 5 * 60 * 1000) return
+      fetch(API_ROUTES.JD_WS_TODOIST_SYNC(wsId), { method: 'POST', headers: authHeader(token) })
+        .then(r => r.json())
+        .then(d => {
+          if (!d.ok) return
+          sessionStorage.setItem(key, Date.now().toString())
+          if (d.completed > 0) navigate(`/jourdoc/${wsId}/todoist-tasks`)
+        })
+        .catch(() => {})
+    }
+    runSync()
+    document.addEventListener('visibilitychange', runSync)
+    return () => document.removeEventListener('visibilitychange', runSync)
   }, [wsId, token])
 
   function isActive(path) {

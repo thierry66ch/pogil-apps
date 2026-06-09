@@ -20,7 +20,7 @@ db.exec(schema)
 for (const col of ['todoist_token TEXT', 'todoist_project_id TEXT', 'todoist_project_nom TEXT']) {
   try { db.exec(`ALTER TABLE workspaces ADD COLUMN ${col}`) } catch { /* déjà présente */ }
 }
-for (const col of ['tache_todoist_due TEXT', 'tache_todoist_priority INTEGER', 'tache_todoist_done INTEGER DEFAULT 0']) {
+for (const col of ['tache_todoist_due TEXT', 'tache_todoist_priority INTEGER', 'tache_todoist_done INTEGER DEFAULT 0', 'tache_todoist_recurrence_done INTEGER DEFAULT 0']) {
   try { db.exec(`ALTER TABLE jd_notes ADD COLUMN ${col}`) } catch { /* déjà présente */ }
 }
 

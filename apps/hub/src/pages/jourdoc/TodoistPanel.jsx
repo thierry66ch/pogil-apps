@@ -116,7 +116,7 @@ export default function TodoistPanel({ wsId, token, note }) {
     try {
       const res = await fetch(API_ROUTES.JD_NOTE_TODOIST_IMPORT(wsId, note.id), {
         method: 'POST', headers: authHeader(token),
-        body: JSON.stringify({ completed_at: d.completed_at, comments: d.comments }),
+        body: JSON.stringify({ completed_at: d.completed_at, comments: d.comments, task_title: d.task_content, task_id: d.task_id }),
       })
       if (res.ok) {
         setStatus(s => ({ ...s, _imported: true }))

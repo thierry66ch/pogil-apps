@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 64 — 2026-06-09
+Fix sync Todoist : try/catch global sur POST /todoist/sync — les erreurs non gérées retournaient une réponse vide (client voyait "erreur réseau"). Q4 : endpoint /details retourne task_content + task_id ; /import accepte task_title + task_id et les inclut dans le HTML ajouté (📌 lien cliquable vers la tâche Todoist).
+
+---
+
 ## Build 63 — 2026-06-09
 §6.4 Sync Todoist (A+B) : route POST /todoist/sync — batch check des tâches non complétées du workspace, mise à jour DB (done/due/priority). Sync silencieuse au montage de JourDocApp (throttlée 5 min via sessionStorage). Bouton "🔄 Sync maintenant" dans WorkspaceManager avec feedback (X tâches vérifiées, Y terminées) et horodatage de dernière sync.
 

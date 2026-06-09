@@ -892,36 +892,40 @@ jourdoc.get('/:wsId/todoist', wsCheck, (c) => {
 
 // POST /:wsId/todoist/sync — synchronisation batch des tâches non complétées
 jourdoc.post('/:wsId/todoist/sync', wsCheck, async (c) => {
-  const wsId = c.get('wsId')
-  const ws = db.prepare('SELECT todoist_token FROM workspaces WHERE id=?').get(wsId)
-  if (!ws?.todoist_token) return c.json({ ok: false, error: 'Todoist non configuré' })
+  try {
+    const wsId = c.get('wsId')
+    const ws = db.prepare('SELECT todoist_token FROM workspaces WHERE id=?').get(wsId)
+    if (!ws?.todoist_token) return c.json({ ok: false, error: 'Todoist non configuré' })
 
-  const notes = db.prepare(
-    'SELECT id, tache_todoist_id FROM jd_notes WHERE workspace_id=? AND tache_todoist_id IS NOT NULL AND (tache_todoist_done IS NULL OR tache_todoist_done = 0)'
-  ).all(wsId)
+    const notes = db.prepare(
+      'SELECT id, tache_todoist_id FROM jd_notes WHERE workspace_id=? AND tache_todoist_id IS NOT NULL AND (tache_todoist_done IS NULL OR tache_todoist_done = 0)'
+    ).all(wsId)
 
-  let completed = 0, errors = 0
-  for (const note of notes) {
-    try {
-      const res = await fetch(`${TODOIST_API}/tasks/${note.tache_todoist_id}?include_completed=true`, {
-        headers: todoistAuthHeader(ws.todoist_token)
-      })
-      if (res.status === 404) {
-        db.prepare('UPDATE jd_notes SET tache_todoist_done=1 WHERE id=?').run(note.id)
-        completed++; continue
-      }
-      if (!res.ok) { errors++; continue }
-      const task = extractTask(await res.json())
-      const isDone = Boolean(task?.checked || task?.completed_at || task?.is_completed)
-      db.prepare('UPDATE jd_notes SET tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=? WHERE id=?')
-        .run(task?.due?.date ?? null, task?.priority ?? null, isDone ? 1 : 0, note.id)
-      if (isDone) completed++
-    } catch { errors++ }
+    let completed = 0, errors = 0
+    for (const note of notes) {
+      try {
+        const res = await fetch(`${TODOIST_API}/tasks/${note.tache_todoist_id}?include_completed=true`, {
+          headers: todoistAuthHeader(ws.todoist_token)
+        })
+        if (res.status === 404) {
+          db.prepare('UPDATE jd_notes SET tache_todoist_done=1 WHERE id=?').run(note.id)
+          completed++; continue
+        }
+        if (!res.ok) { errors++; continue }
+        const task = extractTask(await res.json())
+        const isDone = Boolean(task?.checked || task?.completed_at || task?.is_completed)
+        db.prepare('UPDATE jd_notes SET tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=? WHERE id=?')
+          .run(task?.due?.date ?? null, task?.priority ?? null, isDone ? 1 : 0, note.id)
+        if (isDone) completed++
+      } catch { errors++ }
+    }
+
+    const syncedAt = new Date().toISOString()
+    syncTimestamps.set(wsId, syncedAt)
+    return c.json({ ok: true, synced: notes.length, completed, errors, synced_at: syncedAt })
+  } catch (e) {
+    return c.json({ ok: false, error: String(e?.message ?? e) }, 500)
   }
-
-  const syncedAt = new Date().toISOString()
-  syncTimestamps.set(wsId, syncedAt)
-  return c.json({ ok: true, synced: notes.length, completed, errors, synced_at: syncedAt })
 })
 
 // PUT /:wsId/todoist — enregistrer token + projet
@@ -1118,6 +1122,8 @@ jourdoc.get('/:wsId/notes/:noteId/todoist/details', wsCheck, async (c) => {
     const comments = Array.isArray(commData) ? commData : (commData?.results ?? [])
     return c.json({
       completed_at: task?.completed_at ?? null,
+      task_content: task?.content ?? null,
+      task_id:      taskId,
       comments: comments.map(cm => ({ content: cm.content, posted_at: cm.posted_at })),
     })
   } catch (e) {
@@ -1129,13 +1135,17 @@ jourdoc.get('/:wsId/notes/:noteId/todoist/details', wsCheck, async (c) => {
 jourdoc.post('/:wsId/notes/:noteId/todoist/import', wsCheck, async (c) => {
   const wsId   = c.get('wsId')
   const noteId = Number(c.req.param('noteId'))
-  const { completed_at, comments = [] } = await c.req.json()
+  const { completed_at, comments = [], task_title, task_id } = await c.req.json()
   const note = db.prepare('SELECT contenu FROM jd_notes WHERE id=? AND workspace_id=?').get(noteId, wsId)
   if (!note) return c.json({ error: 'Note introuvable' }, 404)
   const dateStr = completed_at
     ? new Date(completed_at).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' })
     : ''
   let append = `<hr><p><strong>✓ Tâche exécutée${dateStr ? ` le ${dateStr}` : ''}</strong></p>`
+  if (task_title && task_id) {
+    const taskUrl = `https://app.todoist.com/app/task/${task_id}`
+    append += `<p>📌 <a href="${taskUrl}" target="_blank" rel="noopener noreferrer">${task_title}</a></p>`
+  }
   for (const cm of comments) {
     const cmDate = cm.posted_at
       ? new Date(cm.posted_at).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' })

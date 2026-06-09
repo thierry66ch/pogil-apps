@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 62 — 2026-06-09
+Fix §2.6 titre_alt : séparateur des objets corrigé de '/' en ', ' — le '/' est interne au nom_court d'un objet (ex. Pom/Gol), les objets sont séparés par ', ' comme dans le titre long (ex. Pom/Gol, Pru → TrAntif).
+
+---
+
 ## Build 61 — 2026-06-09
 (1) SW : ajout skipWaiting() + clientsClaim() — le nouveau service worker prend le contrôle immédiatement sans attendre la fermeture des onglets, ce qui corrige le build en retard dans le footer. (2) TopBar : logo "P" remplacé par icon-192.png (logo 4 couleurs).
 

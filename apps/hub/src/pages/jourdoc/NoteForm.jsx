@@ -116,7 +116,7 @@ export default function NoteForm() {
     if (theme) parts.push(theme.nom)
     const titre = parts.join(' → ')
     const titreAlt = [
-      selectedObjets.map(o => o.nom_court || o.nom.slice(0, 3)).join('/'),
+      selectedObjets.map(o => o.nom_court || o.nom.slice(0, 3)).join(', '),
       theme ? (theme.nom_court || theme.nom.slice(0, 4)) : '',
     ].filter(Boolean).join(' → ')
     setForm(f => ({ ...f, titre, titre_alt: titreAlt }))

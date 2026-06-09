@@ -3262,10 +3262,18 @@ button, input, select, textarea { font: inherit; color: inherit }
 }
 .todoist-task-row {
   display: flex; align-items: flex-start; gap: .75rem;
-  padding: .625rem 0; border-bottom: 1px solid var(--border-subtle);
+  padding: .625rem .75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surface);
+  margin-bottom: .375rem;
+  transition: border-color .15s;
   flex-wrap: wrap;
 }
-.todoist-task-row__main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .2rem }
+.todoist-task-row:hover { border-color: var(--accent) }
+.todoist-task-row__body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .2rem }
+.todoist-task-row__head { display: flex; align-items: flex-start; gap: .5rem }
+.todoist-task-row__context { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; margin-top: .1rem }
 .todoist-task-row__title { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap }
 .todoist-task-row__objets { font-size: .75rem; color: var(--text-muted) }
 .todoist-task-row__meta { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap }

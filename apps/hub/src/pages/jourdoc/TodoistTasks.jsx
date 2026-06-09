@@ -16,23 +16,36 @@ function NoteRow({ note, onImport, onFollowUp, importing }) {
   const { wsId } = useParams()
   const navigate = useNavigate()
   const isRecurring = note.tache_todoist_recurrence_done === 1
-  const isDone     = note.tache_todoist_done === 1
+  const isDone      = note.tache_todoist_done === 1
+  const isConsigne  = note.tache_todoist_consigne === 1
 
   return (
     <div className="todoist-task-row">
-      <div className="todoist-task-row__main">
-        <div className="todoist-task-row__title">
-          <span className="jd-note-card__titre todoist-task-row__note-titre"
-            style={{ cursor: 'pointer', fontSize: '.9375rem' }}
+      {/* Titre de la note — plein titre pour le contexte complet */}
+      <div className="todoist-task-row__body">
+        <div className="todoist-task-row__head">
+          <p className="jd-note-card__titre"
+            style={{ cursor: 'pointer', margin: 0, flex: 1 }}
             onClick={() => navigate(`/jourdoc/${wsId}/notes/${note.id}`)}>
-            {note.titre_alt ?? note.titre}
-          </span>
-          {note.objets?.length > 0 && (
-            <span className="todoist-task-row__objets">
-              {note.objets.map(o => o.nom).join(', ')}
-            </span>
-          )}
+            {note.titre}
+          </p>
+          {isRecurring && <span className="todoist-task-row__badge todoist-task-row__badge--rec" title="Tâche récurrente">🔄</span>}
+          {isConsigne  && <span className="todoist-task-row__badge todoist-task-row__badge--done">✓ consigné</span>}
         </div>
+
+        {/* Contexte : thème + objets */}
+        {(note.theme_nom || note.objets?.length > 0) && (
+          <div className="todoist-task-row__context">
+            {note.theme_nom && <span className="jd-note-card__theme">{note.theme_nom}</span>}
+            {note.objets?.length > 0 && (
+              <span style={{ fontSize: '.75rem', color: 'var(--text-muted)' }}>
+                🌿 {note.objets.map(o => o.nom).join(', ')}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Meta : date note + priorité + échéance */}
         <div className="todoist-task-row__meta">
           {note.date && <span className="todoist-task-row__date">{fmtDate(note.date)}</span>}
           {note.tache_todoist_priority && (
@@ -41,14 +54,16 @@ function NoteRow({ note, onImport, onFollowUp, importing }) {
             </span>
           )}
           {note.tache_todoist_due && (
-            <span className="todoist-task-row__due">📅 {fmtDate(note.tache_todoist_due)}</span>
+            <span className="todoist-task-row__due">
+              {isRecurring ? '🔄' : '📅'} {fmtDate(note.tache_todoist_due)}
+            </span>
           )}
-          {isRecurring && <span className="todoist-task-row__badge todoist-task-row__badge--rec">🔄 récurrente</span>}
-          {isDone     && <span className="todoist-task-row__badge todoist-task-row__badge--done">✓ terminée</span>}
         </div>
       </div>
+
+      {/* Actions */}
       <div className="todoist-task-row__actions">
-        {(isDone || isRecurring) && (
+        {(isDone || isRecurring) && !isConsigne && (
           <>
             <button className="btn btn-secondary" style={{ fontSize: '.78rem', padding: '.3rem .6rem' }}
               onClick={() => onImport(note)} disabled={importing === note.id}>
@@ -62,7 +77,7 @@ function NoteRow({ note, onImport, onFollowUp, importing }) {
         )}
         <button className="btn btn-ghost" style={{ fontSize: '.78rem', padding: '.3rem .6rem' }}
           onClick={() => navigate(`/jourdoc/${wsId}/notes/${note.id}`)}>
-          Ouvrir →
+          →
         </button>
       </div>
     </div>
@@ -74,10 +89,10 @@ export default function TodoistTasks() {
   const { token } = useAuth()
   const navigate  = useNavigate()
 
-  const [notes, setNotes]       = useState([])
-  const [loading, setLoading]   = useState(true)
+  const [notes, setNotes]         = useState([])
+  const [loading, setLoading]     = useState(true)
   const [importing, setImporting] = useState(null)
-  const [msg, setMsg]           = useState('')
+  const [msg, setMsg]             = useState('')
 
   function load() {
     setLoading(true)
@@ -89,9 +104,14 @@ export default function TodoistTasks() {
 
   useEffect(() => { load() }, [wsId, token])
 
-  const active    = notes.filter(n => !n.tache_todoist_done && !n.tache_todoist_recurrence_done)
-  const recurring = notes.filter(n => n.tache_todoist_recurrence_done)
-  const done      = notes.filter(n => n.tache_todoist_done)
+  // À traiter : terminées non consignées + récurrentes exécutées
+  const toHandle = notes.filter(n =>
+    (n.tache_todoist_done && !n.tache_todoist_consigne) || n.tache_todoist_recurrence_done
+  )
+  // En cours : actives
+  const active  = notes.filter(n => !n.tache_todoist_done && !n.tache_todoist_recurrence_done)
+  // Traités : consignées
+  const done    = notes.filter(n => n.tache_todoist_done && n.tache_todoist_consigne)
 
   async function handleImport(note) {
     setImporting(note.id); setMsg('')
@@ -103,7 +123,6 @@ export default function TodoistTasks() {
         body: JSON.stringify({ completed_at: details.completed_at, comments: details.comments, task_title: details.task_content, task_id: details.task_id }),
       })
       if (res.ok) {
-        // Réinitialiser le flag récurrence
         setMsg(`Résolution consignée dans "${note.titre_alt ?? note.titre}".`)
         load()
       }
@@ -120,6 +139,18 @@ export default function TodoistTasks() {
         contenu: `<p>Note d'origine : <a href="/jourdoc/${wsId}/notes/${note.id}">${titre}</a></p>`,
       }
     })
+  }
+
+  function Section({ title, items }) {
+    if (items.length === 0) return null
+    return (
+      <section className="todoist-tasks-section">
+        <h3 className="todoist-tasks-section__title">{title} ({items.length})</h3>
+        {items.map(n => (
+          <NoteRow key={n.id} note={n} onImport={handleImport} onFollowUp={handleFollowUp} importing={importing} />
+        ))}
+      </section>
+    )
   }
 
   return (
@@ -140,23 +171,9 @@ export default function TodoistTasks() {
         <div className="empty-state"><div className="empty-state__icon">✓</div><p>Aucune tâche Todoist liée.</p></div>
       ) : (
         <>
-          {(done.length > 0 || recurring.length > 0) && (
-            <section className="todoist-tasks-section">
-              <h3 className="todoist-tasks-section__title">🔔 À traiter ({done.length + recurring.length})</h3>
-              {[...recurring, ...done].map(n => (
-                <NoteRow key={n.id} note={n} onImport={handleImport} onFollowUp={handleFollowUp} importing={importing} />
-              ))}
-            </section>
-          )}
-
-          {active.length > 0 && (
-            <section className="todoist-tasks-section">
-              <h3 className="todoist-tasks-section__title">⏳ En cours ({active.length})</h3>
-              {active.map(n => (
-                <NoteRow key={n.id} note={n} onImport={handleImport} onFollowUp={handleFollowUp} importing={importing} />
-              ))}
-            </section>
-          )}
+          <Section title="🔔 À traiter" items={toHandle} />
+          <Section title="⏳ En cours"  items={active} />
+          <Section title="✅ Traités"   items={done} />
         </>
       )}
     </div>

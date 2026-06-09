@@ -944,6 +944,7 @@ jourdoc.get('/:wsId/todoist/tasks', wsCheck, (c) => {
     SELECT n.id, n.titre, n.titre_alt, n.date, n.type, n.nature,
            n.tache_todoist_id, n.tache_todoist_done, n.tache_todoist_due,
            n.tache_todoist_priority, n.tache_todoist_recurrence_done,
+           COALESCE(n.tache_todoist_consigne, 0) AS tache_todoist_consigne,
            t.nom AS theme_nom
     FROM jd_notes n
     LEFT JOIN jd_themes t ON t.id = n.theme_id
@@ -1194,7 +1195,13 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/import', wsCheck, async (c) => {
   // S'assurer que le contenu existant est non-nul et terminer proprement avant d'ajouter
   const existing = note.contenu ?? ''
   const newContenu = existing + append
-  db.prepare('UPDATE jd_notes SET contenu=?, tache_todoist_recurrence_done=0 WHERE id=?').run(newContenu, noteId)
+  // Récurrente → remet recurrence_done à 0 (retour en cours) ; terminée → marque consignée
+  const taskMeta = db.prepare('SELECT tache_todoist_recurrence_done FROM jd_notes WHERE id=?').get(noteId)
+  if (taskMeta?.tache_todoist_recurrence_done) {
+    db.prepare('UPDATE jd_notes SET contenu=?, tache_todoist_recurrence_done=0 WHERE id=?').run(newContenu, noteId)
+  } else {
+    db.prepare('UPDATE jd_notes SET contenu=?, tache_todoist_consigne=1 WHERE id=?').run(newContenu, noteId)
+  }
   return c.json({ ok: true, contenu: newContenu })
 })
 

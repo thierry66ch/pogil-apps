@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 68 — 2026-06-09
+Retouches page Tâches Todoist : (1) Cartes arrondies avec hover accent (remplace liste plate à coins droits). (2) Symbole 🔄 sur les tâches récurrentes. (3) Affiche note.titre (plein) + thème + objets. (4) Section "✅ Traités" : après "Consigner", flag tache_todoist_consigne=1, tâche quitte "À traiter" → "Traités". Récurrentes : retour en "En cours" après consignation (comportement inchangé). Migration tache_todoist_consigne INTEGER DEFAULT 0.
+
+---
+
 ## Build 67 — 2026-06-09
 Corrections page Tâches Todoist : (1) Titre note remplace le bouton rectangulaire par jd-note-card__titre (style cohérent app). (2) Auto-sync throttle réduit 5 min → 1 min. (3) Import : HTML-escaping du titre de tâche et du contenu des commentaires Todoist (évite injection HTML brut). (4) Suivi : contenu pré-rempli avec lien <a> vers la note d'origine.
 

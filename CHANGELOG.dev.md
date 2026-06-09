@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 69 — 2026-06-09
+Page Tâches : (2) 🔄 inline avant le titre (1rem, sans badge), visible même avec petite font-size. (3) Titre = tache_todoist_content (titre Todoist) avec fallback note.titre. Migration + stockage tache_todoist_content TEXT lors de la création et la sync.
+
+---
+
 ## Build 68 — 2026-06-09
 Retouches page Tâches Todoist : (1) Cartes arrondies avec hover accent (remplace liste plate à coins droits). (2) Symbole 🔄 sur les tâches récurrentes. (3) Affiche note.titre (plein) + thème + objets. (4) Section "✅ Traités" : après "Consigner", flag tache_todoist_consigne=1, tâche quitte "À traiter" → "Traités". Récurrentes : retour en "En cours" après consignation (comportement inchangé). Migration tache_todoist_consigne INTEGER DEFAULT 0.
 

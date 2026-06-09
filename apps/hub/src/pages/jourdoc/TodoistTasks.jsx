@@ -24,13 +24,13 @@ function NoteRow({ note, onImport, onFollowUp, importing }) {
       {/* Titre de la note — plein titre pour le contexte complet */}
       <div className="todoist-task-row__body">
         <div className="todoist-task-row__head">
+          {isRecurring && <span style={{ fontSize: '1rem', flexShrink: 0 }} title="Tâche récurrente">🔄</span>}
           <p className="jd-note-card__titre"
             style={{ cursor: 'pointer', margin: 0, flex: 1 }}
             onClick={() => navigate(`/jourdoc/${wsId}/notes/${note.id}`)}>
-            {note.titre}
+            {note.tache_todoist_content ?? note.titre}
           </p>
-          {isRecurring && <span className="todoist-task-row__badge todoist-task-row__badge--rec" title="Tâche récurrente">🔄</span>}
-          {isConsigne  && <span className="todoist-task-row__badge todoist-task-row__badge--done">✓ consigné</span>}
+          {isConsigne && <span className="todoist-task-row__badge todoist-task-row__badge--done">✓ consigné</span>}
         </div>
 
         {/* Contexte : thème + objets */}

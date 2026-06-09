@@ -917,13 +917,14 @@ jourdoc.post('/:wsId/todoist/sync', wsCheck, async (c) => {
         const currentDue = task?.due?.date ?? null
         // Détection tâche récurrente : due date avancée sans complétion classique
         const isRecurring = !isDone && note.tache_todoist_due && currentDue && currentDue > note.tache_todoist_due
+        const taskContent = task?.content ?? null
         if (isRecurring) {
-          db.prepare('UPDATE jd_notes SET tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_recurrence_done=1 WHERE id=?')
-            .run(currentDue, task?.priority ?? null, note.id)
+          db.prepare('UPDATE jd_notes SET tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_recurrence_done=1, tache_todoist_content=? WHERE id=?')
+            .run(currentDue, task?.priority ?? null, taskContent, note.id)
           completed++
         } else {
-          db.prepare('UPDATE jd_notes SET tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=? WHERE id=?')
-            .run(currentDue, task?.priority ?? null, isDone ? 1 : 0, note.id)
+          db.prepare('UPDATE jd_notes SET tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=?, tache_todoist_content=? WHERE id=?')
+            .run(currentDue, task?.priority ?? null, isDone ? 1 : 0, taskContent, note.id)
           if (isDone) completed++
         }
       } catch { errors++ }
@@ -945,6 +946,7 @@ jourdoc.get('/:wsId/todoist/tasks', wsCheck, (c) => {
            n.tache_todoist_id, n.tache_todoist_done, n.tache_todoist_due,
            n.tache_todoist_priority, n.tache_todoist_recurrence_done,
            COALESCE(n.tache_todoist_consigne, 0) AS tache_todoist_consigne,
+           n.tache_todoist_content,
            t.nom AS theme_nom
     FROM jd_notes n
     LEFT JOIN jd_themes t ON t.id = n.theme_id
@@ -1031,8 +1033,9 @@ jourdoc.post('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
     // API v1 peut envelopper dans { task: {...} } ou retourner l'objet directement
     const task = data.id ? data : (data.task ?? data.item ?? data)
     const cachedDue = task.due?.date ?? due_date ?? null
-    db.prepare('UPDATE jd_notes SET tache_todoist_id=?, tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=0 WHERE id=?')
-      .run(task.id, cachedDue, Number(priority) || 2, noteId)
+    const taskContent = task.content ?? taskBody.content ?? null
+    db.prepare('UPDATE jd_notes SET tache_todoist_id=?, tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=0, tache_todoist_content=? WHERE id=?')
+      .run(task.id, cachedDue, Number(priority) || 2, taskContent, noteId)
     return c.json({ task_id: task.id, url: `https://app.todoist.com/app/task/${task.id}` })
   } catch (e) {
     return c.json({ error: `Impossible de contacter Todoist : ${e.message}` }, 502)

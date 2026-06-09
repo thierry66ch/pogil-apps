@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 65 — 2026-06-09
+Diagnostic sync Todoist : client affiche le message d'erreur réel (status HTTP + body ou exception) au lieu de "Erreur réseau" générique, pour identifier la cause de l'échec.
+
+---
+
 ## Build 64 — 2026-06-09
 Fix sync Todoist : try/catch global sur POST /todoist/sync — les erreurs non gérées retournaient une réponse vide (client voyait "erreur réseau"). Q4 : endpoint /details retourne task_content + task_id ; /import accepte task_title + task_id et les inclut dans le HTML ajouté (📌 lien cliquable vers la tâche Todoist).
 

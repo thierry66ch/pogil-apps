@@ -77,15 +77,20 @@ export default function WorkspaceManager() {
     setTdSyncing(true); setTdSyncMsg('')
     try {
       const res = await fetch(API_ROUTES.JD_WS_TODOIST_SYNC(wsId), { method: 'POST', headers: authHeader(token) })
+      if (!res.ok) {
+        const body = await res.text().catch(() => `HTTP ${res.status}`)
+        setTdSyncMsg(`Erreur ${res.status}: ${body.slice(0, 120)}`)
+        return
+      }
       const data = await res.json()
-      if (!data.ok) { setTdSyncMsg('Erreur sync'); return }
+      if (!data.ok) { setTdSyncMsg(`Erreur: ${data.error ?? 'sync échouée'}`); return }
       const msg = data.synced === 0
         ? 'Aucune tâche à synchroniser.'
         : `${data.synced} tâche${data.synced > 1 ? 's' : ''} vérifiée${data.synced > 1 ? 's' : ''}${data.completed ? `, ${data.completed} terminée${data.completed > 1 ? 's' : ''}` : ''}.`
       setTdSyncMsg(msg)
       sessionStorage.setItem(`todoist_sync_${wsId}`, Date.now().toString())
       await loadTodoist()
-    } catch { setTdSyncMsg('Erreur réseau') }
+    } catch (e) { setTdSyncMsg(`Exception: ${e?.message ?? String(e)}`) }
     finally { setTdSyncing(false) }
   }
 

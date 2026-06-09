@@ -27,6 +27,7 @@ export default function ObjetDetail() {
   const [notes, setNotes] = useState([])
   const [direction, setDirection] = useState('both')
   const [themeFilter, setThemeFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
   const [loading, setLoading] = useState(true)
 
   const objet = objets.find(o => o.id === Number(objetId))
@@ -48,9 +49,9 @@ export default function ObjetDetail() {
   const pathMap = buildPathMap(objets)
   const path = pathMap.get(Number(objetId)) ?? ''
 
-  const filteredNotes = themeFilter
-    ? notes.filter(n => n.theme_id != null && getDescendants(themes, Number(themeFilter)).has(n.theme_id))
-    : notes
+  const filteredNotes = notes
+    .filter(n => !themeFilter || (n.theme_id != null && getDescendants(themes, Number(themeFilter)).has(n.theme_id)))
+    .filter(n => typeFilter === 'all' || n.type === typeFilter)
 
   // Thèmes présents dans les notes (pour le filtre)
   const themesInNotes = themes.filter(t => notes.some(n => n.theme_id === t.id))
@@ -86,6 +87,13 @@ export default function ObjetDetail() {
             {themesInNotes.map(t => <option key={t.id} value={t.id}>{t.nom}</option>)}
           </select>
         )}
+        <div className="jd-segmented" style={{ marginLeft: 'auto' }}>
+          {[['all','Tout'],['journal','📔 Journal'],['documentation','📄 Doc.']].map(([v,l]) => (
+            <button key={v} type="button"
+              className={`jd-seg-btn${typeFilter === v ? ' active' : ''}`}
+              onClick={() => setTypeFilter(v)}>{l}</button>
+          ))}
+        </div>
       </div>
 
       {loading ? (

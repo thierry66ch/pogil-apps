@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 60 — 2026-06-09
+ObjetDetail + ThemeDetail : filtre par type de note — boutons segmentés Tout / 📔 Journal / 📄 Doc., aligné à droite sur la barre de contrôles. Appliqué après les filtres thème/objet existants.
+
+---
+
 ## Build 59 — 2026-06-08
 Vue annuelle : popup au survol identique à la vue mensuelle — 1ère ligne plage de dates (ex. "3 jan – 9 jan"), puis liste notes avec icône + titre court, navigation directe. CSS :hover réutilise les classes cal-cell__popup existantes.
 

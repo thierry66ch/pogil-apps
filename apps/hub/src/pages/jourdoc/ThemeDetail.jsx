@@ -27,6 +27,7 @@ export default function ThemeDetail() {
   const [notes, setNotes] = useState([])
   const [direction, setDirection] = useState('both')
   const [objetFilter, setObjetFilter] = useState('')
+  const [typeFilter, setTypeFilter] = useState('all')
   const [loading, setLoading] = useState(true)
 
   const theme = themes.find(t => t.id === Number(themeId))
@@ -43,9 +44,9 @@ export default function ThemeDetail() {
       .finally(() => setLoading(false))
   }, [wsId, themeId, token, direction])
 
-  const filteredNotes = objetFilter
-    ? notes.filter(n => n.objets?.some(o => getDescendants(objets, Number(objetFilter)).has(o.id)))
-    : notes
+  const filteredNotes = notes
+    .filter(n => !objetFilter || n.objets?.some(o => getDescendants(objets, Number(objetFilter)).has(o.id)))
+    .filter(n => typeFilter === 'all' || n.type === typeFilter)
 
   const objetsInNotes = objets.filter(o => notes.some(n => n.objets?.some(no => no.id === o.id)))
 
@@ -76,6 +77,13 @@ export default function ThemeDetail() {
             {objetsInNotes.map(o => <option key={o.id} value={o.id}>{o.nom}</option>)}
           </select>
         )}
+        <div className="jd-segmented" style={{ marginLeft: 'auto' }}>
+          {[['all','Tout'],['journal','📔 Journal'],['documentation','📄 Doc.']].map(([v,l]) => (
+            <button key={v} type="button"
+              className={`jd-seg-btn${typeFilter === v ? ' active' : ''}`}
+              onClick={() => setTypeFilter(v)}>{l}</button>
+          ))}
+        </div>
       </div>
 
       {loading ? (

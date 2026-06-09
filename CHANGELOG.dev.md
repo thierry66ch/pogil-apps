@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 61 — 2026-06-09
+(1) SW : ajout skipWaiting() + clientsClaim() — le nouveau service worker prend le contrôle immédiatement sans attendre la fermeture des onglets, ce qui corrige le build en retard dans le footer. (2) TopBar : logo "P" remplacé par icon-192.png (logo 4 couleurs).
+
+---
+
 ## Build 60 — 2026-06-09
 ObjetDetail + ThemeDetail : filtre par type de note — boutons segmentés Tout / 📔 Journal / 📄 Doc., aligné à droite sur la barre de contrôles. Appliqué après les filtres thème/objet existants.
 

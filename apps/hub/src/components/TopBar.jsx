@@ -16,7 +16,7 @@ export default function TopBar({ user, isAdmin, onLogout }) {
   return (
     <header className="topbar">
       <a href="/" className="topbar__brand">
-        <div className="topbar__logo">P</div>
+        <img src="/icon-192.png" alt="pogil" className="topbar__logo" />
         <span>pogil</span>
         {isAdmin && <span className="topbar__badge">admin</span>}
       </a>

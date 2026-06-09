@@ -875,15 +875,53 @@ function notePublicUrl(c, wsId, noteId) {
   return `${proto}://${host}/jourdoc/${wsId}/notes/${noteId}`
 }
 
-// GET /:wsId/todoist — config du workspace (token masqué)
+// Horodatages des syncs par workspace (en mémoire — reset au redémarrage serveur)
+const syncTimestamps = new Map()
+
+// GET /:wsId/todoist — config du workspace (token masqué) + dernière sync
 jourdoc.get('/:wsId/todoist', wsCheck, (c) => {
   const wsId = c.get('wsId')
   const ws = db.prepare('SELECT todoist_token, todoist_project_id, todoist_project_nom FROM workspaces WHERE id=?').get(wsId)
   return c.json({
-    configured: Boolean(ws?.todoist_token),
+    configured:  Boolean(ws?.todoist_token),
     project_id:  ws?.todoist_project_id  ?? null,
     project_nom: ws?.todoist_project_nom ?? null,
+    last_sync_at: syncTimestamps.get(wsId) ?? null,
   })
+})
+
+// POST /:wsId/todoist/sync — synchronisation batch des tâches non complétées
+jourdoc.post('/:wsId/todoist/sync', wsCheck, async (c) => {
+  const wsId = c.get('wsId')
+  const ws = db.prepare('SELECT todoist_token FROM workspaces WHERE id=?').get(wsId)
+  if (!ws?.todoist_token) return c.json({ ok: false, error: 'Todoist non configuré' })
+
+  const notes = db.prepare(
+    'SELECT id, tache_todoist_id FROM jd_notes WHERE workspace_id=? AND tache_todoist_id IS NOT NULL AND (tache_todoist_done IS NULL OR tache_todoist_done = 0)'
+  ).all(wsId)
+
+  let completed = 0, errors = 0
+  for (const note of notes) {
+    try {
+      const res = await fetch(`${TODOIST_API}/tasks/${note.tache_todoist_id}?include_completed=true`, {
+        headers: todoistAuthHeader(ws.todoist_token)
+      })
+      if (res.status === 404) {
+        db.prepare('UPDATE jd_notes SET tache_todoist_done=1 WHERE id=?').run(note.id)
+        completed++; continue
+      }
+      if (!res.ok) { errors++; continue }
+      const task = extractTask(await res.json())
+      const isDone = Boolean(task?.checked || task?.completed_at || task?.is_completed)
+      db.prepare('UPDATE jd_notes SET tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=? WHERE id=?')
+        .run(task?.due?.date ?? null, task?.priority ?? null, isDone ? 1 : 0, note.id)
+      if (isDone) completed++
+    } catch { errors++ }
+  }
+
+  const syncedAt = new Date().toISOString()
+  syncTimestamps.set(wsId, syncedAt)
+  return c.json({ ok: true, synced: notes.length, completed, errors, synced_at: syncedAt })
 })
 
 // PUT /:wsId/todoist — enregistrer token + projet

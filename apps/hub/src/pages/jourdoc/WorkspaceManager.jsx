@@ -35,6 +35,8 @@ export default function WorkspaceManager() {
   const [tdEditing, setTdEditing]       = useState(false)
   const [tdLoading, setTdLoading]       = useState(false)
   const [tdError, setTdError]           = useState('')
+  const [tdSyncing, setTdSyncing]       = useState(false)
+  const [tdSyncMsg, setTdSyncMsg]       = useState('')
 
   const loadTodoist = useCallback(async () => {
     const data = await fetch(API_ROUTES.JD_WS_TODOIST(wsId), { headers: authHeader(token) }).then(r => r.json())
@@ -69,6 +71,22 @@ export default function WorkspaceManager() {
       setMsg('Configuration Todoist enregistrée.')
     } catch { setTdError('Erreur réseau') }
     finally { setTdLoading(false) }
+  }
+
+  async function syncTodoist() {
+    setTdSyncing(true); setTdSyncMsg('')
+    try {
+      const res = await fetch(API_ROUTES.JD_WS_TODOIST_SYNC(wsId), { method: 'POST', headers: authHeader(token) })
+      const data = await res.json()
+      if (!data.ok) { setTdSyncMsg('Erreur sync'); return }
+      const msg = data.synced === 0
+        ? 'Aucune tâche à synchroniser.'
+        : `${data.synced} tâche${data.synced > 1 ? 's' : ''} vérifiée${data.synced > 1 ? 's' : ''}${data.completed ? `, ${data.completed} terminée${data.completed > 1 ? 's' : ''}` : ''}.`
+      setTdSyncMsg(msg)
+      sessionStorage.setItem(`todoist_sync_${wsId}`, Date.now().toString())
+      await loadTodoist()
+    } catch { setTdSyncMsg('Erreur réseau') }
+    finally { setTdSyncing(false) }
   }
 
   async function clearTodoist() {
@@ -311,14 +329,28 @@ export default function WorkspaceManager() {
         {tdConfig === null ? (
           <p style={{ color: 'var(--text-muted)', fontSize: '.875rem' }}>Chargement…</p>
         ) : !tdEditing && tdConfig.configured ? (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.75rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '.875rem' }}>
-              Configuré ✓ — Projet : <strong>{tdConfig.project_nom ?? '(aucun)'}</strong>
-            </span>
-            <button className="btn btn-secondary" style={{ fontSize: '.8rem', padding: '.3rem .6rem' }}
-              onClick={() => setTdEditing(true)}>Modifier</button>
-            <button className="btn btn-ghost" style={{ fontSize: '.8rem', padding: '.3rem .6rem', color: 'var(--danger)' }}
-              onClick={clearTodoist}>Supprimer</button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '.5rem' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.75rem', alignItems: 'center' }}>
+              <span style={{ fontSize: '.875rem' }}>
+                Configuré ✓ — Projet : <strong>{tdConfig.project_nom ?? '(aucun)'}</strong>
+              </span>
+              <button className="btn btn-primary" style={{ fontSize: '.8rem', padding: '.3rem .7rem' }}
+                onClick={syncTodoist} disabled={tdSyncing}>
+                {tdSyncing ? '…' : '🔄 Sync maintenant'}
+              </button>
+              <button className="btn btn-secondary" style={{ fontSize: '.8rem', padding: '.3rem .6rem' }}
+                onClick={() => setTdEditing(true)}>Modifier</button>
+              <button className="btn btn-ghost" style={{ fontSize: '.8rem', padding: '.3rem .6rem', color: 'var(--danger)' }}
+                onClick={clearTodoist}>Supprimer</button>
+            </div>
+            {(tdConfig.last_sync_at || tdSyncMsg) && (
+              <p style={{ fontSize: '.8rem', color: 'var(--text-muted)', margin: 0 }}>
+                {tdSyncMsg && <span style={{ color: 'var(--success)', marginRight: '.5rem' }}>{tdSyncMsg}</span>}
+                {tdConfig.last_sync_at && (
+                  <span>Dernière sync : {new Date(tdConfig.last_sync_at).toLocaleTimeString('fr-CH', { hour: '2-digit', minute: '2-digit' })}</span>
+                )}
+              </p>
+            )}
           </div>
         ) : (
           <div className="todoist-config-form">

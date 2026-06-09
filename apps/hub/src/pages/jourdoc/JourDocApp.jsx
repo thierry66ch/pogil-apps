@@ -43,6 +43,17 @@ export default function JourDocApp() {
     if (found && ws && found.name !== ws.name) setWs(w => ({ ...w, name: found.name }))
   }, [allWs, wsId])
 
+  // Sync Todoist silencieuse au montage — au plus une fois toutes les 5 min par workspace
+  useEffect(() => {
+    const key = `todoist_sync_${wsId}`
+    const last = Number(sessionStorage.getItem(key) ?? 0)
+    if (Date.now() - last < 5 * 60 * 1000) return
+    fetch(API_ROUTES.JD_WS_TODOIST_SYNC(wsId), { method: 'POST', headers: authHeader(token) })
+      .then(r => r.json())
+      .then(d => { if (d.ok) sessionStorage.setItem(key, Date.now().toString()) })
+      .catch(() => {})
+  }, [wsId, token])
+
   function isActive(path) {
     const base = `/jourdoc/${wsId}`
     if (path === '') return location.pathname === base || location.pathname === base + '/'

@@ -22,9 +22,11 @@ function NoteRow({ note, onImport, onFollowUp, importing }) {
     <div className="todoist-task-row">
       <div className="todoist-task-row__main">
         <div className="todoist-task-row__title">
-          <button className="jd-name-link" onClick={() => navigate(`/jourdoc/${wsId}/notes/${note.id}`)}>
+          <span className="jd-note-card__titre todoist-task-row__note-titre"
+            style={{ cursor: 'pointer', fontSize: '.9375rem' }}
+            onClick={() => navigate(`/jourdoc/${wsId}/notes/${note.id}`)}>
             {note.titre_alt ?? note.titre}
-          </button>
+          </span>
           {note.objets?.length > 0 && (
             <span className="todoist-task-row__objets">
               {note.objets.map(o => o.nom).join(', ')}
@@ -110,10 +112,12 @@ export default function TodoistTasks() {
   }
 
   function handleFollowUp(note) {
+    const titre = note.titre_alt ?? note.titre
     navigate(`/jourdoc/${wsId}/new`, {
       state: {
         objet_ids: note.objets?.map(o => o.id) ?? [],
-        titre: `Suivi — ${note.titre_alt ?? note.titre}`,
+        titre: `Suivi — ${titre}`,
+        contenu: `<p>Note d'origine : <a href="/jourdoc/${wsId}/notes/${note.id}">${titre}</a></p>`,
       }
     })
   }

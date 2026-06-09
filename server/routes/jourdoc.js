@@ -1168,22 +1168,32 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/import', wsCheck, async (c) => {
   const { completed_at, comments = [], task_title, task_id } = await c.req.json()
   const note = db.prepare('SELECT contenu FROM jd_notes WHERE id=? AND workspace_id=?').get(noteId, wsId)
   if (!note) return c.json({ error: 'Note introuvable' }, 404)
+
+  function esc(s) {
+    return (s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+  }
+
   const dateStr = completed_at
     ? new Date(completed_at).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' })
     : ''
+
   let append = `<hr><p><strong>✓ Tâche exécutée${dateStr ? ` le ${dateStr}` : ''}</strong></p>`
   if (task_title && task_id) {
-    const taskUrl = `https://app.todoist.com/app/task/${task_id}`
-    append += `<p>📌 <a href="${taskUrl}" target="_blank" rel="noopener noreferrer">${task_title}</a></p>`
+    const taskUrl = `https://app.todoist.com/app/task/${esc(task_id)}`
+    append += `<p>📌 <a href="${taskUrl}" target="_blank" rel="noopener noreferrer">${esc(task_title)}</a></p>`
   }
   for (const cm of comments) {
     const cmDate = cm.posted_at
       ? new Date(cm.posted_at).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' })
       : ''
-    const html = (cm.content ?? '').replace(/\n/g, '</p><p>')
-    append += `<blockquote><p>${cmDate ? `<em>${cmDate}</em> — ` : ''}${html}</p></blockquote>`
+    // Échapper le contenu puis convertir les sauts de ligne en balises
+    const safeContent = esc(cm.content ?? '').replace(/\n/g, '</p><p>')
+    append += `<blockquote><p>${cmDate ? `<em>${cmDate}</em> — ` : ''}${safeContent}</p></blockquote>`
   }
-  const newContenu = (note.contenu ?? '') + append
+
+  // S'assurer que le contenu existant est non-nul et terminer proprement avant d'ajouter
+  const existing = note.contenu ?? ''
+  const newContenu = existing + append
   db.prepare('UPDATE jd_notes SET contenu=?, tache_todoist_recurrence_done=0 WHERE id=?').run(newContenu, noteId)
   return c.json({ ok: true, contenu: newContenu })
 })

@@ -50,7 +50,7 @@ export default function JourDocApp() {
       if (document.hidden) return
       const key = `todoist_sync_${wsId}`
       const last = Number(sessionStorage.getItem(key) ?? 0)
-      if (Date.now() - last < 5 * 60 * 1000) return
+      if (Date.now() - last < 60 * 1000) return
       fetch(API_ROUTES.JD_WS_TODOIST_SYNC(wsId), { method: 'POST', headers: authHeader(token) })
         .then(r => r.json())
         .then(d => {

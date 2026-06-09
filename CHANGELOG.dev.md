@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 67 — 2026-06-09
+Corrections page Tâches Todoist : (1) Titre note remplace le bouton rectangulaire par jd-note-card__titre (style cohérent app). (2) Auto-sync throttle réduit 5 min → 1 min. (3) Import : HTML-escaping du titre de tâche et du contenu des commentaires Todoist (évite injection HTML brut). (4) Suivi : contenu pré-rempli avec lien <a> vers la note d'origine.
+
+---
+
 ## Build 66 — 2026-06-09
 Page "✓ Tâches" Todoist : route GET /todoist/tasks, composant TodoistTasks.jsx (sections À traiter / En cours), actions "↓ Consigner" et "✎ Suivi" inline. Détection tâches récurrentes : champ tache_todoist_recurrence_done, comparaison due date en sync. Auto-sync : ajout visibilitychange (retour au premier plan) + navigation automatique vers /todoist-tasks si d.completed > 0. Import remet recurrence_done à 0.
 

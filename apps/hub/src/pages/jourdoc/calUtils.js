@@ -193,3 +193,24 @@ export function flattenObjects(objects) {
   roots.sort((a, b) => a.nom.localeCompare(b.nom)).forEach(r => traverse(r, 0))
   return result
 }
+
+// Numéro de "bucket" hebdomadaire dans l'année (0 = sem contenant le 1er jan)
+export function weekBucket(isoDate) {
+  const d = new Date(isoDate + 'T00:00:00')
+  const y = d.getFullYear()
+  const jan1 = new Date(y, 0, 1)
+  return { year: y, bucket: Math.min(Math.floor((d - jan1) / 604800000), 51) }
+}
+
+// Labels de mois pour 52 buckets d'une année de référence
+export function monthSpansFor52(refYear) {
+  const jan1 = new Date(refYear, 0, 1)
+  const spans = []; let cur = -1; let count = 0
+  for (let i = 0; i < 52; i++) {
+    const m = new Date(jan1.getTime() + i * 604800000).getMonth()
+    if (m !== cur) { if (cur >= 0) spans.push({ month: cur, count }); cur = m; count = 1 }
+    else count++
+  }
+  spans.push({ month: cur, count })
+  return spans
+}

@@ -1257,4 +1257,46 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/import', wsCheck, async (c) => {
   return c.json({ ok: true, contenu: newContenu })
 })
 
+// ── ANALYSE PLURIANNUELLE ─────────────────────────────────────
+jourdoc.get('/:wsId/analyse', wsCheck, (c) => {
+  const wsId = c.get('wsId')
+  const { objet_id, objet_dir = 'both', theme_id, theme_dir = 'both', nature } = c.req.query()
+
+  function relatedIds(table, rootId, dir) {
+    const all = db.prepare(`SELECT id, parent_id FROM ${table} WHERE workspace_id=?`).all(wsId)
+    const ids = new Set([rootId])
+    if (dir === 'down' || dir === 'both') {
+      let added = true
+      while (added) { added = false; for (const x of all) if (!ids.has(x.id) && ids.has(x.parent_id)) { ids.add(x.id); added = true } }
+    }
+    if (dir === 'up' || dir === 'both') {
+      let cur = rootId
+      while (true) { const t = all.find(x => x.id === cur); if (!t || !t.parent_id) break; ids.add(t.parent_id); cur = t.parent_id }
+    }
+    return ids
+  }
+
+  let sql = `SELECT n.id, n.date, n.nature, n.type, n.titre_alt, n.titre,
+             (SELECT nom FROM jd_themes WHERE id = n.theme_id) AS theme_nom
+             FROM jd_notes n WHERE n.workspace_id = ? AND n.date IS NOT NULL`
+  const params = [wsId]
+
+  if (objet_id) {
+    const ids = relatedIds('jd_objets', Number(objet_id), objet_dir)
+    const ph = [...ids].map(() => '?').join(',')
+    sql += ` AND EXISTS (SELECT 1 FROM jd_note_objet no WHERE no.note_id=n.id AND no.objet_id IN (${ph}))`
+    params.push(...ids)
+  }
+  if (theme_id) {
+    const ids = relatedIds('jd_themes', Number(theme_id), theme_dir)
+    const ph = [...ids].map(() => '?').join(',')
+    sql += ` AND n.theme_id IN (${ph})`
+    params.push(...ids)
+  }
+  if (nature && nature !== 'both') { sql += ` AND n.nature = ?`; params.push(nature) }
+
+  sql += ` ORDER BY n.date ASC`
+  return c.json({ notes: db.prepare(sql).all(...params) })
+})
+
 export default jourdoc

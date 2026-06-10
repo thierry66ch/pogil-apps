@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 75 — 2026-06-10
+§7.3 Vue Analyse pluriannuelle : tableau 1 ligne/année × 52 colonnes/semaines. Filtres HierarchyPicker objet+direction et thème+direction, nature (Tout/Obs./Act.). Header mois proportionnel. Cellules avec dots colorés par nature + popup au survol. Route GET /analyse côté serveur avec filtrage hiérarchique JS. .jd-main--wide pour la pleine largeur. Item "📊 Analyse" dans la nav.
+
+---
+
 ## Build 74 — 2026-06-10
 Lier tâche Todoist : après la liaison, poste un commentaire sur la tâche Todoist avec lien cliquable vers la note JourDoc (📔 Note JourDoc : [titre](url)). Erreur de commentaire silencieuse (la liaison reste valide).
 

@@ -3294,3 +3294,90 @@ button, input, select, textarea { font: inherit; color: inherit }
 .todoist-task-row__badge--done { background: var(--success-bg, #d1fae5); color: var(--success) }
 .todoist-task-row__badge--rec  { background: var(--accent-bg); color: var(--accent) }
 .todoist-task-row__actions { display: flex; gap: .375rem; align-items: center; flex-shrink: 0 }
+
+/* ── Vue Analyse pluriannuelle ────────────── */
+.jd-main--wide { max-width: none !important; padding-left: 1rem; padding-right: 1rem }
+
+.jd-analyse { display: flex; flex-direction: column; gap: 1rem }
+
+.jd-analyse__filters {
+  display: flex; flex-direction: column; gap: .5rem;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: .75rem;
+}
+.jd-analyse__filter-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap }
+.jd-analyse__filter-label { font-size: .75rem; font-weight: 700; color: var(--text-muted); width: 44px; flex-shrink: 0 }
+.jd-analyse__picker { flex: 1; min-width: 150px; max-width: 260px }
+
+.jd-analyse__wrap { overflow-x: auto; padding-bottom: .5rem }
+
+.jd-analyse__table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 640px;
+  table-layout: fixed;
+}
+.jd-analyse__col-year { width: 52px }
+
+.jd-analyse__th-year { width: 52px }
+.jd-analyse__th-month {
+  font-size: .7rem; font-weight: 700; color: var(--text-muted);
+  text-align: left; padding: .15rem .2rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap; overflow: hidden;
+}
+
+.jd-analyse__td-year {
+  font-size: .8125rem; font-weight: 700; color: var(--text-muted);
+  padding: .2rem .3rem; white-space: nowrap;
+  position: sticky; left: 0;
+  background: var(--bg); z-index: 2;
+}
+
+.jd-analyse__cell {
+  height: 28px; padding: 0 1px;
+  border-left: 1px solid var(--border-subtle);
+  position: relative;
+  vertical-align: middle;
+}
+.jd-analyse__cell--has { background: var(--surface-glass) }
+
+.jd-analyse__dots {
+  display: flex; align-items: center; justify-content: center;
+  gap: 1px; height: 100%;
+}
+.jd-analyse__dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.jd-analyse__dot-more { font-size: .55rem; color: var(--text-muted) }
+
+/* Popup au survol */
+.jd-analyse__popup {
+  display: none;
+  position: absolute;
+  top: calc(100% + 2px); left: 0;
+  min-width: 180px; max-width: 240px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  padding: .4rem .5rem;
+  z-index: 300;
+  pointer-events: auto;
+}
+.jd-analyse__cell:hover .jd-analyse__popup,
+.jd-analyse__popup:hover { display: block }
+
+.jd-analyse__popup-head {
+  font-size: .7rem; font-weight: 700; color: var(--text-muted);
+  margin-bottom: .25rem;
+}
+.jd-analyse__popup-item {
+  display: block; width: 100%;
+  padding: .2rem .25rem;
+  background: none; border: none; border-radius: var(--r-sm);
+  text-align: left; font-size: .8rem; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.jd-analyse__popup-item:hover { background: var(--accent-bg); color: var(--accent) }
+.jd-analyse__popup-more { font-size: .7rem; color: var(--text-muted); padding: .1rem .25rem; display: block }

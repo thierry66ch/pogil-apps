@@ -2890,7 +2890,7 @@ button, input, select, textarea { font: inherit; color: inherit }
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-lg);
-  z-index: 50;
+  z-index: 300;
   overflow: hidden;
   animation: pop-in .15s var(--ease);
 }
@@ -2939,7 +2939,7 @@ button, input, select, textarea { font: inherit; color: inherit }
 }
 .ws-switch__hr { border: none; border-top: 1px solid var(--border); margin: .25rem 0 }
 .ws-switch__create { color: var(--accent); font-weight: 600 }
-.ws-switch__backdrop { position: fixed; inset: 0; z-index: 49 }
+.ws-switch__backdrop { position: fixed; inset: 0; z-index: 299 }
 
 /* ── Workspace Manager ──────────────────── */
 .ws-manager { padding-bottom: 2rem }

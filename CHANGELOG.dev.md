@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 71 — 2026-06-10
+Fix build 70 : (1) ws-switch menu z-index 50→300, backdrop 49→299 (menu derrière le contenu principal). (2) Route /todoist/link : outer try/catch + c.req.json() protégé + extraction ID plus robuste (split /task/ → dernière portion → strip query string).
+
+---
+
 ## Build 70 — 2026-06-10
 (1) Workspace switcher mobile : position:fixed pour échapper à overflow-x:auto de .jd-nav (menu clips). (2) TodoistPanel : bouton "🔗 Lier une tâche existante" — saisie URL ou ID Todoist, extraction de l'ID, vérification API, stockage tache_todoist_id + contenu + due + priority. Route POST /todoist/link côté serveur.
 

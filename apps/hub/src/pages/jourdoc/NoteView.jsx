@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
@@ -42,6 +42,12 @@ export default function NoteView() {
   const [loading, setLoading] = useState(true)
   const [lbIdx, setLbIdx] = useState(-1)
   const touchStart = useRef(null)
+
+  const refreshNote = useCallback(() => {
+    fetch(API_ROUTES.JD_NOTE(wsId, noteId), { headers: authHeader(token) })
+      .then(r => r.json())
+      .then(d => setNote(d.note ?? null))
+  }, [wsId, noteId, token])
 
   useEffect(() => {
     setLoading(true)
@@ -218,7 +224,7 @@ export default function NoteView() {
 
           {/* Tâche Todoist */}
           <div className="note-view__sidebar-block">
-            <TodoistPanel wsId={wsId} token={token} note={note} />
+            <TodoistPanel wsId={wsId} token={token} note={note} onNoteUpdated={refreshNote} />
           </div>
 
           {/* Créée le */}

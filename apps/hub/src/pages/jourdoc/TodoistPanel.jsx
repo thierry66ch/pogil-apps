@@ -24,7 +24,7 @@ function priorityInfo(value) {
   return PRIORITY_OPTIONS.find(p => p.value === value) ?? null
 }
 
-export default function TodoistPanel({ wsId, token, note }) {
+export default function TodoistPanel({ wsId, token, note, onNoteUpdated }) {
   const navigate = useNavigate()
   const { wsId: wsIdParam } = useParams()
   const [status, setStatus]         = useState(null)
@@ -124,7 +124,7 @@ export default function TodoistPanel({ wsId, token, note }) {
       })
       if (res.ok) {
         setStatus(s => ({ ...s, _imported: true }))
-        window.location.reload()  // recharge la note pour afficher le contenu mis à jour
+        onNoteUpdated?.()
       }
     } finally { setImporting(false) }
   }

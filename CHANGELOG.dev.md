@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 78 — 2026-06-10
+§2.7 confirmé existant. Polish+§7.3 : (1) TodoistPanel window.location.reload() → onNoteUpdated callback (re-fetch ciblé). (2) CalendarView swipe tactile sur tous les modes sauf matrice. (3) AnalyseView : surlignade colonne au clic (même semaine × toutes les années), marqueur semaine courante (outline accent), popup enrichi (plage dates semaine en header, dot nature + date exacte par note).
+
+---
+
 ## Build 77 — 2026-06-10
 Vue Analyse fixes : (2) Popup via createPortal(document.body) + position:fixed calculée au survol (échappe overflow-x:auto de .jd-analyse__wrap), gestion hover avec délai 150ms. (3) Contour table via outline:2px, border-right:1px entre semaines (border-collapse), --month-start inchangé.
 

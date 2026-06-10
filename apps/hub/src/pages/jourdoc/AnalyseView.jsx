@@ -26,13 +26,17 @@ export default function AnalyseView() {
   const [loading,        setLoading]        = useState(false)
 
   // Popup via portal (position fixed pour échapper à overflow-x:auto)
-  const [popup, setPopup]   = useState(null)  // { notes, x, y }
-  const hideTimer           = useRef(null)
+  const [popup, setPopup]       = useState(null)  // { notes, x, y, year, bucket }
+  const [highlightCol, setHighlightCol] = useState(null)  // bucket index surligné
+  const hideTimer               = useRef(null)
 
-  const showPopup = useCallback((e, cellNotes) => {
+  // Semaine courante (marqueur visuel)
+  const todayBucket = useMemo(() => weekBucket(new Date().toISOString().slice(0, 10)).bucket, [])
+
+  const showPopup = useCallback((e, cellNotes, year, bucket) => {
     clearTimeout(hideTimer.current)
     const rect = e.currentTarget.getBoundingClientRect()
-    setPopup({ notes: cellNotes, x: rect.left, y: rect.bottom + 4 })
+    setPopup({ notes: cellNotes, x: rect.left, y: rect.bottom + 4, year, bucket })
   }, [])
 
   const hidePopup = useCallback(() => {
@@ -181,15 +185,20 @@ export default function AnalyseView() {
                   {Array.from({ length: BUCKETS }, (_, b) => {
                     const cellNotes = byYearBucket.get(`${year}/${b}`) ?? []
                     const isMonthStart = monthStarts.has(b)
+                    const isHighlighted = highlightCol === b
+                    const isToday = b === todayBucket && year === new Date().getFullYear()
                     return (
                       <td key={b}
                         className={[
                           'jd-analyse__cell',
                           cellNotes.length ? 'jd-analyse__cell--has' : '',
                           isMonthStart ? 'jd-analyse__cell--month-start' : '',
+                          isHighlighted ? 'jd-analyse__cell--hl' : '',
+                          isToday ? 'jd-analyse__cell--today' : '',
                         ].filter(Boolean).join(' ')}
-                        onMouseEnter={cellNotes.length ? e => showPopup(e, cellNotes) : undefined}
+                        onMouseEnter={cellNotes.length ? e => showPopup(e, cellNotes, year, b) : undefined}
                         onMouseLeave={cellNotes.length ? hidePopup : undefined}
+                        onClick={() => setHighlightCol(highlightCol === b ? null : b)}
                       >
                         {cellNotes.length > 0 && (
                           <div className="jd-analyse__dots">
@@ -217,12 +226,25 @@ export default function AnalyseView() {
           onMouseEnter={keepPopup}
           onMouseLeave={hidePopup}
         >
+          {/* En-tête : plage de dates de la semaine */}
           <div className="jd-analyse__popup-head">
-            {popup.notes.length} note{popup.notes.length > 1 ? 's' : ''}
+            {(() => {
+              const jan1 = new Date(popup.year, 0, 1)
+              const ws = new Date(jan1.getTime() + popup.bucket * 7 * 86400000)
+              const we = new Date(ws.getTime() + 6 * 86400000)
+              const fmt = d => d.toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })
+              return `${fmt(ws)} – ${fmt(we)} ${popup.year}`
+            })()}
+            {' · '}{popup.notes.length} note{popup.notes.length > 1 ? 's' : ''}
           </div>
           {popup.notes.slice(0, 6).map(n => (
             <button key={n.id} className="jd-analyse__popup-item"
               onClick={() => { setPopup(null); navigate(`/jourdoc/${wsId}/notes/${n.id}`) }}>
+              <span className="jd-analyse__popup-dot"
+                style={{ background: NATURE_COLOR[n.nature ?? n.type] ?? NATURE_COLOR.journal }} />
+              <span className="jd-analyse__popup-date">
+                {n.date ? new Date(n.date + 'T00:00:00').toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' }) : ''}
+              </span>
               {n.titre_alt ?? n.titre}
             </button>
           ))}

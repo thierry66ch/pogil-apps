@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
@@ -77,8 +77,19 @@ export default function CalendarView() {
 
   const showFilters = mode === 'month' || mode === 'year'
 
+  // Swipe tactile pour naviguer entre périodes (hors matrix)
+  const swipeX = useRef(null)
+  function onTouchStart(e) { swipeX.current = e.touches[0].clientX }
+  function onTouchEnd(e) {
+    if (swipeX.current === null || mode === 'matrix') return
+    const dx = e.changedTouches[0].clientX - swipeX.current
+    swipeX.current = null
+    if (Math.abs(dx) < 50) return
+    setAnchor(a => shiftAnchor(a, period, dx > 0 ? -1 : 1))
+  }
+
   return (
-    <div className="cal-view">
+    <div className="cal-view" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <div className="cal-view__toolbar">
         <div className="period-nav">
           <button className="period-nav__arrow" onClick={() => setAnchor(a => shiftAnchor(a, period, -1))}>‹</button>

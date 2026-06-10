@@ -3337,10 +3337,18 @@ button, input, select, textarea { font: inherit; color: inherit }
 .jd-analyse__cell {
   height: 28px; padding: 0 1px;
   border-left: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
   position: relative;
   vertical-align: middle;
 }
 .jd-analyse__cell--has { background: var(--surface-glass) }
+.jd-analyse__cell--month-start { border-left: 2px solid var(--border) }
+.jd-analyse__cell:hover { z-index: 10 }
+/* Alternance de fond par ligne */
+.jd-analyse__table tbody tr:nth-child(odd)  td { background-color: var(--surface-glass) }
+.jd-analyse__table tbody tr:nth-child(even) td { background-color: var(--bg) }
+.jd-analyse__table tbody tr:nth-child(odd)  .jd-analyse__cell--has { background-color: color-mix(in srgb, var(--accent-bg) 30%, var(--surface-glass)) }
+.jd-analyse__table tbody tr:nth-child(even) .jd-analyse__cell--has { background-color: var(--accent-bg) }
 
 .jd-analyse__dots {
   display: flex; align-items: center; justify-content: center;
@@ -3355,15 +3363,16 @@ button, input, select, textarea { font: inherit; color: inherit }
 .jd-analyse__popup {
   display: none;
   position: absolute;
-  top: calc(100% + 2px); left: 0;
+  top: calc(100% + 2px); left: 50%; transform: translateX(-40%);
   min-width: 180px; max-width: 240px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-lg);
   padding: .4rem .5rem;
-  z-index: 300;
+  z-index: 400;
   pointer-events: auto;
+  white-space: normal;
 }
 .jd-analyse__cell:hover .jd-analyse__popup,
 .jd-analyse__popup:hover { display: block }

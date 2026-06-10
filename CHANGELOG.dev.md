@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 76 — 2026-06-10
+Vue Analyse retouches : (1) Documentation exclue systématiquement (AND n.nature IS NOT NULL). (2) Popup z-index 400 + z-index:10 sur cellule survolée (était masqué par les lignes suivantes). (3) Grille : border-bottom fin entre semaines, border-left épais aux transitions de mois (--month-start), alternance de fond pair/impair par ligne.
+
+---
+
 ## Build 75 — 2026-06-10
 §7.3 Vue Analyse pluriannuelle : tableau 1 ligne/année × 52 colonnes/semaines. Filtres HierarchyPicker objet+direction et thème+direction, nature (Tout/Obs./Act.). Header mois proportionnel. Cellules avec dots colorés par nature + popup au survol. Route GET /analyse côté serveur avec filtrage hiérarchique JS. .jd-main--wide pour la pleine largeur. Item "📊 Analyse" dans la nav.
 

@@ -1293,7 +1293,12 @@ jourdoc.get('/:wsId/analyse', wsCheck, (c) => {
     sql += ` AND n.theme_id IN (${ph})`
     params.push(...ids)
   }
-  if (nature && nature !== 'both') { sql += ` AND n.nature = ?`; params.push(nature) }
+  // Documentation exclue systématiquement (intemporelle — pas de valeur pour l'analyse)
+  if (nature && nature !== 'both') {
+    sql += ` AND n.nature = ?`; params.push(nature)
+  } else {
+    sql += ` AND n.nature IS NOT NULL`
+  }
 
   sql += ` ORDER BY n.date ASC`
   return c.json({ notes: db.prepare(sql).all(...params) })

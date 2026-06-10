@@ -63,6 +63,18 @@ export default function AnalyseView() {
   const refYear = new Date().getFullYear()
   const monthSpans = useMemo(() => monthSpansFor52(refYear), [refYear])
 
+  // Buckets marquant le début d'un nouveau mois (pour bordure plus épaisse)
+  const monthStarts = useMemo(() => {
+    const jan1 = new Date(refYear, 0, 1)
+    const starts = new Set()
+    let cur = -1
+    for (let b = 0; b < 52; b++) {
+      const m = new Date(jan1.getTime() + b * 604800000).getMonth()
+      if (m !== cur) { starts.add(b); cur = m }
+    }
+    return starts
+  }, [refYear])
+
   const BUCKETS = 52
 
   return (
@@ -155,8 +167,13 @@ export default function AnalyseView() {
                   <td className="jd-analyse__td-year">{year}</td>
                   {Array.from({ length: BUCKETS }, (_, b) => {
                     const cellNotes = byYearBucket.get(`${year}/${b}`) ?? []
+                    const classes = [
+                      'jd-analyse__cell',
+                      cellNotes.length ? 'jd-analyse__cell--has' : '',
+                      monthStarts.has(b) ? 'jd-analyse__cell--month-start' : '',
+                    ].filter(Boolean).join(' ')
                     return (
-                      <td key={b} className={`jd-analyse__cell${cellNotes.length ? ' jd-analyse__cell--has' : ''}`}>
+                      <td key={b} className={classes}>
                         {cellNotes.length > 0 && (
                           <div className="jd-analyse__dots">
                             {cellNotes.slice(0, 4).map((n, i) => (

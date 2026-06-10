@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 79 — 2026-06-10
+Documentation complète : CLAUDE.md (sections JourDoc, patterns, PWA, portal), docs/dev/architecture.md (refonte complète), docs/dev/database.md (nouveau, schéma complet + migrations), docs/dev/jourdoc.md (nouveau, composants, routes, patterns), docs/dev/api.md (toutes les routes). CDC-JourDoc.md : phasage mis à jour avec statut ✅, fonctionnalités hors-CDC, idées d'évolution.
+
+---
+
 ## Build 78 — 2026-06-10
 §2.7 confirmé existant. Polish+§7.3 : (1) TodoistPanel window.location.reload() → onNoteUpdated callback (re-fetch ciblé). (2) CalendarView swipe tactile sur tous les modes sauf matrice. (3) AnalyseView : surlignade colonne au clic (même semaine × toutes les années), marqueur semaine courante (outline accent), popup enrichi (plage dates semaine en header, dot nature + date exacte par note).
 

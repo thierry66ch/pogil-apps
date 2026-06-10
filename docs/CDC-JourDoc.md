@@ -354,15 +354,35 @@ notes ──> Todoist               (tache_todoist_id, lien bidirectionnel + syn
 
 ---
 
-## 10. Phasage indicatif
+## 10. Phasage — état d'avancement (build 78, juin 2026)
 
-| Phase | Contenu |
-|---|---|
-| **MVP** | Objets hiérarchiques + notes (journal/doc, nature, thèmes) + liaison notes↔objets + fiche objet avec recherche récursive (±3 niveaux). |
-| **Phase 2** | Médias (vue média↔note, vignettes, filtres), portail calendrier (jour/semaine/trimestre), grille/calendrier. |
-| **Phase 3** | Intégration Todoist (création, lien bidirectionnel, synchro), import CSV, éditeur de tables avec insertion de niveaux. |
-| **Phase 4 (avancé)** | Analyses comparatives pluriannuelles (saisons/années). Gestion avancée des PDF. |
+| Phase | Contenu | Statut |
+|---|---|---|
+| **MVP** | Objets hiérarchiques + notes (journal/doc, nature, thèmes) + liaison notes↔objets + fiche objet avec recherche récursive (±3 niveaux) | ✅ Complet |
+| **Phase 2** | Médias (vue média↔note, vignettes, filtres), portail calendrier (jour/semaine/7j/matrice/année), grille/calendrier | ✅ Complet |
+| **Phase 3** | Intégration Todoist (création, liaison tâche existante, sync batch, récurrentes, page tâches), import CSV, éditeur inline arbres | ✅ Complet |
+| **Phase 4** | Analyses comparatives pluriannuelles (vue semaine × année, filtres hiérarchiques, surlignade colonne), PDF viewer inline | ✅ Complet |
+
+### Fonctionnalités hors CDC ajoutées en cours de développement
+
+- **Vue annuelle** du calendrier (52 cellules/semaine par mois)
+- **Filtres hiérarchiques** objet + thème + direction sur calendrier mois/année et fiches objet/thème
+- **Filtre type** (Journal/Documentation) sur fiches objet et thème
+- **Lier une tâche Todoist existante** via son URL (extraction ID depuis slug moderne)
+- **Page Tâches Todoist** centralisée : sections À traiter / En cours / Traités, détection récurrences
+- **Détection tâches récurrentes** : comparaison de la date d'échéance pour détecter une exécution
+- **Swipe tactile** sur journal et toutes les vues calendrier
+- **PWA installable** : icône maskable, manifest MIME correct, clientsClaim/skipWaiting
+- **Popup au survol** avec plage dates et notes dans les vues calendrier et analyse
+
+### Idées d'évolution (non encore spécifiées)
+
+- Analyses comparatives entre workspaces différents
+- Notifications push (PWA) pour les tâches Todoist dues
+- Export des données (CSV, JSON)
+- Recherche globale dans les notes
+- Synchronisation des objets/thèmes entre workspaces
 
 ---
 
-*Document de travail — à enrichir lors de la conception détaillée. Les hypothèses de modèle de données sont des propositions, pas des décisions figées.*
+*Document mis à jour le 10 juin 2026 — build 78.*

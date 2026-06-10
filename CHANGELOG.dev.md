@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 73 — 2026-06-10
+Fix extraction taskId Todoist : URL moderne = "nom-kebab-TASKID" → TASKID = dernier segment avec majuscules et ≥8 chars (ex. 6cVrwR54r6Jhmr69). Fallback = slug complet ou valeur brute.
+
+---
+
 ## Build 72 — 2026-06-10
 (1) ws-switch menu rendu via createPortal(document.body) — échappe définitivement overflow-x:auto et tout stacking context parent. CSS: position:fixed par défaut (mobile), position:absolute sur desktop. (2) todoist/link : affiche le taskId extrait dans le message d'erreur pour debug.
 

@@ -1054,14 +1054,23 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/link', wsCheck, async (c) => {
     const ws = db.prepare('SELECT todoist_token FROM workspaces WHERE id=?').get(wsId)
     if (!ws?.todoist_token) return c.json({ error: 'Todoist non configuré' }, 400)
 
-    // Extraire l'ID : prend la dernière portion après /task/, sinon utilise la valeur brute
-    const parts = raw.split('/task/')
-    const taskId = (parts.length > 1 ? parts[parts.length - 1] : raw)
-      .split('?')[0].split('/')[0].trim()
+    // Extraire l'ID depuis une URL Todoist moderne :
+    // https://app.todoist.com/app/task/nom-kebab-TASKID
+    // L'ID réel est le dernier segment séparé par '-' contenant des majuscules (ex. 6cVrwR54r6Jhmr69)
+    const slug = raw.includes('/task/')
+      ? raw.split('/task/').pop().split('?')[0].split('/')[0].trim()
+      : raw.trim()
+    let taskId = slug
+    if (slug.includes('-')) {
+      const segs = slug.split('-')
+      for (let i = segs.length - 1; i >= 0; i--) {
+        if (/[A-Z]/.test(segs[i]) && segs[i].length >= 8) { taskId = segs[i]; break }
+      }
+    }
     if (!taskId) return c.json({ error: 'ID de tâche introuvable dans l\'URL' }, 400)
 
     const res = await fetch(`${TODOIST_API}/tasks/${taskId}`, { headers: todoistAuthHeader(ws.todoist_token) })
-    if (!res.ok) return c.json({ error: `Tâche introuvable (${res.status}), taskId extrait: "${taskId}"` }, 400)
+    if (!res.ok) return c.json({ error: `Tâche introuvable dans Todoist (${res.status})` }, 400)
     const task = extractTask(await res.json())
     const isDone = Boolean(task?.checked || task?.completed_at || task?.is_completed)
     db.prepare('UPDATE jd_notes SET tache_todoist_id=?, tache_todoist_content=?, tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=? WHERE id=?')

@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 77 — 2026-06-10
+Vue Analyse fixes : (2) Popup via createPortal(document.body) + position:fixed calculée au survol (échappe overflow-x:auto de .jd-analyse__wrap), gestion hover avec délai 150ms. (3) Contour table via outline:2px, border-right:1px entre semaines (border-collapse), --month-start inchangé.
+
+---
+
 ## Build 76 — 2026-06-10
 Vue Analyse retouches : (1) Documentation exclue systématiquement (AND n.nature IS NOT NULL). (2) Popup z-index 400 + z-index:10 sur cellule survolée (était masqué par les lignes suivantes). (3) Grille : border-bottom fin entre semaines, border-left épais aux transitions de mois (--month-start), alternance de fond pair/impair par ligne.
 

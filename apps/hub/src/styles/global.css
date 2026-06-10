@@ -3316,6 +3316,7 @@ button, input, select, textarea { font: inherit; color: inherit }
   width: 100%;
   min-width: 640px;
   table-layout: fixed;
+  outline: 2px solid var(--border);
 }
 .jd-analyse__col-year { width: 52px }
 
@@ -3336,14 +3337,13 @@ button, input, select, textarea { font: inherit; color: inherit }
 
 .jd-analyse__cell {
   height: 28px; padding: 0 1px;
-  border-left: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border);
   border-bottom: 1px solid var(--border-subtle);
   position: relative;
   vertical-align: middle;
 }
 .jd-analyse__cell--has { background: var(--surface-glass) }
 .jd-analyse__cell--month-start { border-left: 2px solid var(--border) }
-.jd-analyse__cell:hover { z-index: 10 }
 /* Alternance de fond par ligne */
 .jd-analyse__table tbody tr:nth-child(odd)  td { background-color: var(--surface-glass) }
 .jd-analyse__table tbody tr:nth-child(even) td { background-color: var(--bg) }
@@ -3361,9 +3361,7 @@ button, input, select, textarea { font: inherit; color: inherit }
 
 /* Popup au survol */
 .jd-analyse__popup {
-  display: none;
-  position: absolute;
-  top: calc(100% + 2px); left: 50%; transform: translateX(-40%);
+  position: fixed;
   min-width: 180px; max-width: 240px;
   background: var(--surface);
   border: 1px solid var(--border);
@@ -3374,8 +3372,6 @@ button, input, select, textarea { font: inherit; color: inherit }
   pointer-events: auto;
   white-space: normal;
 }
-.jd-analyse__cell:hover .jd-analyse__popup,
-.jd-analyse__popup:hover { display: block }
 
 .jd-analyse__popup-head {
   font-size: .7rem; font-weight: 700; color: var(--text-muted);

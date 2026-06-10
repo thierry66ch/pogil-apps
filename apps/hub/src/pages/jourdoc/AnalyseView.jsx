@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
@@ -24,6 +25,24 @@ export default function AnalyseView() {
   const [notes,          setNotes]          = useState([])
   const [loading,        setLoading]        = useState(false)
 
+  // Popup via portal (position fixed pour échapper à overflow-x:auto)
+  const [popup, setPopup]   = useState(null)  // { notes, x, y }
+  const hideTimer           = useRef(null)
+
+  const showPopup = useCallback((e, cellNotes) => {
+    clearTimeout(hideTimer.current)
+    const rect = e.currentTarget.getBoundingClientRect()
+    setPopup({ notes: cellNotes, x: rect.left, y: rect.bottom + 4 })
+  }, [])
+
+  const hidePopup = useCallback(() => {
+    hideTimer.current = setTimeout(() => setPopup(null), 150)
+  }, [])
+
+  const keepPopup = useCallback(() => {
+    clearTimeout(hideTimer.current)
+  }, [])
+
   const hasFilter = objetFilter != null || themeFilter != null
 
   useEffect(() => {
@@ -39,7 +58,6 @@ export default function AnalyseView() {
       .finally(() => setLoading(false))
   }, [wsId, token, objetFilter, objetDir, themeFilter, themeDir, nature])
 
-  // Groupe les notes par (year, bucket)
   const byYearBucket = useMemo(() => {
     const map = new Map()
     for (const n of notes) {
@@ -55,7 +73,6 @@ export default function AnalyseView() {
   const years = useMemo(() => {
     if (notes.length === 0) return []
     const ys = [...new Set(notes.map(n => weekBucket(n.date).year))].sort()
-    // Compléter pour avoir toutes les années entre min et max
     const min = ys[0], max = ys[ys.length - 1]
     return Array.from({ length: max - min + 1 }, (_, i) => min + i)
   }, [notes])
@@ -63,7 +80,6 @@ export default function AnalyseView() {
   const refYear = new Date().getFullYear()
   const monthSpans = useMemo(() => monthSpansFor52(refYear), [refYear])
 
-  // Buckets marquant le début d'un nouveau mois (pour bordure plus épaisse)
   const monthStarts = useMemo(() => {
     const jan1 = new Date(refYear, 0, 1)
     const starts = new Set()
@@ -126,7 +142,6 @@ export default function AnalyseView() {
         </div>
       </div>
 
-      {/* Invite si aucun filtre */}
       {!hasFilter && (
         <div className="empty-state" style={{ marginTop: '2rem' }}>
           <div className="empty-state__icon">📊</div>
@@ -136,7 +151,6 @@ export default function AnalyseView() {
 
       {loading && <div className="jd-loading">Chargement…</div>}
 
-      {/* Tableau */}
       {!loading && hasFilter && notes.length === 0 && (
         <div className="empty-state" style={{ marginTop: '1.5rem' }}>
           <p>Aucune note correspondant aux filtres.</p>
@@ -151,7 +165,6 @@ export default function AnalyseView() {
               {Array.from({ length: BUCKETS }, (_, i) => <col key={i} />)}
             </colgroup>
             <thead>
-              {/* Ligne mois */}
               <tr>
                 <th className="jd-analyse__th-year" />
                 {monthSpans.map(({ month, count }, i) => (
@@ -167,13 +180,17 @@ export default function AnalyseView() {
                   <td className="jd-analyse__td-year">{year}</td>
                   {Array.from({ length: BUCKETS }, (_, b) => {
                     const cellNotes = byYearBucket.get(`${year}/${b}`) ?? []
-                    const classes = [
-                      'jd-analyse__cell',
-                      cellNotes.length ? 'jd-analyse__cell--has' : '',
-                      monthStarts.has(b) ? 'jd-analyse__cell--month-start' : '',
-                    ].filter(Boolean).join(' ')
+                    const isMonthStart = monthStarts.has(b)
                     return (
-                      <td key={b} className={classes}>
+                      <td key={b}
+                        className={[
+                          'jd-analyse__cell',
+                          cellNotes.length ? 'jd-analyse__cell--has' : '',
+                          isMonthStart ? 'jd-analyse__cell--month-start' : '',
+                        ].filter(Boolean).join(' ')}
+                        onMouseEnter={cellNotes.length ? e => showPopup(e, cellNotes) : undefined}
+                        onMouseLeave={cellNotes.length ? hidePopup : undefined}
+                      >
                         {cellNotes.length > 0 && (
                           <div className="jd-analyse__dots">
                             {cellNotes.slice(0, 4).map((n, i) => (
@@ -181,21 +198,6 @@ export default function AnalyseView() {
                                 style={{ background: NATURE_COLOR[n.nature ?? n.type] ?? NATURE_COLOR.journal }} />
                             ))}
                             {cellNotes.length > 4 && <span className="jd-analyse__dot-more">+{cellNotes.length - 4}</span>}
-                          </div>
-                        )}
-                        {/* Popup au survol */}
-                        {cellNotes.length > 0 && (
-                          <div className="jd-analyse__popup">
-                            <div className="jd-analyse__popup-head">
-                              Sem. {b + 1} · {year} · {cellNotes.length} note{cellNotes.length > 1 ? 's' : ''}
-                            </div>
-                            {cellNotes.slice(0, 6).map(n => (
-                              <button key={n.id} className="jd-analyse__popup-item"
-                                onClick={() => navigate(`/jourdoc/${wsId}/notes/${n.id}`)}>
-                                {n.titre_alt ?? n.titre}
-                              </button>
-                            ))}
-                            {cellNotes.length > 6 && <span className="jd-analyse__popup-more">+{cellNotes.length - 6} autres</span>}
                           </div>
                         )}
                       </td>
@@ -206,6 +208,27 @@ export default function AnalyseView() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Popup via portal — échappe overflow-x:auto de .jd-analyse__wrap */}
+      {popup && createPortal(
+        <div className="jd-analyse__popup"
+          style={{ left: popup.x, top: popup.y }}
+          onMouseEnter={keepPopup}
+          onMouseLeave={hidePopup}
+        >
+          <div className="jd-analyse__popup-head">
+            {popup.notes.length} note{popup.notes.length > 1 ? 's' : ''}
+          </div>
+          {popup.notes.slice(0, 6).map(n => (
+            <button key={n.id} className="jd-analyse__popup-item"
+              onClick={() => { setPopup(null); navigate(`/jourdoc/${wsId}/notes/${n.id}`) }}>
+              {n.titre_alt ?? n.titre}
+            </button>
+          ))}
+          {popup.notes.length > 6 && <span className="jd-analyse__popup-more">+{popup.notes.length - 6} autres</span>}
+        </div>,
+        document.body
       )}
     </div>
   )

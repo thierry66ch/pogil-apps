@@ -38,6 +38,10 @@ export default function TodoistPanel({ wsId, token, note }) {
   const [details, setDetails]       = useState(null)   // { completed_at, comments }
   const [loadingDetails, setLoadingDetails] = useState(false)
   const [importing, setImporting]   = useState(false)
+  const [linking, setLinking]       = useState(false)
+  const [linkUrl, setLinkUrl]       = useState('')
+  const [linkErr, setLinkErr]       = useState('')
+  const [linkSaving, setLinkSaving] = useState(false)
 
   const poll = useCallback(() => {
     if (!note?.tache_todoist_id) { setStatus({ linked: false }); return }
@@ -259,12 +263,57 @@ export default function TodoistPanel({ wsId, token, note }) {
         <span className="todoist-panel__title">Todoist</span>
       </div>
 
-      {!creating ? (
-        <button className="btn btn-secondary" style={{ fontSize: '.8125rem', width: '100%' }}
-          onClick={() => setCreating(true)}>
-          + Créer une tâche
-        </button>
-      ) : (
+      {!creating && !linking && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '.375rem' }}>
+          <button className="btn btn-secondary" style={{ fontSize: '.8125rem', width: '100%' }}
+            onClick={() => setCreating(true)}>
+            + Créer une tâche
+          </button>
+          <button className="btn btn-ghost" style={{ fontSize: '.8125rem', width: '100%' }}
+            onClick={() => { setLinking(true); setLinkErr('') }}>
+            🔗 Lier une tâche existante
+          </button>
+        </div>
+      )}
+
+      {linking && (
+        <div className="todoist-form">
+          {linkErr && <p style={{ color: 'var(--danger)', fontSize: '.8rem', margin: '0 0 .5rem' }}>{linkErr}</p>}
+          <div className="todoist-form__row">
+            <label className="todoist-form__label">URL ou ID de la tâche Todoist</label>
+            <input className="input" style={{ padding: '.3rem .5rem', fontSize: '.85rem' }}
+              placeholder="https://app.todoist.com/app/task/… ou ID"
+              value={linkUrl} onChange={e => setLinkUrl(e.target.value)}
+              autoFocus />
+          </div>
+          <div style={{ display: 'flex', gap: '.5rem', marginTop: '.25rem' }}>
+            <button className="btn btn-primary" style={{ fontSize: '.8125rem', flex: 1 }}
+              disabled={linkSaving || !linkUrl.trim()}
+              onClick={async () => {
+                setLinkSaving(true); setLinkErr('')
+                try {
+                  const res = await fetch(API_ROUTES.JD_NOTE_TODOIST_LINK(wsId, note.id), {
+                    method: 'POST', headers: authHeader(token),
+                    body: JSON.stringify({ task_url: linkUrl }),
+                  })
+                  const data = await res.json()
+                  if (!res.ok || !data.ok) { setLinkErr(data.error ?? 'Erreur'); return }
+                  setLinking(false); setLinkUrl('')
+                  setStatus({ linked: true, completed: false, url: data.url, task_id: data.task_id, content: data.content })
+                } catch (e) { setLinkErr(`Erreur réseau : ${e.message}`) }
+                finally { setLinkSaving(false) }
+              }}>
+              {linkSaving ? '…' : 'Lier'}
+            </button>
+            <button className="btn btn-ghost" style={{ fontSize: '.8125rem' }}
+              onClick={() => { setLinking(false); setLinkUrl('') }}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
+
+      {creating && (
         <form onSubmit={createTask} className="todoist-form">
           {err && <p style={{ color: 'var(--danger)', fontSize: '.8rem', margin: '0 0 .5rem' }}>{err}</p>}
 

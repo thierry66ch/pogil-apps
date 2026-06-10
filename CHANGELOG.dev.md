@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 70 — 2026-06-10
+(1) Workspace switcher mobile : position:fixed pour échapper à overflow-x:auto de .jd-nav (menu clips). (2) TodoistPanel : bouton "🔗 Lier une tâche existante" — saisie URL ou ID Todoist, extraction de l'ID, vérification API, stockage tache_todoist_id + contenu + due + priority. Route POST /todoist/link côté serveur.
+
+---
+
 ## Build 69 — 2026-06-09
 Page Tâches : (2) 🔄 inline avant le titre (1rem, sans badge), visible même avec petite font-size. (3) Titre = tache_todoist_content (titre Todoist) avec fallback note.titre. Migration + stockage tache_todoist_content TEXT lors de la création et la sync.
 

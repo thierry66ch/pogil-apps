@@ -1042,6 +1042,33 @@ jourdoc.post('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
   }
 })
 
+// POST /:wsId/notes/:noteId/todoist/link — lier une tâche Todoist existante via son URL ou ID
+jourdoc.post('/:wsId/notes/:noteId/todoist/link', wsCheck, async (c) => {
+  const wsId   = c.get('wsId')
+  const noteId = Number(c.req.param('noteId'))
+  const { task_url } = await c.req.json()
+  if (!task_url?.trim()) return c.json({ error: 'URL ou ID requis' }, 400)
+
+  const ws = db.prepare('SELECT todoist_token FROM workspaces WHERE id=?').get(wsId)
+  if (!ws?.todoist_token) return c.json({ error: 'Todoist non configuré' }, 400)
+
+  // Extraire l'ID depuis l'URL (https://app.todoist.com/app/task/ID ou ID direct)
+  const match = task_url.trim().match(/\/task\/([a-zA-Z0-9_-]+)/)
+  const taskId = match ? match[1] : task_url.trim()
+
+  try {
+    const res = await fetch(`${TODOIST_API}/tasks/${taskId}`, { headers: todoistAuthHeader(ws.todoist_token) })
+    if (!res.ok) return c.json({ error: `Tâche introuvable (${res.status})` }, 400)
+    const task = extractTask(await res.json())
+    const isDone = Boolean(task?.checked || task?.completed_at || task?.is_completed)
+    db.prepare('UPDATE jd_notes SET tache_todoist_id=?, tache_todoist_content=?, tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=? WHERE id=?')
+      .run(taskId, task?.content ?? null, task?.due?.date ?? null, task?.priority ?? null, isDone ? 1 : 0, noteId)
+    return c.json({ ok: true, task_id: taskId, content: task?.content, url: `https://app.todoist.com/app/task/${taskId}` })
+  } catch (e) {
+    return c.json({ error: `Impossible de contacter Todoist : ${e.message}` }, 502)
+  }
+})
+
 // GET /:wsId/notes/:id/todoist — statut de la tâche (polling)
 jourdoc.get('/:wsId/notes/:noteId/todoist', wsCheck, async (c) => {
   const wsId   = c.get('wsId')

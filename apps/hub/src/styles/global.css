@@ -2895,9 +2895,16 @@ button, input, select, textarea { font: inherit; color: inherit }
   animation: pop-in .15s var(--ease);
 }
 
-/* Sur mobile (barre bas), le menu s'ouvre vers le haut */
+/* Sur mobile, position: fixed pour échapper à overflow-x: auto de .jd-nav */
 @media (max-width: 767px) {
-  .ws-switch__menu { top: auto; bottom: calc(100% + 4px) }
+  .ws-switch__menu {
+    position: fixed;
+    left: .5rem; right: .5rem;
+    bottom: calc(env(safe-area-inset-bottom) + 62px);
+    top: auto;
+    max-height: 50vh;
+    overflow-y: auto;
+  }
 }
 
 .ws-switch__section-label {

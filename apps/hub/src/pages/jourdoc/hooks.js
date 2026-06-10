@@ -6,26 +6,29 @@ function authHeader(token) {
 }
 
 export function useJdData(wsId, token) {
-  const [objets, setObjets] = useState([])
-  const [themes, setThemes] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [objets, setObjets]           = useState([])
+  const [themes, setThemes]           = useState([])
+  const [searchDepth, setSearchDepth] = useState(3)
+  const [loading, setLoading]         = useState(true)
 
   const reload = useCallback(async () => {
     setLoading(true)
     try {
-      const [ro, rt] = await Promise.all([
+      const [ro, rt, rw] = await Promise.all([
         fetch(API_ROUTES.JD_OBJETS(wsId), { headers: authHeader(token) }).then(r => r.json()),
         fetch(API_ROUTES.JD_THEMES(wsId), { headers: authHeader(token) }).then(r => r.json()),
+        fetch(API_ROUTES.JD_WS(wsId), { headers: authHeader(token) }).then(r => r.json()),
       ])
       setObjets(ro.objets ?? [])
       setThemes(rt.themes ?? [])
+      setSearchDepth(rw.workspace?.search_depth ?? 3)
     } finally {
       setLoading(false)
     }
   }, [wsId, token])
 
   useEffect(() => { reload() }, [reload])
-  return { objets, themes, loading, reload }
+  return { objets, themes, searchDepth, loading, reload }
 }
 
 // Construit une Map id → chemin court (ex. "arb/fru/pom") depuis la liste plate

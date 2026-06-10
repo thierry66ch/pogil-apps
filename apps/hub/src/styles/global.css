@@ -2780,6 +2780,18 @@ button, input, select, textarea { font: inherit; color: inherit }
 }
 
 /* Contenu ProseMirror */
+.rte-source {
+  width: 100%; min-height: 120px;
+  padding: .75rem 1rem;
+  font-family: var(--font-mono, monospace);
+  font-size: .8125rem;
+  line-height: 1.5;
+  color: var(--text);
+  background: var(--surface);
+  border: none; outline: none;
+  resize: vertical;
+}
+.rte-btn:disabled { opacity: .4; cursor: default }
 .rte-content .ProseMirror {
   padding: .75rem 1rem;
   min-height: 120px;

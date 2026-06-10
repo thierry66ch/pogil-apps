@@ -333,8 +333,17 @@ jourdoc.delete('/:wsId/members/:uid', async (c) => {
 
 jourdoc.get('/:wsId', (c) => {
   const wsId = c.get('wsId')
-  const ws = db.prepare('SELECT id, name FROM workspaces WHERE id = ?').get(wsId)
+  const ws = db.prepare('SELECT id, name, COALESCE(jd_search_depth, 3) AS search_depth FROM workspaces WHERE id = ?').get(wsId)
   return c.json({ workspace: ws })
+})
+
+// PATCH /:wsId/search-depth — mettre à jour la profondeur de recherche
+jourdoc.patch('/:wsId/search-depth', wsCheck, async (c) => {
+  const wsId = c.get('wsId')
+  const { depth } = await c.req.json()
+  const d = Math.max(1, Math.min(10, Number(depth) || 3))
+  db.prepare('UPDATE workspaces SET jd_search_depth=? WHERE id=?').run(d, wsId)
+  return c.json({ ok: true, search_depth: d })
 })
 
 // ── OBJETS ───────────────────────────────────────────────────
@@ -379,7 +388,8 @@ jourdoc.get('/:wsId/objets/:id/notes', (c) => {
   const wsId = c.get('wsId')
   const id = Number(c.req.param('id'))
   const direction = c.req.query('direction') ?? 'both'
-  const maxDepth = 3
+  const ws = db.prepare('SELECT COALESCE(jd_search_depth,3) AS d FROM workspaces WHERE id=?').get(wsId)
+  const maxDepth = ws?.d ?? 3
   let ids = []
 
   if (direction === 'down' || direction === 'both') {
@@ -430,27 +440,31 @@ jourdoc.get('/:wsId/themes/:id/notes', (c) => {
   const id = Number(c.req.param('id'))
   const direction = c.req.query('direction') ?? 'both'
 
-  // Calcul hiérarchique en JS (pas de CTE) — charge tous les thèmes du workspace
+  const ws = db.prepare('SELECT COALESCE(jd_search_depth,3) AS d FROM workspaces WHERE id=?').get(wsId)
+  const maxDepth = ws?.d ?? 3
   const allThemes = db.prepare('SELECT id, parent_id FROM jd_themes WHERE workspace_id = ?').all(wsId)
   const ids = new Set([id])
 
   if (direction === 'down' || direction === 'both') {
+    const depthMap = new Map([[id, 0]])
     let added = true
     while (added) {
       added = false
       for (const t of allThemes) {
-        if (!ids.has(t.id) && ids.has(t.parent_id)) { ids.add(t.id); added = true }
+        if (!ids.has(t.id) && ids.has(t.parent_id)) {
+          const pd = depthMap.get(t.parent_id) ?? 0
+          if (pd < maxDepth) { ids.add(t.id); depthMap.set(t.id, pd + 1); added = true }
+        }
       }
     }
   }
 
   if (direction === 'up' || direction === 'both') {
-    let current = id
-    while (true) {
+    let current = id; let d = 0
+    while (d < maxDepth) {
       const t = allThemes.find(x => x.id === current)
       if (!t || !t.parent_id) break
-      ids.add(t.parent_id)
-      current = t.parent_id
+      ids.add(t.parent_id); current = t.parent_id; d++
     }
   }
 
@@ -1262,16 +1276,19 @@ jourdoc.get('/:wsId/analyse', wsCheck, (c) => {
   const wsId = c.get('wsId')
   const { objet_id, objet_dir = 'both', theme_id, theme_dir = 'both', nature } = c.req.query()
 
+  const wsConf = db.prepare('SELECT COALESCE(jd_search_depth,3) AS d FROM workspaces WHERE id=?').get(wsId)
+  const maxDepth = wsConf?.d ?? 3
+
   function relatedIds(table, rootId, dir) {
     const all = db.prepare(`SELECT id, parent_id FROM ${table} WHERE workspace_id=?`).all(wsId)
     const ids = new Set([rootId])
     if (dir === 'down' || dir === 'both') {
-      let added = true
-      while (added) { added = false; for (const x of all) if (!ids.has(x.id) && ids.has(x.parent_id)) { ids.add(x.id); added = true } }
+      const dm = new Map([[rootId, 0]]); let added = true
+      while (added) { added = false; for (const x of all) if (!ids.has(x.id) && ids.has(x.parent_id)) { const pd = dm.get(x.parent_id)??0; if (pd < maxDepth) { ids.add(x.id); dm.set(x.id, pd+1); added = true } } }
     }
     if (dir === 'up' || dir === 'both') {
-      let cur = rootId
-      while (true) { const t = all.find(x => x.id === cur); if (!t || !t.parent_id) break; ids.add(t.parent_id); cur = t.parent_id }
+      let cur = rootId; let d = 0
+      while (d < maxDepth) { const t = all.find(x => x.id === cur); if (!t || !t.parent_id) break; ids.add(t.parent_id); cur = t.parent_id; d++ }
     }
     return ids
   }

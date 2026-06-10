@@ -48,5 +48,6 @@ export const API_ROUTES = {
   JD_NOTE_TODOIST_LINK:    (wsId, noteId) => `/api/jourdoc/${wsId}/notes/${noteId}/todoist/link`,
   JD_WS_TODOIST_SYNC:      (wsId) => `/api/jourdoc/${wsId}/todoist/sync`,
   JD_WS_TODOIST_TASKS:     (wsId) => `/api/jourdoc/${wsId}/todoist/tasks`,
+  JD_WS_SEARCH_DEPTH:      (wsId) => `/api/jourdoc/${wsId}/search-depth`,
   JD_ANALYSE:              (wsId) => `/api/jourdoc/${wsId}/analyse`,
 }

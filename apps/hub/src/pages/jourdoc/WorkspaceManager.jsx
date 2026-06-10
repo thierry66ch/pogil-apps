@@ -106,6 +106,23 @@ export default function WorkspaceManager() {
   useEffect(() => { loadTodoist() }, [loadTodoist])
 
   const [importTab, setImportTab] = useState('objets')
+  const [searchDepth, setSearchDepth] = useState(3)
+  const [depthSaved, setDepthSaved] = useState(false)
+
+  useEffect(() => {
+    fetch(API_ROUTES.JD_WS(wsId), { headers: authHeader(token) })
+      .then(r => r.json()).then(d => setSearchDepth(d.workspace?.search_depth ?? 3))
+  }, [wsId, token])
+
+  async function saveDepth(d) {
+    setSearchDepth(d)
+    await fetch(API_ROUTES.JD_WS_SEARCH_DEPTH(wsId), {
+      method: 'PATCH', headers: authHeader(token),
+      body: JSON.stringify({ depth: d }),
+    })
+    setDepthSaved(true)
+    setTimeout(() => setDepthSaved(false), 2000)
+  }
   const [newWsName, setNewWsName] = useState('')
   const [showCreate, setShowCreate] = useState(showCreateOnMount)
   const [createLoading, setCreateLoading] = useState(false)
@@ -325,6 +342,26 @@ export default function WorkspaceManager() {
             ✚ Créer un nouveau workspace
           </button>
         )}
+      </section>
+
+      {/* ── Profondeur de recherche ── */}
+      <section className="ws-manager__section">
+        <h3 className="ws-manager__title">🔍 Profondeur de recherche hiérarchique</h3>
+        <p style={{ fontSize: '.8125rem', color: 'var(--text-muted)', marginBottom: '.75rem' }}>
+          Nombre de niveaux parcourus lors de la recherche par objet ou thème (fiches, calendrier, analyse).
+        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '.75rem', flexWrap: 'wrap' }}>
+          <div className="jd-segmented">
+            {[1, 2, 3, 5, 10].map(d => (
+              <button key={d} type="button"
+                className={`jd-seg-btn${searchDepth === d ? ' active' : ''}`}
+                onClick={() => saveDepth(d)}>{d}</button>
+            ))}
+          </div>
+          <span style={{ fontSize: '.8125rem', color: 'var(--text-muted)' }}>
+            {depthSaved ? '✓ Enregistré' : `Actuellement : ${searchDepth} niveau${searchDepth > 1 ? 'x' : ''}`}
+          </span>
+        </div>
       </section>
 
       {/* ── Todoist ── */}

@@ -155,22 +155,26 @@ export function weeksOfYear(year) {
 }
 
 // Compute IDs related to rootId based on direction (down/up/both) in items list
-export function getRelated(items, rootId, direction) {
+// maxDepth : limite les niveaux parcourus (default Infinity)
+export function getRelated(items, rootId, direction, maxDepth = Infinity) {
   const ids = new Set([rootId])
   if (direction === 'down' || direction === 'both') {
-    let added = true
+    const dm = new Map([[rootId, 0]]); let added = true
     while (added) {
       added = false
       for (const item of items)
-        if (!ids.has(item.id) && ids.has(item.parent_id)) { ids.add(item.id); added = true }
+        if (!ids.has(item.id) && ids.has(item.parent_id)) {
+          const pd = dm.get(item.parent_id) ?? 0
+          if (pd < maxDepth) { ids.add(item.id); dm.set(item.id, pd + 1); added = true }
+        }
     }
   }
   if (direction === 'up' || direction === 'both') {
-    let current = rootId
-    while (true) {
+    let current = rootId; let d = 0
+    while (d < maxDepth) {
       const t = items.find(x => x.id === current)
       if (!t || !t.parent_id) break
-      ids.add(t.parent_id); current = t.parent_id
+      ids.add(t.parent_id); current = t.parent_id; d++
     }
   }
   return ids

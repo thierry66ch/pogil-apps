@@ -17,7 +17,7 @@ const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf8')
 db.exec(schema)
 
 // Migrations incrémentales (idempotentes — SQLite lève une erreur si la colonne existe déjà)
-for (const col of ['todoist_token TEXT', 'todoist_project_id TEXT', 'todoist_project_nom TEXT']) {
+for (const col of ['todoist_token TEXT', 'todoist_project_id TEXT', 'todoist_project_nom TEXT', 'jd_search_depth INTEGER DEFAULT 3']) {
   try { db.exec(`ALTER TABLE workspaces ADD COLUMN ${col}`) } catch { /* déjà présente */ }
 }
 for (const col of ['tache_todoist_due TEXT', 'tache_todoist_priority INTEGER', 'tache_todoist_done INTEGER DEFAULT 0', 'tache_todoist_recurrence_done INTEGER DEFAULT 0', 'tache_todoist_consigne INTEGER DEFAULT 0', 'tache_todoist_content TEXT']) {

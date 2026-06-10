@@ -23,7 +23,7 @@ const DIR_OPTS = [['both','↕ Les deux'],['down','↓ Descendants'],['up','↑ 
 export default function CalendarView() {
   const { wsId } = useParams()
   const { token } = useAuth()
-  const { objets, themes } = useJdData(wsId, token)
+  const { objets, themes, searchDepth } = useJdData(wsId, token)
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [mode,   setModeState]   = useState(searchParams.get('mode')   ?? 'month')
@@ -65,11 +65,11 @@ export default function CalendarView() {
   const filteredNotes = useMemo(() => {
     let result = notes
     if (objetFilter) {
-      const ids = getRelated(objets, Number(objetFilter), objetDirection)
+      const ids = getRelated(objets, Number(objetFilter), objetDirection, searchDepth)
       result = result.filter(n => n.objets?.some(o => ids.has(o.id)))
     }
     if (themeFilter) {
-      const ids = getRelated(themes, Number(themeFilter), themeDirection)
+      const ids = getRelated(themes, Number(themeFilter), themeDirection, searchDepth)
       result = result.filter(n => ids.has(n.theme_id))
     }
     return result

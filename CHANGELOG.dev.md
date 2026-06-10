@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 80 — 2026-06-10
+Items 3/4/5 phase v2 : (3) maxDepth paramétrable — champ jd_search_depth sur workspaces, migration, route PATCH /search-depth, useJdData retourne searchDepth, getRelated accepte maxDepth, CalendarView et routes serveur (objets/notes, themes/notes, analyse) l'appliquent. UI dans WorkspaceManager (segmented 1/2/3/5/10). (4) Import CSV deux formats : boutons path/parent dans l'exemple, descriptions, chargement du bon exemple. (5) Éditeur enrichi : bouton Barré (Strike Tiptap), toggle code source HTML (textarea éditable + retour Tiptap).
+
+---
+
 ## Build 79 — 2026-06-10
 Documentation complète : CLAUDE.md (sections JourDoc, patterns, PWA, portal), docs/dev/architecture.md (refonte complète), docs/dev/database.md (nouveau, schéma complet + migrations), docs/dev/jourdoc.md (nouveau, composants, routes, patterns), docs/dev/api.md (toutes les routes). CDC-JourDoc.md : phasage mis à jour avec statut ✅, fonctionnalités hors-CDC, idées d'évolution.
 

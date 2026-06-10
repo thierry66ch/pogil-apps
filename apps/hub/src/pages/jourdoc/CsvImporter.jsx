@@ -25,7 +25,8 @@ function computeDepth(chemin) {
 
 // ── Exemples de format ────────────────────────────────────────
 
-const EXAMPLES = {
+// Format 1 : chemin hiérarchique complet (recommandé)
+const EXAMPLES_PATH = {
   objets: `chemin;nom_court;est_individu;description
 Arbres;arb;0;
 Arbres/Arbres fruitiers;fru;0;
@@ -50,6 +51,35 @@ Récolte/Cueillette;cui
 Observation;obs`,
 }
 
+// Format 2 : nom + parent (utile quand les noms sont courts)
+const EXAMPLES_PARENT = {
+  objets: `nom;parent;nom_court;est_individu;description
+Arbres;;arb;0;
+Arbres fruitiers;Arbres;fru;0;
+Pommiers;Arbres fruitiers;pom;0;
+Pommier Golden;Pommiers;gol;1;Variété Golden Délicieux
+Potager;;pot;0;
+Tomates;Potager;tom;0;
+Tomate Cœur de Bœuf;Tomates;cdb;1;`,
+
+  themes: `nom;parent;nom_court
+Installation;;ins
+Semer;Installation;sem
+Planter;Installation;pla
+Repiquer;Installation;rep
+Entretien;;ent
+Taille;Entretien;tai
+Arrosage;Entretien;arr
+Traitement;;tra
+Traitement antifongique;Traitement;taf
+Récolte;;rec
+Cueillette;Récolte;cui
+Observation;;obs`,
+}
+
+// Compatibilité avec le code existant
+const EXAMPLES = EXAMPLES_PATH
+
 // ── Composant principal ───────────────────────────────────────
 
 export default function CsvImporter({ wsId, token, type = 'objets', onDone }) {
@@ -58,7 +88,8 @@ export default function CsvImporter({ wsId, token, type = 'objets', onDone }) {
   const [loading, setLoading]     = useState(false)
   const [result, setResult]       = useState(null)
   const [error, setError]         = useState('')
-  const [showExample, setShowExample] = useState(false)
+  const [showExample, setShowExample]   = useState(false)
+  const [exampleFormat, setExampleFormat] = useState('path')  // 'path' | 'parent'
   const fileRef = useRef(null)
 
   function handleChange(text) {
@@ -69,7 +100,8 @@ export default function CsvImporter({ wsId, token, type = 'objets', onDone }) {
   }
 
   function loadExample() {
-    handleChange(EXAMPLES[type])
+    const ex = exampleFormat === 'path' ? EXAMPLES_PATH[type] : EXAMPLES_PARENT[type]
+    handleChange(ex)
   }
 
   function loadFile(file) {
@@ -106,14 +138,28 @@ export default function CsvImporter({ wsId, token, type = 'objets', onDone }) {
           onClick={() => setShowExample(o => !o)}>
           {showExample ? "Masquer l'exemple" : '📋 Voir le format attendu'}
         </button>
-        <button type="button" className="jd-auto-btn"
-          onClick={loadExample}>
+        <button type="button" className="jd-auto-btn" onClick={loadExample}>
           ↓ Charger l'exemple
         </button>
       </div>
 
       {showExample && (
-        <pre className="csv-importer__example">{EXAMPLES[type]}</pre>
+        <div className="csv-importer__example-block">
+          <div className="jd-segmented" style={{ marginBottom: '.5rem' }}>
+            <button type="button" className={`jd-seg-btn${exampleFormat === 'path' ? ' active' : ''}`}
+              onClick={() => setExampleFormat('path')}>📂 Format chemin</button>
+            <button type="button" className={`jd-seg-btn${exampleFormat === 'parent' ? ' active' : ''}`}
+              onClick={() => setExampleFormat('parent')}>🔗 Format nom+parent</button>
+          </div>
+          <p style={{ fontSize: '.78rem', color: 'var(--text-muted)', marginBottom: '.375rem' }}>
+            {exampleFormat === 'path'
+              ? 'Chaque ligne contient le chemin complet depuis la racine, séparé par "/".'
+              : 'Chaque ligne contient le nom de l\'élément et le nom de son parent direct (laisser vide pour la racine).'}
+          </p>
+          <pre className="csv-importer__example">
+            {(exampleFormat === 'path' ? EXAMPLES_PATH : EXAMPLES_PARENT)[type]}
+          </pre>
+        </div>
       )}
 
       {/* Upload fichier */}

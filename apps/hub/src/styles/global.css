@@ -2882,28 +2882,28 @@ button, input, select, textarea { font: inherit; color: inherit }
 .ws-switch__name { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
 .ws-switch__chevron { flex-shrink: 0; font-size: .7rem; color: var(--text-muted) }
 
+/* Rendu via createPortal dans document.body — toujours position:fixed */
 .ws-switch__menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0; right: 0;
+  position: fixed;
+  left: .5rem; right: .5rem;
+  bottom: calc(env(safe-area-inset-bottom) + 62px);
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-lg);
   z-index: 300;
-  overflow: hidden;
+  overflow-y: auto;
+  max-height: 50vh;
   animation: pop-in .15s var(--ease);
 }
-
-/* Sur mobile, position: fixed pour échapper à overflow-x: auto de .jd-nav */
-@media (max-width: 767px) {
+/* Desktop : ancré sous le bouton dans la sidebar */
+@media (min-width: 768px) {
   .ws-switch__menu {
-    position: fixed;
-    left: .5rem; right: .5rem;
-    bottom: calc(env(safe-area-inset-bottom) + 62px);
-    top: auto;
-    max-height: 50vh;
-    overflow-y: auto;
+    position: absolute;
+    top: calc(100% + 4px);
+    bottom: auto;
+    left: 0; right: 0;
+    max-height: none;
   }
 }
 

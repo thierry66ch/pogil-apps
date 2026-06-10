@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
@@ -91,7 +92,7 @@ export default function JourDocApp() {
               <span className="ws-switch__chevron">{showSwitcher ? '▴' : '▾'}</span>
             </button>
 
-            {showSwitcher && (
+            {showSwitcher && createPortal(
               <>
                 <div className="ws-switch__menu">
                   {others.length > 0 && (
@@ -113,7 +114,8 @@ export default function JourDocApp() {
                   </button>
                 </div>
                 <div className="ws-switch__backdrop" onClick={() => setShowSwitcher(false)} />
-              </>
+              </>,
+              document.body
             )}
           </div>
 

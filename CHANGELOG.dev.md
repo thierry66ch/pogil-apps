@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 72 — 2026-06-10
+(1) ws-switch menu rendu via createPortal(document.body) — échappe définitivement overflow-x:auto et tout stacking context parent. CSS: position:fixed par défaut (mobile), position:absolute sur desktop. (2) todoist/link : affiche le taskId extrait dans le message d'erreur pour debug.
+
+---
+
 ## Build 71 — 2026-06-10
 Fix build 70 : (1) ws-switch menu z-index 50→300, backdrop 49→299 (menu derrière le contenu principal). (2) Route /todoist/link : outer try/catch + c.req.json() protégé + extraction ID plus robuste (split /task/ → dernière portion → strip query string).
 

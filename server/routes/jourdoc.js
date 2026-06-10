@@ -1061,7 +1061,7 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/link', wsCheck, async (c) => {
     if (!taskId) return c.json({ error: 'ID de tâche introuvable dans l\'URL' }, 400)
 
     const res = await fetch(`${TODOIST_API}/tasks/${taskId}`, { headers: todoistAuthHeader(ws.todoist_token) })
-    if (!res.ok) return c.json({ error: `Tâche introuvable (${res.status})` }, 400)
+    if (!res.ok) return c.json({ error: `Tâche introuvable (${res.status}), taskId extrait: "${taskId}"` }, 400)
     const task = extractTask(await res.json())
     const isDone = Boolean(task?.checked || task?.completed_at || task?.is_completed)
     db.prepare('UPDATE jd_notes SET tache_todoist_id=?, tache_todoist_content=?, tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=? WHERE id=?')

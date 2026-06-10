@@ -1075,6 +1075,16 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/link', wsCheck, async (c) => {
     const isDone = Boolean(task?.checked || task?.completed_at || task?.is_completed)
     db.prepare('UPDATE jd_notes SET tache_todoist_id=?, tache_todoist_content=?, tache_todoist_due=?, tache_todoist_priority=?, tache_todoist_done=? WHERE id=?')
       .run(taskId, task?.content ?? null, task?.due?.date ?? null, task?.priority ?? null, isDone ? 1 : 0, noteId)
+
+    // Ajouter un commentaire sur la tâche Todoist avec le lien vers la note JourDoc
+    const note = db.prepare('SELECT titre FROM jd_notes WHERE id=?').get(noteId)
+    const noteUrl = notePublicUrl(c, wsId, noteId)
+    await fetch(`${TODOIST_API}/comments`, {
+      method: 'POST',
+      headers: { ...todoistHeaders(ws.todoist_token), 'X-Request-Id': randomUUID() },
+      body: JSON.stringify({ task_id: taskId, content: `📔 Note JourDoc : [${note?.titre ?? 'Note'}](${noteUrl})` }),
+    }).catch(() => { /* on continue si le commentaire échoue */ })
+
     return c.json({ ok: true, task_id: taskId, content: task?.content, url: `https://app.todoist.com/app/task/${taskId}` })
   } catch (e) {
     return c.json({ error: String(e?.message ?? e) }, 500)

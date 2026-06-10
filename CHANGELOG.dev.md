@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 74 — 2026-06-10
+Lier tâche Todoist : après la liaison, poste un commentaire sur la tâche Todoist avec lien cliquable vers la note JourDoc (📔 Note JourDoc : [titre](url)). Erreur de commentaire silencieuse (la liaison reste valide).
+
+---
+
 ## Build 73 — 2026-06-10
 Fix extraction taskId Todoist : URL moderne = "nom-kebab-TASKID" → TASKID = dernier segment avec majuscules et ≥8 chars (ex. 6cVrwR54r6Jhmr69). Fallback = slug complet ou valeur brute.
 

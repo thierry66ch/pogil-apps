@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 86 — 2026-06-11
+Fix export CSV+médias : readFileSync non importé → ReferenceError silencieuse dans le catch → fichiers médias absents du ZIP. Ajout readFileSync aux imports node:fs.
+
+---
+
 ## Build 85 — 2026-06-11
 Fix export CSV : archiver (CJS) causait Internal Server Error dans ESM Hono. Remplacé par makeZip() — générateur ZIP STORE pur Node.js, zéro dépendance, CRC32 intégré.
 

@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { mkdirSync, writeFileSync, unlinkSync } from 'node:fs'
+import { mkdirSync, writeFileSync, unlinkSync, readFileSync } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import sharp from 'sharp'
 import heicConvert from 'heic-convert'

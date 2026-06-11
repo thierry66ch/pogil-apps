@@ -9,11 +9,6 @@ Fix MediaCard : boutons sans `type="button"` à l'intérieur du formulaire NoteF
 
 ---
 
-## Build 86 — 2026-06-11
-Fix export CSV+médias : readFileSync non importé → ReferenceError silencieuse dans le catch → fichiers médias absents du ZIP. Ajout readFileSync aux imports node:fs.
-
----
-
 ## Build 89 — 2026-06-11
 (1) ws-switch desktop : position calculée via getBoundingClientRect au clic → menu positionné correctement sous le bouton (portal dans document.body = position:absolute inutilisable). (2) Triangles pli/dépli arbres ×1.5 : font-size 1.2→1.8rem, width/height 32→44px.
 

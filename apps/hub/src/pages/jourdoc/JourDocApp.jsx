@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Outlet, useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
@@ -27,6 +27,8 @@ export default function JourDocApp() {
   const [ws, setWs] = useState(null)
   const [allWs, setAllWs] = useState([])
   const [showSwitcher, setShowSwitcher] = useState(false)
+  const [menuRect, setMenuRect] = useState(null)
+  const wsBtnRef = useRef(null)
 
   useEffect(() => {
     fetch(API_ROUTES.JD_WS(wsId), { headers: authHeader(token) })
@@ -85,8 +87,12 @@ export default function JourDocApp() {
           {/* ── Workspace switcher ── */}
           <div className="ws-switch">
             <button
+              ref={wsBtnRef}
               className="ws-switch__btn"
-              onClick={() => setShowSwitcher(o => !o)}
+              onClick={() => {
+                if (!showSwitcher && wsBtnRef.current) setMenuRect(wsBtnRef.current.getBoundingClientRect())
+                setShowSwitcher(o => !o)
+              }}
               title="Changer de workspace"
             >
               <span className="ws-switch__name">{ws?.name ?? '…'}</span>
@@ -95,7 +101,13 @@ export default function JourDocApp() {
 
             {showSwitcher && createPortal(
               <>
-                <div className="ws-switch__menu">
+                <div className="ws-switch__menu" style={menuRect && window.innerWidth >= 768 ? {
+                  position: 'fixed',
+                  top: menuRect.bottom + 4,
+                  left: menuRect.left,
+                  width: menuRect.width,
+                  bottom: 'auto',
+                } : undefined}>
                   {others.length > 0 && (
                     <>
                       <div className="ws-switch__section-label">Basculer vers</div>

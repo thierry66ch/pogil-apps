@@ -9,6 +9,11 @@ Fix export CSV+médias : readFileSync non importé → ReferenceError silencieus
 
 ---
 
+## Build 89 — 2026-06-11
+(1) ws-switch desktop : position calculée via getBoundingClientRect au clic → menu positionné correctement sous le bouton (portal dans document.body = position:absolute inutilisable). (2) Triangles pli/dépli arbres ×1.5 : font-size 1.2→1.8rem, width/height 32→44px.
+
+---
+
 ## Build 88 — 2026-06-11
 Corrections éléments : (1) ElementPicker auto-géré (loadElements interne, refresh après création), champ inline style tag-input, Enter rapide (sélection si match unique sinon création). (2) Route GET /notes/:id inclut elements[]. (3) NoteCard : chips éléments inline avec les objets. (4) NoteView : section éléments visible. (5) ElementManager page dédiée (/elements), lien depuis WorkspaceManager.
 

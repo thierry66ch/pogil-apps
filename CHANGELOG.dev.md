@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 90 — 2026-06-11
+Fix MediaCard : boutons sans `type="button"` à l'intérieur du formulaire NoteForm déclenchaient une soumission du formulaire au clic (sélection d'un média = enregistrement immédiat de la note). Ajout `type="button"` sur les trois boutons (sélection, notes liées, suppression).
+
+---
+
 ## Build 86 — 2026-06-11
 Fix export CSV+médias : readFileSync non importé → ReferenceError silencieuse dans le catch → fichiers médias absents du ZIP. Ajout readFileSync aux imports node:fs.
 

@@ -41,6 +41,7 @@ export default function MediaCard({ media, selected, onExpand, onSelect, onNotes
       {/* Checkbox de sélection (coin haut-gauche) */}
       {onSelect && (
         <button
+          type="button"
           className={`media-card__sel${selected ? ' active' : ''}`}
           onClick={e => { e.stopPropagation(); onSelect() }}
           aria-pressed={selected}
@@ -52,13 +53,13 @@ export default function MediaCard({ media, selected, onExpand, onSelect, onNotes
 
       {/* Notes liées (coin haut-droit, visible si lié) */}
       {onNotes && media.lie ? (
-        <button className="media-card__linked" onClick={e => { e.stopPropagation(); onNotes() }}
+        <button type="button" className="media-card__linked" onClick={e => { e.stopPropagation(); onNotes() }}
           title="Voir les notes liées">🔗</button>
       ) : null}
 
       {/* Supprimer */}
       {onDelete && (
-        <button className="media-card__del" onClick={e => { e.stopPropagation(); onDelete() }}
+        <button type="button" className="media-card__del" onClick={e => { e.stopPropagation(); onDelete() }}
           title="Supprimer">×</button>
       )}
 

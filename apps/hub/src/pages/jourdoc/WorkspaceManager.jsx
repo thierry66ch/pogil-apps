@@ -105,7 +105,27 @@ export default function WorkspaceManager() {
 
   useEffect(() => { loadTodoist() }, [loadTodoist])
 
-  const [importTab, setImportTab] = useState('objets')
+  const [importTab, setImportTab]   = useState('objets')
+  const [exporting, setExporting]   = useState(false)
+
+  async function downloadExport(format, withMedias) {
+    setExporting(true)
+    try {
+      const url = API_ROUTES.JD_WS_EXPORT(wsId, format, withMedias)
+      const res = await fetch(url, { headers: authHeader(token) })
+      if (!res.ok) { setMsg('Erreur lors de l\'export'); return }
+      const blob = await res.blob()
+      const cd = res.headers.get('content-disposition') ?? ''
+      const filename = cd.match(/filename="?([^"]+)"?/)?.[1]
+        ?? `export-${wsId}.${format === 'json' ? 'json' : 'zip'}`
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(blob)
+      a.download = filename
+      a.click()
+      URL.revokeObjectURL(a.href)
+    } catch { setMsg('Erreur réseau') }
+    finally { setExporting(false) }
+  }
   const [searchDepth, setSearchDepth] = useState(3)
   const [depthSaved, setDepthSaved] = useState(false)
 
@@ -351,18 +371,18 @@ export default function WorkspaceManager() {
           Exporte toutes les données du workspace (objets, thèmes, notes, médias).
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
-          <a href={API_ROUTES.JD_WS_EXPORT(wsId, 'json', false)}
-            className="btn btn-secondary" style={{ fontSize: '.8rem', textDecoration: 'none' }}>
+          <button className="btn btn-secondary" style={{ fontSize: '.8rem' }}
+            onClick={() => downloadExport('json', false)} disabled={exporting}>
             ↓ JSON
-          </a>
-          <a href={API_ROUTES.JD_WS_EXPORT(wsId, 'csv', false)}
-            className="btn btn-secondary" style={{ fontSize: '.8rem', textDecoration: 'none' }}>
+          </button>
+          <button className="btn btn-secondary" style={{ fontSize: '.8rem' }}
+            onClick={() => downloadExport('csv', false)} disabled={exporting}>
             ↓ CSV (ZIP)
-          </a>
-          <a href={API_ROUTES.JD_WS_EXPORT(wsId, 'csv', true)}
-            className="btn btn-secondary" style={{ fontSize: '.8rem', textDecoration: 'none' }}>
-            ↓ CSV + médias (ZIP)
-          </a>
+          </button>
+          <button className="btn btn-secondary" style={{ fontSize: '.8rem' }}
+            onClick={() => downloadExport('csv', true)} disabled={exporting}>
+            {exporting ? '…' : '↓ CSV + médias (ZIP)'}
+          </button>
         </div>
       </section>
 

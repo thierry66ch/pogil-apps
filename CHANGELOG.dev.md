@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 82 — 2026-06-11
+Fix export : les <a href> ne transmettaient pas le token → Unauthorized. Remplacé par fetch() avec authHeader + URL.createObjectURL pour déclencher le téléchargement côté client.
+
+---
+
 ## Build 81 — 2026-06-11
 Items 1+2 phase v2 : (1) Export : route GET /:wsId/export?format=json|csv&medias=0|1 — JSON imbriqué complet, CSV ZIP (archiver), option avec médias. Boutons dans WorkspaceManager. (2a) Admin UserEditor : checkboxes accès apps, sauvegarde atomique création, mise à jour accès à l'édition. GET /admin/apps + GET /admin/users inclut app_ids. (2b) AppCard : si aucun workspace, formulaire de création inline au premier clic.
 

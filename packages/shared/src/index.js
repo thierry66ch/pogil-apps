@@ -50,4 +50,5 @@ export const API_ROUTES = {
   JD_WS_TODOIST_TASKS:     (wsId) => `/api/jourdoc/${wsId}/todoist/tasks`,
   JD_WS_SEARCH_DEPTH:      (wsId) => `/api/jourdoc/${wsId}/search-depth`,
   JD_ANALYSE:              (wsId) => `/api/jourdoc/${wsId}/analyse`,
+  JD_WS_EXPORT:            (wsId, fmt, medias) => `/api/jourdoc/${wsId}/export?format=${fmt}&medias=${medias?1:0}`,
 }

@@ -344,6 +344,28 @@ export default function WorkspaceManager() {
         )}
       </section>
 
+      {/* ── Export ── */}
+      <section className="ws-manager__section">
+        <h3 className="ws-manager__title">📤 Exporter les données</h3>
+        <p style={{ fontSize: '.8125rem', color: 'var(--text-muted)', marginBottom: '.75rem' }}>
+          Exporte toutes les données du workspace (objets, thèmes, notes, médias).
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.5rem' }}>
+          <a href={API_ROUTES.JD_WS_EXPORT(wsId, 'json', false)}
+            className="btn btn-secondary" style={{ fontSize: '.8rem', textDecoration: 'none' }}>
+            ↓ JSON
+          </a>
+          <a href={API_ROUTES.JD_WS_EXPORT(wsId, 'csv', false)}
+            className="btn btn-secondary" style={{ fontSize: '.8rem', textDecoration: 'none' }}>
+            ↓ CSV (ZIP)
+          </a>
+          <a href={API_ROUTES.JD_WS_EXPORT(wsId, 'csv', true)}
+            className="btn btn-secondary" style={{ fontSize: '.8rem', textDecoration: 'none' }}>
+            ↓ CSV + médias (ZIP)
+          </a>
+        </div>
+      </section>
+
       {/* ── Profondeur de recherche ── */}
       <section className="ws-manager__section">
         <h3 className="ws-manager__title">🔍 Profondeur de recherche hiérarchique</h3>

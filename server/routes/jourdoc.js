@@ -1271,6 +1271,73 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/import', wsCheck, async (c) => {
   return c.json({ ok: true, contenu: newContenu })
 })
 
+// ── EXPORT WORKSPACE ─────────────────────────────────────────
+jourdoc.get('/:wsId/export', wsCheck, async (c) => {
+  const wsId  = c.get('wsId')
+  const { format = 'json', medias = '0' } = c.req.query()
+  const withMedias = medias === '1'
+
+  // Collecte des données
+  const objets  = db.prepare('SELECT * FROM jd_objets  WHERE workspace_id=?').all(wsId)
+  const themes  = db.prepare('SELECT * FROM jd_themes  WHERE workspace_id=?').all(wsId)
+  const rawNotes = db.prepare('SELECT * FROM jd_notes  WHERE workspace_id=?').all(wsId)
+  const rawMedias = db.prepare('SELECT * FROM jd_medias WHERE workspace_id=?').all(wsId)
+
+  // Enrichissement des notes
+  const notes = rawNotes.map(n => ({
+    ...n,
+    objets:  db.prepare('SELECT o.id,o.nom FROM jd_note_objet no JOIN jd_objets o ON o.id=no.objet_id WHERE no.note_id=?').all(n.id),
+    medias:  db.prepare('SELECT m.id,m.nom_original,m.fichier,m.type_media,m.date_prise FROM jd_note_media nm JOIN jd_medias m ON m.id=nm.media_id WHERE nm.note_id=?').all(n.id),
+    liens:   db.prepare('SELECT note_cible_id,type_lien FROM jd_note_note WHERE note_source_id=?').all(n.id),
+  }))
+
+  const wsName = db.prepare('SELECT name FROM workspaces WHERE id=?').get(wsId)?.name ?? `workspace-${wsId}`
+  const slug = wsName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+  const date = new Date().toISOString().slice(0, 10)
+
+  if (format === 'json') {
+    const payload = JSON.stringify({ workspace: { id: wsId, name: wsName, exported_at: new Date().toISOString() }, objets, themes, notes, medias: rawMedias }, null, 2)
+    c.header('Content-Type', 'application/json')
+    c.header('Content-Disposition', `attachment; filename="${slug}-${date}.json"`)
+    return c.body(payload)
+  }
+
+  // CSV + ZIP
+  const archiver = (await import('archiver')).default
+  const { PassThrough } = await import('node:stream')
+
+  function toCsv(rows) {
+    if (!rows.length) return ''
+    const keys = Object.keys(rows[0])
+    const esc = v => (v == null ? '' : String(v).includes(',') || String(v).includes('"') || String(v).includes('\n') ? `"${String(v).replace(/"/g, '""')}"` : String(v))
+    return [keys.join(','), ...rows.map(r => keys.map(k => esc(r[k])).join(','))].join('\n')
+  }
+
+  const archive = archiver('zip', { zlib: { level: 6 } })
+  const pass = new PassThrough()
+  archive.pipe(pass)
+
+  archive.append(toCsv(objets),  { name: 'objets.csv' })
+  archive.append(toCsv(themes),  { name: 'themes.csv' })
+  archive.append(toCsv(rawNotes), { name: 'notes.csv' })
+  archive.append(toCsv(rawMedias), { name: 'medias.csv' })
+  archive.append(toCsv(rawNotes.flatMap(n =>
+    db.prepare('SELECT note_source_id,note_cible_id,type_lien FROM jd_note_note WHERE note_source_id=?').all(n.id)
+  )), { name: 'liens_notes.csv' })
+
+  if (withMedias) {
+    for (const m of rawMedias) {
+      try { archive.file(`./${m.fichier}`, { name: `medias/${m.nom_original ?? m.fichier.split('/').pop()}` }) } catch { /* fichier manquant */ }
+    }
+  }
+
+  archive.finalize()
+
+  c.header('Content-Type', 'application/zip')
+  c.header('Content-Disposition', `attachment; filename="${slug}-${date}.zip"`)
+  return c.body(pass)
+})
+
 // ── ANALYSE PLURIANNUELLE ─────────────────────────────────────
 jourdoc.get('/:wsId/analyse', wsCheck, (c) => {
   const wsId = c.get('wsId')

@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 81 — 2026-06-11
+Items 1+2 phase v2 : (1) Export : route GET /:wsId/export?format=json|csv&medias=0|1 — JSON imbriqué complet, CSV ZIP (archiver), option avec médias. Boutons dans WorkspaceManager. (2a) Admin UserEditor : checkboxes accès apps, sauvegarde atomique création, mise à jour accès à l'édition. GET /admin/apps + GET /admin/users inclut app_ids. (2b) AppCard : si aucun workspace, formulaire de création inline au premier clic.
+
+---
+
 ## Build 80 — 2026-06-10
 Items 3/4/5 phase v2 : (3) maxDepth paramétrable — champ jd_search_depth sur workspaces, migration, route PATCH /search-depth, useJdData retourne searchDepth, getRelated accepte maxDepth, CalendarView et routes serveur (objets/notes, themes/notes, analyse) l'appliquent. UI dans WorkspaceManager (segmented 1/2/3/5/10). (4) Import CSV deux formats : boutons path/parent dans l'exemple, descriptions, chargement du bon exemple. (5) Éditeur enrichi : bouton Barré (Strike Tiptap), toggle code source HTML (textarea éditable + retour Tiptap).
 

@@ -127,20 +127,35 @@ admin.post('/settings/confirm', async (c) => {
   return c.json({ ok: true })
 })
 
-// GET /api/admin/users
-admin.get('/users', (c) => {
-  const users = db.prepare('SELECT id, username, email, is_active, created_at FROM users').all()
-  return c.json({ users })
+// GET /api/admin/apps — liste toutes les apps pour les checkboxes d'accès
+admin.get('/apps', (c) => {
+  const apps = db.prepare('SELECT id, slug, name, icon FROM apps WHERE is_active = 1').all()
+  return c.json({ apps })
 })
 
-// POST /api/admin/users
+// GET /api/admin/users — inclut app_ids pour chaque utilisateur
+admin.get('/users', (c) => {
+  const users = db.prepare('SELECT id, username, email, is_active, created_at FROM users').all()
+  const withAccess = users.map(u => {
+    const app_ids = db.prepare('SELECT app_id FROM user_app_access WHERE user_id = ?')
+      .all(u.id).map(r => r.app_id)
+    return { ...u, app_ids }
+  })
+  return c.json({ users: withAccess })
+})
+
+// POST /api/admin/users — crée l'utilisateur ET définit les accès apps en une seule opération
 admin.post('/users', async (c) => {
-  const { username, email, password, is_active = true } = await c.req.json()
+  const { username, email, password, is_active = true, app_ids = [] } = await c.req.json()
   const password_hash = await bcrypt.hash(password, 12)
   const result = db.prepare(
     'INSERT INTO users (username, email, password_hash, is_active) VALUES (?, ?, ?, ?)'
   ).run(username, email, password_hash, is_active ? 1 : 0)
-  return c.json({ id: result.lastInsertRowid }, 201)
+  const newId = result.lastInsertRowid
+  for (const appId of app_ids) {
+    db.prepare('INSERT OR IGNORE INTO user_app_access (user_id, app_id) VALUES (?, ?)').run(newId, appId)
+  }
+  return c.json({ id: newId }, 201)
 })
 
 // PUT /api/admin/users/:id

@@ -113,7 +113,11 @@ export default function WorkspaceManager() {
     try {
       const url = API_ROUTES.JD_WS_EXPORT(wsId, format, withMedias)
       const res = await fetch(url, { headers: authHeader(token) })
-      if (!res.ok) { setMsg('Erreur lors de l\'export'); return }
+      if (!res.ok) {
+        const body = await res.text().catch(() => `HTTP ${res.status}`)
+        setMsg(`Erreur export (${res.status}): ${body.slice(0, 200)}`)
+        return
+      }
       const blob = await res.blob()
       const cd = res.headers.get('content-disposition') ?? ''
       const filename = cd.match(/filename="?([^"]+)"?/)?.[1]

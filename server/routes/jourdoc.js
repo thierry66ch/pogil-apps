@@ -1272,7 +1272,7 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/import', wsCheck, async (c) => {
 })
 
 // ── EXPORT WORKSPACE ─────────────────────────────────────────
-jourdoc.get('/:wsId/export', wsCheck, async (c) => {
+jourdoc.get('/:wsId/export', wsCheck, async (c) => { try {
   const wsId  = c.get('wsId')
   const { format = 'json', medias = '0' } = c.req.query()
   const withMedias = medias === '1'
@@ -1344,6 +1344,7 @@ jourdoc.get('/:wsId/export', wsCheck, async (c) => {
   c.header('Content-Type', 'application/zip')
   c.header('Content-Disposition', `attachment; filename="${slug}-${date}.zip"`)
   return c.body(buffer)
+} catch(e) { return c.json({ error: String(e?.message ?? e), stack: e?.stack?.slice(0,500) }, 500) }
 })
 
 // ── ANALYSE PLURIANNUELLE ─────────────────────────────────────

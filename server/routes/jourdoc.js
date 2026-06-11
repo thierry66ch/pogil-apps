@@ -1302,40 +1302,48 @@ jourdoc.get('/:wsId/export', wsCheck, async (c) => {
     return c.body(payload)
   }
 
-  // CSV + ZIP
+  // CSV + ZIP — bufferisé en mémoire pour compatibilité Hono
   const archiver = (await import('archiver')).default
-  const { PassThrough } = await import('node:stream')
 
   function toCsv(rows) {
     if (!rows.length) return ''
     const keys = Object.keys(rows[0])
-    const esc = v => (v == null ? '' : String(v).includes(',') || String(v).includes('"') || String(v).includes('\n') ? `"${String(v).replace(/"/g, '""')}"` : String(v))
+    const esc = v => (v == null ? '' : /[,"\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v))
     return [keys.join(','), ...rows.map(r => keys.map(k => esc(r[k])).join(','))].join('\n')
   }
 
-  const archive = archiver('zip', { zlib: { level: 6 } })
-  const pass = new PassThrough()
-  archive.pipe(pass)
-
-  archive.append(toCsv(objets),  { name: 'objets.csv' })
-  archive.append(toCsv(themes),  { name: 'themes.csv' })
-  archive.append(toCsv(rawNotes), { name: 'notes.csv' })
-  archive.append(toCsv(rawMedias), { name: 'medias.csv' })
-  archive.append(toCsv(rawNotes.flatMap(n =>
+  const liens = rawNotes.flatMap(n =>
     db.prepare('SELECT note_source_id,note_cible_id,type_lien FROM jd_note_note WHERE note_source_id=?').all(n.id)
-  )), { name: 'liens_notes.csv' })
+  )
+
+  const archive = archiver('zip', { zlib: { level: 6 } })
+  const chunks = []
+  archive.on('data', chunk => chunks.push(Buffer.from(chunk)))
+
+  const zipDone = new Promise((resolve, reject) => {
+    archive.on('end', resolve)
+    archive.on('error', reject)
+  })
+
+  archive.append(toCsv(objets),    { name: 'objets.csv' })
+  archive.append(toCsv(themes),    { name: 'themes.csv' })
+  archive.append(toCsv(rawNotes),  { name: 'notes.csv' })
+  archive.append(toCsv(rawMedias), { name: 'medias.csv' })
+  archive.append(toCsv(liens),     { name: 'liens_notes.csv' })
 
   if (withMedias) {
     for (const m of rawMedias) {
-      try { archive.file(`./${m.fichier}`, { name: `medias/${m.nom_original ?? m.fichier.split('/').pop()}` }) } catch { /* fichier manquant */ }
+      try { archive.file(`./${m.fichier}`, { name: `medias/${m.nom_original ?? m.fichier.split('/').pop()}` }) } catch { /* manquant */ }
     }
   }
 
   archive.finalize()
+  await zipDone
 
+  const buffer = Buffer.concat(chunks)
   c.header('Content-Type', 'application/zip')
   c.header('Content-Disposition', `attachment; filename="${slug}-${date}.zip"`)
-  return c.body(pass)
+  return c.body(buffer)
 })
 
 // ── ANALYSE PLURIANNUELLE ─────────────────────────────────────

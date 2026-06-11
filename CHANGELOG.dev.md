@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 83 — 2026-06-11
+Fix export CSV : Hono attend une Web ReadableStream, pas un PassThrough Node.js. ZIP bufferisé en mémoire via archive.on('data') + Buffer.concat avant c.body().
+
+---
+
 ## Build 82 — 2026-06-11
 Fix export : les <a href> ne transmettaient pas le token → Unauthorized. Remplacé par fetch() avec authHeader + URL.createObjectURL pour déclencher le téléchargement côté client.
 

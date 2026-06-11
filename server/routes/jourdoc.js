@@ -657,7 +657,11 @@ jourdoc.get('/:wsId/notes/:id', (c) => {
      WHERE nn.note_cible_id = ? ORDER BY n.date ASC, n.created_at ASC`
   ).all(id)
 
-  return c.json({ note: { ...note, objets, medias, liens, liensEntrants } })
+  const elements = db.prepare(
+    'SELECT e.id, e.nom FROM jd_note_element ne JOIN jd_elements e ON e.id = ne.element_id WHERE ne.note_id = ? ORDER BY e.nom'
+  ).all(id)
+
+  return c.json({ note: { ...note, objets, medias, liens, liensEntrants, elements } })
 })
 
 jourdoc.post('/:wsId/notes', async (c) => {

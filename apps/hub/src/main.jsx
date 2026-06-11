@@ -21,6 +21,7 @@ import NoteView from './pages/jourdoc/NoteView'
 import WorkspaceManager from './pages/jourdoc/WorkspaceManager'
 import TodoistTasks from './pages/jourdoc/TodoistTasks'
 import AnalyseView from './pages/jourdoc/AnalyseView'
+import ElementManager from './pages/jourdoc/ElementManager'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 
@@ -54,6 +55,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               <Route path="calendar" element={<CalendarView />} />
               <Route path="todoist-tasks" element={<TodoistTasks />} />
               <Route path="analyse" element={<AnalyseView />} />
+              <Route path="elements" element={<ElementManager />} />
               <Route path="settings" element={<WorkspaceManager />} />
               <Route path="medias" element={<MediaGallery />} />
               <Route path="media/:mediaId" element={<MediaDetail />} />

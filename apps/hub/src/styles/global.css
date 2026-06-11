@@ -1111,8 +1111,16 @@ button, input, select, textarea { font: inherit; color: inherit }
   font-size: .85rem; line-height: 1; color: #b45309; opacity: .6;
 }
 .element-chip__remove:hover { opacity: 1 }
-.element-picker__input-row { display: flex; gap: .375rem }
-.element-picker__input { flex: 1; font-size: .875rem; padding: .35rem .5rem }
+.element-picker__field {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .375rem;
+  border: 1px solid var(--border); border-radius: var(--r);
+  padding: .25rem .5rem; background: var(--surface); cursor: text; min-height: 38px;
+}
+.element-picker__field:focus-within { border-color: var(--accent) }
+.element-picker__inline-input {
+  border: none; outline: none; background: transparent;
+  font-size: .875rem; flex: 1; min-width: 120px; padding: .1rem 0;
+}
 .element-picker__dropdown {
   position: absolute; top: calc(100% + 2px); left: 0; right: 0;
   background: var(--surface); border: 1px solid var(--border);
@@ -1125,6 +1133,7 @@ button, input, select, textarea { font: inherit; color: inherit }
   font-size: .875rem; cursor: pointer; transition: background .1s;
 }
 .element-picker__option:hover { background: var(--accent-bg); color: var(--accent) }
+.element-picker__option--hl { background: var(--accent-bg); color: var(--accent) }
 .element-picker__create { color: var(--accent); font-weight: 600 }
 .element-picker__create:disabled { opacity: .5; cursor: default }
 

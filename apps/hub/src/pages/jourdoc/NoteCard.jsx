@@ -39,19 +39,15 @@ export default function NoteCard({ note, contextNoteIds, showDate = false }) {
 
       <p className="jd-note-card__titre">{note.titre}</p>
 
-      {note.objets?.length > 0 && (
+      {(note.objets?.length > 0 || note.elements?.length > 0) && (
         <div className="jd-note-card__objets">
-          {note.objets.map(o => (
+          {note.objets?.map(o => (
             <span key={o.id} className="jd-chip" onClick={e => {
               e.stopPropagation()
               navigate(`/jourdoc/${wsId}/objet/${o.id}`)
             }}>{o.nom}</span>
           ))}
-        </div>
-      )}
-      {note.elements?.length > 0 && (
-        <div className="jd-note-card__objets">
-          {note.elements.map(e => (
+          {note.elements?.map(e => (
             <span key={e.id} className="jd-chip jd-chip--element">{e.nom}</span>
           ))}
         </div>

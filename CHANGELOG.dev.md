@@ -9,6 +9,11 @@ Fix export CSV+médias : readFileSync non importé → ReferenceError silencieus
 
 ---
 
+## Build 88 — 2026-06-11
+Corrections éléments : (1) ElementPicker auto-géré (loadElements interne, refresh après création), champ inline style tag-input, Enter rapide (sélection si match unique sinon création). (2) Route GET /notes/:id inclut elements[]. (3) NoteCard : chips éléments inline avec les objets. (4) NoteView : section éléments visible. (5) ElementManager page dédiée (/elements), lien depuis WorkspaceManager.
+
+---
+
 ## Build 87 — 2026-06-11
 Item 6 — Éléments (tags plats non hiérarchiques sur les notes) : tables jd_elements + jd_note_element dans schema.sql. Routes CRUD + fusion (POST /elements/merge). withData enrichit les notes avec leurs éléments. ElementPicker.jsx : chips + dropdown filtré + création inline (Enter ou bouton). NoteForm, NoteCard, NoteView affichent et éditent les éléments. WorkspaceManager : liste éléments avec compteur notes, renommage inline, suppression si 0 notes, fusion multi-sélection → nom cible.
 

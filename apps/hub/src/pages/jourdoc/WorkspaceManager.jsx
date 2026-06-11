@@ -409,53 +409,13 @@ export default function WorkspaceManager() {
       {/* ── Éléments ── */}
       <section className="ws-manager__section">
         <h3 className="ws-manager__title">🔩 Éléments</h3>
-        {elMsg && <p style={{ fontSize: '.8rem', color: 'var(--success)', marginBottom: '.5rem' }}>{elMsg}</p>}
-
-        {elements.length === 0 ? (
-          <p style={{ fontSize: '.8125rem', color: 'var(--text-muted)' }}>Aucun élément créé pour ce workspace.</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '.25rem', marginBottom: '.75rem' }}>
-            {elements.map(el => (
-              <div key={el.id} style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' }}>
-                {/* Checkbox fusion */}
-                <input type="checkbox" checked={elMerge.has(el.id)}
-                  onChange={() => setElMerge(s => { const n = new Set(s); n.has(el.id) ? n.delete(el.id) : n.add(el.id); return n })} />
-                {/* Nom modifiable */}
-                {elEditing[el.id] !== undefined ? (
-                  <input className="input" style={{ flex: 1, padding: '.25rem .5rem', fontSize: '.875rem' }}
-                    value={elEditing[el.id]}
-                    onChange={e => setElEditing(ed => ({ ...ed, [el.id]: e.target.value }))}
-                    onKeyDown={e => { if (e.key === 'Enter') renameElement(el.id, elEditing[el.id]); if (e.key === 'Escape') setElEditing(ed => { const n = { ...ed }; delete n[el.id]; return n }) }}
-                    autoFocus />
-                ) : (
-                  <span style={{ flex: 1, fontSize: '.875rem' }}>{el.nom}</span>
-                )}
-                <span style={{ fontSize: '.75rem', color: 'var(--text-muted)', flexShrink: 0 }}>
-                  {el.note_count} note{el.note_count !== 1 ? 's' : ''}
-                </span>
-                <button className="btn btn-ghost" style={{ fontSize: '.75rem', padding: '.2rem .4rem' }}
-                  onClick={() => setElEditing(ed => ({ ...ed, [el.id]: el.nom }))}>✏️</button>
-                {Number(el.note_count) === 0 && (
-                  <button className="btn btn-ghost" style={{ fontSize: '.75rem', padding: '.2rem .4rem', color: 'var(--danger)' }}
-                    onClick={() => deleteElement(el.id, el.nom)}>🗑</button>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Fusion */}
-        {elMerge.size >= 1 && (
-          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', alignItems: 'center', padding: '.625rem', background: 'var(--accent-bg)', borderRadius: 'var(--r)' }}>
-            <span style={{ fontSize: '.8125rem' }}>Fusionner {elMerge.size} élément{elMerge.size > 1 ? 's' : ''} → </span>
-            <input className="input" style={{ flex: 1, minWidth: 140, padding: '.3rem .5rem', fontSize: '.875rem' }}
-              placeholder="Nom cible…" value={mergeTarget} onChange={e => setMergeTarget(e.target.value)} />
-            <button className="btn btn-primary" style={{ fontSize: '.8rem' }} onClick={mergeElements}
-              disabled={!mergeTarget.trim()}>Fusionner</button>
-            <button className="btn btn-ghost" style={{ fontSize: '.8rem' }}
-              onClick={() => { setElMerge(new Set()); setMergeTarget('') }}>Annuler</button>
-          </div>
-        )}
+        <p style={{ fontSize: '.8125rem', color: 'var(--text-muted)', marginBottom: '.75rem' }}>
+          Gérer les éléments (renommer, supprimer, fusionner) dans la page dédiée.
+        </p>
+        <button className="btn btn-secondary" style={{ fontSize: '.8rem' }}
+          onClick={() => navigate(`/jourdoc/${wsId}/elements`)}>
+          🔩 Gérer les éléments →
+        </button>
       </section>
 
       {/* ── Export ── */}

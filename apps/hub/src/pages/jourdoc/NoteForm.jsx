@@ -46,11 +46,6 @@ export default function NoteForm() {
   const navigate = useNavigate()
   const location = useLocation()
   const { objets, themes } = useJdData(wsId, token)
-  const [elements, setElements] = useState([])
-  useEffect(() => {
-    fetch(API_ROUTES.JD_ELEMENTS(wsId), { headers: authHeader(token) })
-      .then(r => r.json()).then(d => setElements(d.elements ?? []))
-  }, [wsId, token])
   const isEdit = Boolean(noteId)
 
   // Médias pré-sélectionnés depuis la galerie (navigation state)
@@ -263,7 +258,6 @@ export default function NoteForm() {
         <div className="form-field">
           <label className="form-label">Éléments</label>
           <ElementPicker
-            elements={elements}
             value={form.element_ids}
             onChange={v => setForm(f => ({ ...f, element_ids: v }))}
             wsId={wsId} token={token}

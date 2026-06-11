@@ -9,6 +9,11 @@ Fix export CSV+médias : readFileSync non importé → ReferenceError silencieus
 
 ---
 
+## Build 87 — 2026-06-11
+Item 6 — Éléments (tags plats non hiérarchiques sur les notes) : tables jd_elements + jd_note_element dans schema.sql. Routes CRUD + fusion (POST /elements/merge). withData enrichit les notes avec leurs éléments. ElementPicker.jsx : chips + dropdown filtré + création inline (Enter ou bouton). NoteForm, NoteCard, NoteView affichent et éditent les éléments. WorkspaceManager : liste éléments avec compteur notes, renommage inline, suppression si 0 notes, fusion multi-sélection → nom cible.
+
+---
+
 ## Build 85 — 2026-06-11
 Fix export CSV : archiver (CJS) causait Internal Server Error dans ESM Hono. Remplacé par makeZip() — générateur ZIP STORE pur Node.js, zéro dépendance, CRC32 intégré.
 

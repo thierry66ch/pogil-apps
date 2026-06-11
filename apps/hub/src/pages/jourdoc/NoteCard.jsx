@@ -49,6 +49,13 @@ export default function NoteCard({ note, contextNoteIds, showDate = false }) {
           ))}
         </div>
       )}
+      {note.elements?.length > 0 && (
+        <div className="jd-note-card__objets">
+          {note.elements.map(e => (
+            <span key={e.id} className="jd-chip jd-chip--element">{e.nom}</span>
+          ))}
+        </div>
+      )}
 
       {/* Vignettes médias — clic → lightbox (sans naviguer vers la note) */}
       {note.medias?.length > 0 && (

@@ -1093,6 +1093,40 @@ button, input, select, textarea { font: inherit; color: inherit }
   transition: all .12s;
 }
 .jd-chip:hover { background: var(--accent-bg); border-color: var(--accent); color: var(--accent) }
+.jd-chip--element { background: color-mix(in srgb, #f59e0b 12%, transparent); border-color: #f59e0b44; color: #b45309; cursor: default }
+.jd-chip--element:hover { background: color-mix(in srgb, #f59e0b 20%, transparent); border-color: #f59e0b; color: #92400e }
+
+/* ── ElementPicker ──────────────────────── */
+.element-picker { position: relative }
+.element-picker__chips { display: flex; flex-wrap: wrap; gap: .375rem; margin-bottom: .375rem }
+.element-chip {
+  display: inline-flex; align-items: center; gap: .25rem;
+  padding: .2em .4em .2em .55em;
+  background: color-mix(in srgb, #f59e0b 12%, transparent);
+  border: 1px solid #f59e0b44; border-radius: var(--r-full);
+  font-size: .75rem; font-weight: 500; color: #b45309;
+}
+.element-chip__remove {
+  border: none; background: none; cursor: pointer; padding: 0;
+  font-size: .85rem; line-height: 1; color: #b45309; opacity: .6;
+}
+.element-chip__remove:hover { opacity: 1 }
+.element-picker__input-row { display: flex; gap: .375rem }
+.element-picker__input { flex: 1; font-size: .875rem; padding: .35rem .5rem }
+.element-picker__dropdown {
+  position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
+  z-index: 200; max-height: 200px; overflow-y: auto;
+}
+.element-picker__option {
+  display: block; width: 100%; padding: .4rem .625rem;
+  background: none; border: none; text-align: left;
+  font-size: .875rem; cursor: pointer; transition: background .1s;
+}
+.element-picker__option:hover { background: var(--accent-bg); color: var(--accent) }
+.element-picker__create { color: var(--accent); font-weight: 600 }
+.element-picker__create:disabled { opacity: .5; cursor: default }
 
 /* FAB */
 .jd-fab {

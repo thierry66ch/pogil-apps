@@ -183,6 +183,18 @@ export default function NoteView() {
             </div>
           )}
 
+          {/* Éléments */}
+          {note.elements?.length > 0 && (
+            <div className="note-view__sidebar-block">
+              <h4 className="note-view__sidebar-title">🔩 Éléments</h4>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '.375rem' }}>
+                {note.elements.map(e => (
+                  <span key={e.id} className="jd-chip jd-chip--element">{e.nom}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Source URL */}
           {note.source_url && (
             <div className="note-view__sidebar-block">

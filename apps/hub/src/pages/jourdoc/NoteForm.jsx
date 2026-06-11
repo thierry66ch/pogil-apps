@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import { API_ROUTES } from '@pogil/shared'
 import { useJdData, authHeader } from './hooks'
 import HierarchyPicker from './HierarchyPicker'
+import ElementPicker from './ElementPicker'
 import MediaPicker from './MediaPicker'
 import MediaCard from './MediaCard'
 import NoteLinkPicker from './NoteLinkPicker'
@@ -45,6 +46,11 @@ export default function NoteForm() {
   const navigate = useNavigate()
   const location = useLocation()
   const { objets, themes } = useJdData(wsId, token)
+  const [elements, setElements] = useState([])
+  useEffect(() => {
+    fetch(API_ROUTES.JD_ELEMENTS(wsId), { headers: authHeader(token) })
+      .then(r => r.json()).then(d => setElements(d.elements ?? []))
+  }, [wsId, token])
   const isEdit = Boolean(noteId)
 
   // Médias pré-sélectionnés depuis la galerie (navigation state)
@@ -54,7 +60,8 @@ export default function NoteForm() {
     type:      location.state?.type    ?? 'journal',
     nature:    location.state?.nature  ?? 'observation',
     theme_id:  null,
-    objet_ids: location.state?.objet_ids ?? [],
+    objet_ids:   location.state?.objet_ids ?? [],
+    element_ids: [],
     media_ids: initMediaIds,
     titre:     location.state?.titre   ?? '',
     titre_alt: '',
@@ -82,7 +89,8 @@ export default function NoteForm() {
           type: note.type,
           nature: note.nature ?? 'observation',
           theme_id: note.theme_id,
-          objet_ids: note.objets.map(o => o.id),
+          objet_ids:   note.objets.map(o => o.id),
+          element_ids: (note.elements ?? []).map(e => e.id),
           media_ids: note.medias?.map(m => m.id) ?? [],
           titre: note.titre,
           titre_alt: note.titre_alt ?? '',
@@ -250,6 +258,17 @@ export default function NoteForm() {
         <HierarchyPicker items={objets} value={form.objet_ids}
           onChange={v => setForm(f => ({ ...f, objet_ids: v }))}
           mode="multi" label="Objets liés" placeholder="Choisir un ou plusieurs objets…" />
+
+        {/* Éléments */}
+        <div className="form-field">
+          <label className="form-label">Éléments</label>
+          <ElementPicker
+            elements={elements}
+            value={form.element_ids}
+            onChange={v => setForm(f => ({ ...f, element_ids: v }))}
+            wsId={wsId} token={token}
+          />
+        </div>
 
         {/* Titre */}
         <div className="form-field">

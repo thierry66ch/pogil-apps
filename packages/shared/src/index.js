@@ -51,4 +51,7 @@ export const API_ROUTES = {
   JD_WS_SEARCH_DEPTH:      (wsId) => `/api/jourdoc/${wsId}/search-depth`,
   JD_ANALYSE:              (wsId) => `/api/jourdoc/${wsId}/analyse`,
   JD_WS_EXPORT:            (wsId, fmt, medias) => `/api/jourdoc/${wsId}/export?format=${fmt}&medias=${medias?1:0}`,
+  JD_ELEMENTS:             (wsId) => `/api/jourdoc/${wsId}/elements`,
+  JD_ELEMENT:              (wsId, id) => `/api/jourdoc/${wsId}/elements/${id}`,
+  JD_ELEMENTS_MERGE:       (wsId) => `/api/jourdoc/${wsId}/elements/merge`,
 }

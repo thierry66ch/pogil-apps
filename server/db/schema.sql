@@ -145,3 +145,22 @@ CREATE INDEX IF NOT EXISTS idx_jd_medias_date  ON jd_medias(date_prise);
 CREATE INDEX IF NOT EXISTS idx_jd_medias_lie   ON jd_medias(lie);
 CREATE INDEX IF NOT EXISTS idx_jd_nm_note      ON jd_note_media(note_id);
 CREATE INDEX IF NOT EXISTS idx_jd_nm_media     ON jd_note_media(media_id);
+
+-- ── Éléments (tags plats non hiérarchiques) ──────────────────
+
+CREATE TABLE IF NOT EXISTS jd_elements (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  workspace_id INTEGER NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  nom          TEXT NOT NULL,
+  created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS jd_note_element (
+  note_id    INTEGER NOT NULL REFERENCES jd_notes(id) ON DELETE CASCADE,
+  element_id INTEGER NOT NULL REFERENCES jd_elements(id) ON DELETE CASCADE,
+  PRIMARY KEY (note_id, element_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_jd_elements_ws ON jd_elements(workspace_id);
+CREATE INDEX IF NOT EXISTS idx_jd_ne_note     ON jd_note_element(note_id);
+CREATE INDEX IF NOT EXISTS idx_jd_ne_element  ON jd_note_element(element_id);

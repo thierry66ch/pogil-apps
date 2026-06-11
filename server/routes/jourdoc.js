@@ -262,9 +262,70 @@ function withData(notes) {
     const medias = db.prepare(
       'SELECT m.id, m.type_media, m.nom_original, m.fichier FROM jd_note_media nm JOIN jd_medias m ON m.id = nm.media_id WHERE nm.note_id = ? ORDER BY m.created_at LIMIT 6'
     ).all(note.id)
-    return { ...note, objets, medias }
+    const elements = db.prepare(
+      'SELECT e.id, e.nom FROM jd_note_element ne JOIN jd_elements e ON e.id = ne.element_id WHERE ne.note_id = ? ORDER BY e.nom'
+    ).all(note.id)
+    return { ...note, objets, medias, elements }
   })
 }
+
+// ── ÉLÉMENTS ─────────────────────────────────────────────────
+
+jourdoc.get('/:wsId/elements', (c) => {
+  const wsId = c.get('wsId')
+  const elements = db.prepare(`
+    SELECT e.id, e.nom, e.created_at,
+      (SELECT COUNT(*) FROM jd_note_element ne WHERE ne.element_id = e.id) AS note_count
+    FROM jd_elements e WHERE e.workspace_id = ? ORDER BY e.nom
+  `).all(wsId)
+  return c.json({ elements })
+})
+
+jourdoc.post('/:wsId/elements', async (c) => {
+  const wsId = c.get('wsId')
+  const { nom } = await c.req.json()
+  if (!nom?.trim()) return c.json({ error: 'Nom requis' }, 400)
+  const existing = db.prepare('SELECT id FROM jd_elements WHERE workspace_id=? AND nom=?').get(wsId, nom.trim())
+  if (existing) return c.json({ id: existing.id, existing: true })
+  const r = db.prepare('INSERT INTO jd_elements (workspace_id, nom) VALUES (?,?)').run(wsId, nom.trim())
+  return c.json({ id: r.lastInsertRowid }, 201)
+})
+
+jourdoc.put('/:wsId/elements/:id', async (c) => {
+  const wsId = c.get('wsId'); const id = Number(c.req.param('id'))
+  const { nom } = await c.req.json()
+  if (!nom?.trim()) return c.json({ error: 'Nom requis' }, 400)
+  db.prepare('UPDATE jd_elements SET nom=? WHERE id=? AND workspace_id=?').run(nom.trim(), id, wsId)
+  return c.json({ ok: true })
+})
+
+jourdoc.delete('/:wsId/elements/:id', (c) => {
+  const wsId = c.get('wsId'); const id = Number(c.req.param('id'))
+  const count = db.prepare('SELECT COUNT(*) AS n FROM jd_note_element WHERE element_id=?').get(id)?.n ?? 0
+  if (count > 0) return c.json({ error: `Cet élément est lié à ${count} note${count>1?'s':''} — supprimez les liens d'abord` }, 409)
+  db.prepare('DELETE FROM jd_elements WHERE id=? AND workspace_id=?').run(id, wsId)
+  return c.json({ ok: true })
+})
+
+// Fusion : déplace tous les liens des éléments source vers l'élément cible, supprime les sources
+jourdoc.post('/:wsId/elements/merge', async (c) => {
+  const wsId = c.get('wsId')
+  const { source_ids = [], target_nom } = await c.req.json()
+  if (!target_nom?.trim() || source_ids.length === 0) return c.json({ error: 'source_ids et target_nom requis' }, 400)
+  let targetId
+  const existing = db.prepare('SELECT id FROM jd_elements WHERE workspace_id=? AND nom=?').get(wsId, target_nom.trim())
+  if (existing) { targetId = existing.id }
+  else { const r = db.prepare('INSERT INTO jd_elements (workspace_id, nom) VALUES (?,?)').run(wsId, target_nom.trim()); targetId = r.lastInsertRowid }
+  for (const srcId of source_ids) {
+    if (srcId === targetId) continue
+    const notes = db.prepare('SELECT note_id FROM jd_note_element WHERE element_id=?').all(srcId)
+    for (const { note_id } of notes)
+      db.prepare('INSERT OR IGNORE INTO jd_note_element (note_id, element_id) VALUES (?,?)').run(note_id, targetId)
+    db.prepare('DELETE FROM jd_note_element WHERE element_id=?').run(srcId)
+    db.prepare('DELETE FROM jd_elements WHERE id=? AND workspace_id=?').run(srcId, wsId)
+  }
+  return c.json({ ok: true, target_id: targetId })
+})
 
 // ── Info + settings workspace ─────────────────────────────────
 
@@ -601,7 +662,7 @@ jourdoc.get('/:wsId/notes/:id', (c) => {
 
 jourdoc.post('/:wsId/notes', async (c) => {
   const wsId = c.get('wsId')
-  const { type = 'journal', nature, theme_id, titre, titre_alt, contenu, date, source_url, objet_ids = [], media_ids = [] } = await c.req.json()
+  const { type = 'journal', nature, theme_id, titre, titre_alt, contenu, date, source_url, objet_ids = [], media_ids = [], element_ids = [] } = await c.req.json()
   if (!titre) return c.json({ error: 'titre requis' }, 400)
 
   const result = db.prepare(
@@ -618,6 +679,9 @@ jourdoc.post('/:wsId/notes', async (c) => {
     db.prepare('INSERT OR IGNORE INTO jd_note_media (note_id, media_id) VALUES (?,?)').run(noteId, mediaId)
     refreshLie(mediaId)
   }
+  for (const elementId of element_ids) {
+    db.prepare('INSERT OR IGNORE INTO jd_note_element (note_id, element_id) VALUES (?,?)').run(noteId, elementId)
+  }
 
   return c.json({ id: noteId }, 201)
 })
@@ -625,7 +689,7 @@ jourdoc.post('/:wsId/notes', async (c) => {
 jourdoc.put('/:wsId/notes/:id', async (c) => {
   const wsId = c.get('wsId')
   const id = Number(c.req.param('id'))
-  const { type, nature, theme_id, titre, titre_alt, contenu, date, source_url, objet_ids, media_ids } = await c.req.json()
+  const { type, nature, theme_id, titre, titre_alt, contenu, date, source_url, objet_ids, media_ids, element_ids } = await c.req.json()
 
   db.prepare(
     `UPDATE jd_notes SET type=?, nature=?, theme_id=?, titre=?, titre_alt=?, contenu=?, date=?, source_url=?
@@ -646,6 +710,13 @@ jourdoc.put('/:wsId/notes/:id', async (c) => {
       db.prepare('INSERT OR IGNORE INTO jd_note_media (note_id, media_id) VALUES (?,?)').run(id, mediaId)
     }
     for (const mediaId of [...new Set([...old, ...media_ids])]) refreshLie(mediaId)
+  }
+
+  if (element_ids !== undefined) {
+    db.prepare('DELETE FROM jd_note_element WHERE note_id = ?').run(id)
+    for (const elementId of element_ids) {
+      db.prepare('INSERT OR IGNORE INTO jd_note_element (note_id, element_id) VALUES (?,?)').run(id, elementId)
+    }
   }
 
   return c.json({ ok: true })

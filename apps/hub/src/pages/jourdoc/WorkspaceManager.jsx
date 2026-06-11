@@ -106,6 +106,44 @@ export default function WorkspaceManager() {
   useEffect(() => { loadTodoist() }, [loadTodoist])
 
   const [importTab, setImportTab]   = useState('objets')
+  const [elements, setElements]     = useState([])
+  const [elEditing, setElEditing]   = useState({})   // id → nom en cours d'édition
+  const [elMerge, setElMerge]       = useState(new Set())  // ids sélectionnés pour fusion
+  const [mergeTarget, setMergeTarget] = useState('')
+  const [elMsg, setElMsg]           = useState('')
+
+  const loadElements = useCallback(async () => {
+    const d = await fetch(API_ROUTES.JD_ELEMENTS(wsId), { headers: authHeader(token) }).then(r => r.json())
+    setElements(d.elements ?? [])
+  }, [wsId, token])
+
+  useEffect(() => { loadElements() }, [loadElements])
+
+  async function renameElement(id, nom) {
+    await fetch(API_ROUTES.JD_ELEMENT(wsId, id), {
+      method: 'PUT', headers: authHeader(token), body: JSON.stringify({ nom }),
+    })
+    setElEditing(e => { const n = { ...e }; delete n[id]; return n })
+    loadElements()
+  }
+
+  async function deleteElement(id, nom) {
+    if (!confirm(`Supprimer l'élément "${nom}" ?`)) return
+    const res = await fetch(API_ROUTES.JD_ELEMENT(wsId, id), { method: 'DELETE', headers: authHeader(token) })
+    const d = await res.json()
+    if (!res.ok) { setElMsg(d.error ?? 'Erreur'); return }
+    loadElements()
+  }
+
+  async function mergeElements() {
+    if (!mergeTarget.trim() || elMerge.size === 0) return
+    await fetch(API_ROUTES.JD_ELEMENTS_MERGE(wsId), {
+      method: 'POST', headers: authHeader(token),
+      body: JSON.stringify({ source_ids: [...elMerge], target_nom: mergeTarget }),
+    })
+    setElMerge(new Set()); setMergeTarget(''); setElMsg('Fusion effectuée.')
+    loadElements()
+  }
   const [exporting, setExporting]   = useState(false)
 
   async function downloadExport(format, withMedias) {
@@ -365,6 +403,58 @@ export default function WorkspaceManager() {
             onClick={() => setShowCreate(true)}>
             ✚ Créer un nouveau workspace
           </button>
+        )}
+      </section>
+
+      {/* ── Éléments ── */}
+      <section className="ws-manager__section">
+        <h3 className="ws-manager__title">🔩 Éléments</h3>
+        {elMsg && <p style={{ fontSize: '.8rem', color: 'var(--success)', marginBottom: '.5rem' }}>{elMsg}</p>}
+
+        {elements.length === 0 ? (
+          <p style={{ fontSize: '.8125rem', color: 'var(--text-muted)' }}>Aucun élément créé pour ce workspace.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '.25rem', marginBottom: '.75rem' }}>
+            {elements.map(el => (
+              <div key={el.id} style={{ display: 'flex', alignItems: 'center', gap: '.5rem', flexWrap: 'wrap' }}>
+                {/* Checkbox fusion */}
+                <input type="checkbox" checked={elMerge.has(el.id)}
+                  onChange={() => setElMerge(s => { const n = new Set(s); n.has(el.id) ? n.delete(el.id) : n.add(el.id); return n })} />
+                {/* Nom modifiable */}
+                {elEditing[el.id] !== undefined ? (
+                  <input className="input" style={{ flex: 1, padding: '.25rem .5rem', fontSize: '.875rem' }}
+                    value={elEditing[el.id]}
+                    onChange={e => setElEditing(ed => ({ ...ed, [el.id]: e.target.value }))}
+                    onKeyDown={e => { if (e.key === 'Enter') renameElement(el.id, elEditing[el.id]); if (e.key === 'Escape') setElEditing(ed => { const n = { ...ed }; delete n[el.id]; return n }) }}
+                    autoFocus />
+                ) : (
+                  <span style={{ flex: 1, fontSize: '.875rem' }}>{el.nom}</span>
+                )}
+                <span style={{ fontSize: '.75rem', color: 'var(--text-muted)', flexShrink: 0 }}>
+                  {el.note_count} note{el.note_count !== 1 ? 's' : ''}
+                </span>
+                <button className="btn btn-ghost" style={{ fontSize: '.75rem', padding: '.2rem .4rem' }}
+                  onClick={() => setElEditing(ed => ({ ...ed, [el.id]: el.nom }))}>✏️</button>
+                {Number(el.note_count) === 0 && (
+                  <button className="btn btn-ghost" style={{ fontSize: '.75rem', padding: '.2rem .4rem', color: 'var(--danger)' }}
+                    onClick={() => deleteElement(el.id, el.nom)}>🗑</button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Fusion */}
+        {elMerge.size >= 1 && (
+          <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap', alignItems: 'center', padding: '.625rem', background: 'var(--accent-bg)', borderRadius: 'var(--r)' }}>
+            <span style={{ fontSize: '.8125rem' }}>Fusionner {elMerge.size} élément{elMerge.size > 1 ? 's' : ''} → </span>
+            <input className="input" style={{ flex: 1, minWidth: 140, padding: '.3rem .5rem', fontSize: '.875rem' }}
+              placeholder="Nom cible…" value={mergeTarget} onChange={e => setMergeTarget(e.target.value)} />
+            <button className="btn btn-primary" style={{ fontSize: '.8rem' }} onClick={mergeElements}
+              disabled={!mergeTarget.trim()}>Fusionner</button>
+            <button className="btn btn-ghost" style={{ fontSize: '.8rem' }}
+              onClick={() => { setElMerge(new Set()); setMergeTarget('') }}>Annuler</button>
+          </div>
         )}
       </section>
 

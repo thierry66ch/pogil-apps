@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 85 — 2026-06-11
+Fix export CSV : archiver (CJS) causait Internal Server Error dans ESM Hono. Remplacé par makeZip() — générateur ZIP STORE pur Node.js, zéro dépendance, CRC32 intégré.
+
+---
+
 ## Build 83 — 2026-06-11
 Fix export CSV : Hono attend une Web ReadableStream, pas un PassThrough Node.js. ZIP bufferisé en mémoire via archive.on('data') + Buffer.concat avant c.body().
 

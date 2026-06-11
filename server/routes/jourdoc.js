@@ -1272,26 +1272,23 @@ jourdoc.post('/:wsId/notes/:noteId/todoist/import', wsCheck, async (c) => {
 })
 
 // ── EXPORT WORKSPACE ─────────────────────────────────────────
-jourdoc.get('/:wsId/export', wsCheck, async (c) => { try {
+jourdoc.get('/:wsId/export', wsCheck, async (c) => {
   const wsId  = c.get('wsId')
   const { format = 'json', medias = '0' } = c.req.query()
   const withMedias = medias === '1'
 
-  // Collecte des données
-  const objets  = db.prepare('SELECT * FROM jd_objets  WHERE workspace_id=?').all(wsId)
-  const themes  = db.prepare('SELECT * FROM jd_themes  WHERE workspace_id=?').all(wsId)
-  const rawNotes = db.prepare('SELECT * FROM jd_notes  WHERE workspace_id=?').all(wsId)
+  const objets   = db.prepare('SELECT * FROM jd_objets  WHERE workspace_id=?').all(wsId)
+  const themes   = db.prepare('SELECT * FROM jd_themes  WHERE workspace_id=?').all(wsId)
+  const rawNotes = db.prepare('SELECT * FROM jd_notes   WHERE workspace_id=?').all(wsId)
   const rawMedias = db.prepare('SELECT * FROM jd_medias WHERE workspace_id=?').all(wsId)
-
-  // Enrichissement des notes
   const notes = rawNotes.map(n => ({
     ...n,
-    objets:  db.prepare('SELECT o.id,o.nom FROM jd_note_objet no JOIN jd_objets o ON o.id=no.objet_id WHERE no.note_id=?').all(n.id),
-    medias:  db.prepare('SELECT m.id,m.nom_original,m.fichier,m.type_media,m.date_prise FROM jd_note_media nm JOIN jd_medias m ON m.id=nm.media_id WHERE nm.note_id=?').all(n.id),
-    liens:   db.prepare('SELECT note_cible_id,type_lien FROM jd_note_note WHERE note_source_id=?').all(n.id),
+    objets: db.prepare('SELECT o.id,o.nom FROM jd_note_objet no JOIN jd_objets o ON o.id=no.objet_id WHERE no.note_id=?').all(n.id),
+    medias: db.prepare('SELECT m.id,m.nom_original,m.fichier,m.type_media FROM jd_note_media nm JOIN jd_medias m ON m.id=nm.media_id WHERE nm.note_id=?').all(n.id),
+    liens:  db.prepare('SELECT note_cible_id,type_lien FROM jd_note_note WHERE note_source_id=?').all(n.id),
   }))
 
-  const wsName = db.prepare('SELECT name FROM workspaces WHERE id=?').get(wsId)?.name ?? `workspace-${wsId}`
+  const wsName = db.prepare('SELECT name FROM workspaces WHERE id=?').get(wsId)?.name ?? `ws-${wsId}`
   const slug = wsName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
   const date = new Date().toISOString().slice(0, 10)
 
@@ -1302,49 +1299,73 @@ jourdoc.get('/:wsId/export', wsCheck, async (c) => { try {
     return c.body(payload)
   }
 
-  // CSV + ZIP — bufferisé en mémoire pour compatibilité Hono
-  const archiver = (await import('archiver')).default
-
+  // CSV + ZIP pur Node.js (pas de dépendance externe)
   function toCsv(rows) {
     if (!rows.length) return ''
     const keys = Object.keys(rows[0])
-    const esc = v => (v == null ? '' : /[,"\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v))
+    const esc = v => (v == null ? '' : /[,"\n]/.test(String(v)) ? `"${String(v).replace(/"/g,'""')}"` : String(v))
     return [keys.join(','), ...rows.map(r => keys.map(k => esc(r[k])).join(','))].join('\n')
+  }
+
+  // Générateur ZIP STORE (sans compression) — pur Node.js
+  function makeZip(files) {
+    const crcTable = (() => {
+      const t = new Uint32Array(256)
+      for (let i = 0; i < 256; i++) { let c = i; for (let j = 0; j < 8; j++) c = c&1 ? 0xEDB88320^(c>>>1) : c>>>1; t[i]=c }
+      return t
+    })()
+    function crc32(buf) { let c=0xFFFFFFFF; for (const b of buf) c=(c>>>8)^crcTable[(c^b)&0xFF]; return (c^0xFFFFFFFF)>>>0 }
+
+    const locals = []; const central = []; let off = 0
+    for (const { name, data } of files) {
+      const d = Buffer.isBuffer(data) ? data : Buffer.from(data, 'utf8')
+      const nb = Buffer.from(name, 'utf8')
+      const crc = crc32(d); const sz = d.length
+      const lh = Buffer.alloc(30 + nb.length)
+      lh.writeUInt32LE(0x04034b50,0); lh.writeUInt16LE(20,4); lh.writeUInt16LE(0,6); lh.writeUInt16LE(0,8)
+      lh.writeUInt16LE(0,10); lh.writeUInt16LE(0,12); lh.writeUInt32LE(crc,14)
+      lh.writeUInt32LE(sz,18); lh.writeUInt32LE(sz,22); lh.writeUInt16LE(nb.length,26); lh.writeUInt16LE(0,28)
+      nb.copy(lh,30)
+      const cd = Buffer.alloc(46 + nb.length)
+      cd.writeUInt32LE(0x02014b50,0); cd.writeUInt16LE(20,4); cd.writeUInt16LE(20,6); cd.writeUInt16LE(0,8); cd.writeUInt16LE(0,10)
+      cd.writeUInt16LE(0,12); cd.writeUInt16LE(0,14); cd.writeUInt32LE(crc,16); cd.writeUInt32LE(sz,20); cd.writeUInt32LE(sz,24)
+      cd.writeUInt16LE(nb.length,28); cd.writeUInt16LE(0,30); cd.writeUInt16LE(0,32); cd.writeUInt16LE(0,34); cd.writeUInt16LE(0,36)
+      cd.writeUInt32LE(0,38); cd.writeUInt32LE(off,42); nb.copy(cd,46)
+      locals.push(lh,d); central.push(cd); off += 30+nb.length+sz
+    }
+    const cdb = Buffer.concat(central)
+    const eocd = Buffer.alloc(22)
+    eocd.writeUInt32LE(0x06054b50,0); eocd.writeUInt16LE(0,4); eocd.writeUInt16LE(0,6)
+    eocd.writeUInt16LE(files.length,8); eocd.writeUInt16LE(files.length,10)
+    eocd.writeUInt32LE(cdb.length,12); eocd.writeUInt32LE(off,16); eocd.writeUInt16LE(0,20)
+    return Buffer.concat([...locals, cdb, eocd])
   }
 
   const liens = rawNotes.flatMap(n =>
     db.prepare('SELECT note_source_id,note_cible_id,type_lien FROM jd_note_note WHERE note_source_id=?').all(n.id)
   )
 
-  const archive = archiver('zip', { zlib: { level: 6 } })
-  const chunks = []
-  archive.on('data', chunk => chunks.push(Buffer.from(chunk)))
-
-  const zipDone = new Promise((resolve, reject) => {
-    archive.on('end', resolve)
-    archive.on('error', reject)
-  })
-
-  archive.append(toCsv(objets),    { name: 'objets.csv' })
-  archive.append(toCsv(themes),    { name: 'themes.csv' })
-  archive.append(toCsv(rawNotes),  { name: 'notes.csv' })
-  archive.append(toCsv(rawMedias), { name: 'medias.csv' })
-  archive.append(toCsv(liens),     { name: 'liens_notes.csv' })
+  const zipFiles = [
+    { name: 'objets.csv',     data: toCsv(objets) },
+    { name: 'themes.csv',     data: toCsv(themes) },
+    { name: 'notes.csv',      data: toCsv(rawNotes) },
+    { name: 'medias.csv',     data: toCsv(rawMedias) },
+    { name: 'liens_notes.csv',data: toCsv(liens) },
+  ]
 
   if (withMedias) {
     for (const m of rawMedias) {
-      try { archive.file(`./${m.fichier}`, { name: `medias/${m.nom_original ?? m.fichier.split('/').pop()}` }) } catch { /* manquant */ }
+      try {
+        const buf = readFileSync(`./${m.fichier}`)
+        zipFiles.push({ name: `medias/${m.nom_original ?? m.fichier.split('/').pop()}`, data: buf })
+      } catch { /* fichier manquant, on ignore */ }
     }
   }
 
-  archive.finalize()
-  await zipDone
-
-  const buffer = Buffer.concat(chunks)
+  const buffer = makeZip(zipFiles)
   c.header('Content-Type', 'application/zip')
   c.header('Content-Disposition', `attachment; filename="${slug}-${date}.zip"`)
   return c.body(buffer)
-} catch(e) { return c.json({ error: String(e?.message ?? e), stack: e?.stack?.slice(0,500) }, 500) }
 })
 
 // ── ANALYSE PLURIANNUELLE ─────────────────────────────────────

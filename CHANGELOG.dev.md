@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 91 — 2026-06-12
+Fix HierarchyPicker : le survol souris déclenchait un scroll automatique de la liste. Ajout d'un ref `scrollToRef` — le scroll n'est autorisé que si initié par clavier (↑↓) ou par changement de recherche. `onMouseMove` → `onMouseEnter` (survol met à jour la mise en évidence visuelle sans scroller).
+
+---
+
 ## Build 90 — 2026-06-11
 Fix MediaCard : boutons sans `type="button"` à l'intérieur du formulaire NoteForm déclenchaient une soumission du formulaire au clic (sélection d'un média = enregistrement immédiat de la note). Ajout `type="button"` sur les trois boutons (sélection, notes liées, suppression).
 

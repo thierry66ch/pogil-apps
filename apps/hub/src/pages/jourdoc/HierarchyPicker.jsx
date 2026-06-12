@@ -33,6 +33,7 @@ export default function HierarchyPicker({
   const [focusedIdx, setFocusedIdx] = useState(0)
   const searchRef = useRef(null)
   const listRef = useRef(null)
+  const scrollToRef = useRef(false) // true = navigation clavier/recherche, scroll autorisé
   const pathMap = useMemo(() => buildPathMap(items), [items])
   const sortPathMap = useMemo(() => buildSortPath(items), [items])
 
@@ -67,10 +68,15 @@ export default function HierarchyPicker({
   }, [baseItems, matchedIds])
 
   // Positionner le focus sur la première correspondance quand la recherche change
-  useEffect(() => { setFocusedIdx(firstMatchIdx) }, [firstMatchIdx])
-
-  // Scroll : si recherche active → item en tête de liste ; sinon → nearest
   useEffect(() => {
+    scrollToRef.current = true
+    setFocusedIdx(firstMatchIdx)
+  }, [firstMatchIdx])
+
+  // Scroll uniquement si déclenché par clavier ou recherche (pas par survol souris)
+  useEffect(() => {
+    if (!scrollToRef.current) return
+    scrollToRef.current = false
     if (!listRef.current) return
     const el = listRef.current.querySelectorAll('li')[focusedIdx]
     if (!el) return
@@ -125,10 +131,12 @@ export default function HierarchyPicker({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
+        scrollToRef.current = true
         setFocusedIdx(i => Math.min(i + 1, baseItems.length - 1))
         break
       case 'ArrowUp':
         e.preventDefault()
+        scrollToRef.current = true
         setFocusedIdx(i => Math.max(i - 1, 0))
         break
       case 'Enter':
@@ -211,7 +219,7 @@ export default function HierarchyPicker({
                     item.id === null ? 'jd-picker__root' : '',
                   ].filter(Boolean).join(' ')}
                   onClick={() => select(item.id)}
-                  onMouseMove={() => setFocusedIdx(idx)}
+                  onMouseEnter={() => setFocusedIdx(idx)}
                 >
                   <span className="jd-picker__nom">{item.nom}</span>
                   {path && <span className="jd-picker__path">({path})</span>}

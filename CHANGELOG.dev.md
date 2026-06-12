@@ -4,6 +4,11 @@ Journal de bord des itérations. Entrées les plus récentes en tête.
 
 ---
 
+## Build 92 — 2026-06-12
+Fix HierarchyPicker : scroll sur recherche ne fonctionnait plus (build 91). Race condition React : `q` en dépendance du scroll effect déclenchait le scroll avant que `focusedIdx` soit mis à jour par le `setFocusedIdx` du cycle suivant. Fix : retrait de `q` des dépendances, le scroll est piloté uniquement par les changements de `focusedIdx`.
+
+---
+
 ## Build 91 — 2026-06-12
 Fix HierarchyPicker : le survol souris déclenchait un scroll automatique de la liste. Ajout d'un ref `scrollToRef` — le scroll n'est autorisé que si initié par clavier (↑↓) ou par changement de recherche. `onMouseMove` → `onMouseEnter` (survol met à jour la mise en évidence visuelle sans scroller).
 
